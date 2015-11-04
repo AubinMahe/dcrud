@@ -65,7 +65,7 @@ int main( void ) {
    Person * aubin  = Person_create( "Mahe", "Aubin", 49 );
    Person * muriel = Person_create( "Le Nain", "Muriel", 42 );
    Person * eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
-   fprintf( stderr, "+----+----+----------------------------------------\n" );
+   printf( "+----+----+----------------------------------------\n" );
    {
       collList persons = collList_reserve();
       collList_add( persons, muriel );
@@ -88,7 +88,7 @@ int main( void ) {
       collList_foreach( persons, printPerson, "List" );
       collList_release( &persons );
    }
-   fprintf( stderr, "+----+----+----------------------------------------\n" );
+   printf( "+----+----+----------------------------------------\n" );
    {
       collSet persons = collSet_reserve((collComparator)personCompare );
       collSet_add( persons, muriel );
@@ -118,7 +118,7 @@ int main( void ) {
       collSet_foreach( persons, printPerson, "Set " );
       collSet_release( &persons );
    }
-   fprintf( stderr, "+----+----+----------------------------------------\n" );
+   printf( "+----+----+----------------------------------------\n" );
    {
       collMap persons = collMap_reserve((collComparator)personMapCompare );
       collMap_put( persons, muriel->forname, muriel );
@@ -127,24 +127,24 @@ int main( void ) {
       collMap_foreach( persons, printPersonEntry, "Map " );
       Person * person = collMap_get( persons, "Eve" );
       if( person == NULL ) {
-         fprintf( stderr, "|Map |FAIL|get: not found!\n" );
+         printf( "|Map |FAIL|get: not found!\n" );
       }
       else if( person == eve ) {
-         fprintf( stderr, "|Map |OK  |get\n" );
+         printf( "|Map |OK  |get\n" );
       }
       else {
-         fprintf( stderr, "|Map |FAIL|get: { %s, %s, %d }\n",
+         printf( "|Map |FAIL|get: { %s, %s, %d }\n",
             person->forname, person->name, person->age );
       }
       person = collMap_put( persons, "Aubin", aubin );
       if( person == NULL ) {
-         fprintf( stderr, "|Map |FAIL|put: doublon accepted!\n" );
+         printf( "|Map |FAIL|put: doublon accepted!\n" );
       }
       else if( person == aubin ) {
-         fprintf( stderr, "|Map |OK  |put: doublon refused\n" );
+         printf( "|Map |OK  |put: doublon refused\n" );
       }
       else {
-         fprintf( stderr, "|Map |FAIL|put: { %s, %s, %d }\n",
+         printf( "|Map |FAIL|put: { %s, %s, %d }\n",
             person->forname, person->name, person->age );
       }
       Person * removed = collMap_remove( persons, "Aubin" );
@@ -163,7 +163,7 @@ int main( void ) {
       collMap_foreach( persons, printPersonEntry, "Map " );
       collMap_release( &persons );
    }
-   fprintf( stderr, "+----+----+----------------------------------------\n" );
+   printf( "+----+----+----------------------------------------\n" );
    free( aubin );
    free( muriel );
    free( eve );

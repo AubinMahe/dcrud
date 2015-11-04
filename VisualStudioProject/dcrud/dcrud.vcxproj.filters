@@ -78,6 +78,9 @@
     <ClInclude Include="..\..\C\src\dcrud\Repositories.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\limits.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\C\src\coll\List.c">

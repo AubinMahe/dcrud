@@ -1,4 +1,6 @@
 #include <coll/Map.h>
+#include <coll/limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,29 +13,52 @@ typedef struct collMapPair_s {
 
 typedef struct collPrivateMap_s {
 
-   unsigned       count;
-   unsigned       limit;
    collComparator cmp;
+   unsigned       count;
+#ifdef STATIC_ALLOCATION
+   collMapPair    pairs[COLL_MAP_ITEM_MAX_COUNT];
+#else
+   unsigned       limit;
    collMapPair *  pairs;
+#endif
 
 } collPrivateMap;
+
+#ifdef STATIC_ALLOCATION
+static collPrivateMap Maps[COLL_MAP_MAX_COUNT];
+static unsigned int   NextMap = 0;
+unsigned int collLimitsMapCountMax     = 0;
+unsigned int collLimitsMapPairCountMax = 0;
+#endif
 
 typedef int ( * PVoidComparator )( const void *, const void * );
 
 collMap collMap_reserve( collComparator cmp ) {
+#ifdef STATIC_ALLOCATION
+   if( NextMap == COLL_MAP_MAX_COUNT ) {
+      fprintf( stderr, "%s:%d:collMap_reserve: out of memory!\n", __FILE__, __LINE__ );
+      return NULL;
+   }
+   collPrivateMap * This = &Maps[NextMap++];
+#else
    collPrivateMap * This = (collPrivateMap *)malloc( sizeof( collPrivateMap ));
+#endif
+   This->cmp   = cmp;
    This->count = 0;
+#ifndef STATIC_ALLOCATION
    This->limit = 100;
    This->pairs = (collMapPair *)malloc( This->limit * sizeof( collMapPair ));
-   This->cmp   = cmp;
+#endif
    return (collMap)This;
 }
 
 void collMap_clear( collMap self ) {
    collPrivateMap * This = (collPrivateMap *)self;
    This->count = 0;
+#ifndef STATIC_ALLOCATION
    This->limit = 100;
    This->pairs = (collMapPair *)realloc( This->pairs, This->limit * sizeof( collMapPair ) );
+#endif
 }
 
 collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value ) {
@@ -48,10 +73,17 @@ collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value
       pair->value = value;
    }
    else {
-      if( This->count == This->limit ) {
-         This->limit += 100;
-         This->pairs = (collMapPair *)realloc( This->pairs, This->limit * sizeof( collMapPair ));
-      }
+#ifdef STATIC_ALLOCATION
+   if( This->count == COLL_MAP_ITEM_MAX_COUNT ) {
+      fprintf( stderr, "%s:%d:collMap_put: out of memory!\n", __FILE__, __LINE__ );
+      return NULL;
+   }
+#else
+   if( This->count == This->limit ) {
+      This->limit += 100;
+      This->pairs = (collMapPair *)realloc( This->pairs, This->limit * sizeof( collMapPair ));
+   }
+#endif
       pair = (collMapPair *)(This->pairs + This->count++);
       pair->key   = key;
       pair->value = value;
@@ -113,10 +145,12 @@ collForeachMapResult collMap_foreach( collMap self, collForeachMapFunction fn, v
 
 void collMap_release( collMap * self ) {
    collPrivateMap * This = (collPrivateMap *)*self;
-   free( This->pairs );
    This->count = 0;
+#ifndef STATIC_ALLOCATION
+   free( This->pairs );
    This->limit = 0;
    This->pairs = NULL;
    free( This );
+#endif
    *self = NULL;
 }
