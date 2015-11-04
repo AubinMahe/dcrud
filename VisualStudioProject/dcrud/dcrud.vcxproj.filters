@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{78465959-d5d9-445f-bc34-0c9530726163}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{f6cdf18b-5c0a-422e-8dcb-31b267ed76b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\coll">
+      <UniqueIdentifier>{a905c089-f66b-4fcc-92bd-3f18fc8b6226}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\dcrud">
+      <UniqueIdentifier>{5618c5e5-0ba9-43e1-b815-559241c1c1ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\io">
+      <UniqueIdentifier>{44a43652-002f-40e2-b308-dfd59fc475ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\util">
+      <UniqueIdentifier>{5c98435a-ed76-4ca7-a4d5-1781b7b1ff17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\coll">
+      <UniqueIdentifier>{a6d7aa4b-5620-4f97-9e39-39b3539a8d83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dcrud">
+      <UniqueIdentifier>{26ac6382-6950-42e2-b488-046933a23efa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\io">
+      <UniqueIdentifier>{2bfabfa6-6ce2-40e5-bc85-98064610d54d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\util">
+      <UniqueIdentifier>{70de9c24-64c9-4d4c-a651-773729afe98a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\C\inc\coll\Comparator.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\ForeachFunction.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\List.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Map.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Set.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\GUID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Shareable.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\ByteBuffer.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\check.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\types.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Cache.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Repositories.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\C\src\coll\List.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\Map.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\Set.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Cache.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\GUID.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Repositories.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\RepositoryFactoryBuilder.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\io\ByteBuffer.c">
+      <Filter>src\io</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\util\check.c">
+      <Filter>src\util</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
