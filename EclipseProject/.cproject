@@ -34,7 +34,8 @@
 								<option id="gnu.c.compiler.option.misc.other.273122773" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0" valueType="string"/>
 								<option id="gnu.c.compiler.option.misc.ansi.7252208" name="Support ANSI programs (-ansi)" superClass="gnu.c.compiler.option.misc.ansi" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1034969528" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="COLLECTIONS_UNIT_TEST"/>
+									<listOptionValue builtIn="false" value="__COLLECTIONS_UNIT_TEST"/>
+									<listOptionValue builtIn="false" value="DCRUD_FUNCTIONAL_TEST"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1549997519" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

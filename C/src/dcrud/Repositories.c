@@ -31,8 +31,8 @@ typedef struct Repositories_s {
 
 } Repositories;
 
-static int sourceComparator( int * left, int * right ) {
-   return *left - *right;
+static int sourceComparator( int * * left, int * * right ) {
+   return **left - **right;
 }
 
 dcrudIRepositoryFactory * dcrudIRepositoryFactory_Repositories(
@@ -83,10 +83,12 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
 {
    Repositories * This = (Repositories *)self;
    dcrudIRepository * repo = dcrudCache_init( sourceId, producer, factory, self );
-   collList repositories = collMap_get( This->repositories, (void*)sourceId );
+   collList repositories = collMap_get( This->repositories, &sourceId );
    if( repositories == NULL ) {
       repositories = collList_reserve( repositories );
-      collMap_put( This->repositories, (void*)sourceId, repositories );
+      int * key = (int *)malloc( sizeof( int ));
+      *key = sourceId;
+      collMap_put( This->repositories, key, repositories );
    }
    collList_add( repositories, repo );
    return repo;

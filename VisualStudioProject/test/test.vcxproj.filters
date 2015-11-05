@@ -21,10 +21,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C\test\main.c">
+    <ClCompile Include="..\..\C\test\TU.c">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\test\TU.c">
+    <ClCompile Include="..\..\C\test\TF.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\main.c">
       <Filter>test</Filter>
     </ClCompile>
   </ItemGroup>

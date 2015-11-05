@@ -39,12 +39,14 @@ dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
    }
    unsigned long mcastAddr  = inet_addr( address );
    unsigned long intrfcAddr = inet_addr( intrfc );
-   FactoryEntry * entry = collMap_get( factories, (collMapKey)mcastAddr );
+   FactoryEntry * entry = collMap_get( factories, &mcastAddr );
    if( entry ) {
       return entry->factory;
    }
    dcrudIRepositoryFactory * factory =
       dcrudIRepositoryFactory_Repositories( mcastAddr, intrfcAddr, port );
-   collMap_put( factories, (collMapKey)mcastAddr, factory );
+   int * key = (unsigned long *)malloc( sizeof( unsigned long ));
+   *key = mcastAddr;
+   collMap_put( factories, key, factory );
    return factory;
 }

@@ -1,5 +1,3 @@
-#include <crtdbg.h>
-
 #include <coll/List.h>
 #include <coll/Set.h>
 #include <coll/Map.h>
@@ -59,9 +57,10 @@ static bool printPersonEntry( collForeachMap * context ) {
    context->retVal = NULL;
    return true;
 }
-#ifdef COLLECTIONS_UNIT_TEST
-int main( void ) {
-   _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF );
+
+int unitTests( int argc, char * argv[] ) {
+   (void)argc;
+   (void)argv;
    Person * aubin  = Person_create( "Mahe", "Aubin", 49 );
    Person * muriel = Person_create( "Le Nain", "Muriel", 42 );
    Person * eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
@@ -169,4 +168,3 @@ int main( void ) {
    free( eve );
    return 0;
 }
-#endif
