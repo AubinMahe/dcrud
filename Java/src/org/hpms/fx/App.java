@@ -19,7 +19,7 @@ public final class App extends Application {
       final FXMLLoader loader = new FXMLLoader( _fxml );
       final Parent     view   = loader.load();
       final Controller ctrl   = loader.getController();
-      ctrl.setArgs( _context, getParameters());
+      ctrl.initialize( _context, getParameters());
       stage.setScene( new Scene( new BorderPane( view )));
       stage.setTitle( ctrl.getAppTitle());
       stage.setX( ctrl.getAppX());

@@ -101,29 +101,21 @@ static void ShareableShape_unserialize( ioByteBuffer * source ) {
 static const int ShareableRect_CLASS_ID = 1;
 static const int ShareableEllipse_CLASS_ID = 2;
 
-static dcrudShareable * shapeFactory( int classId ) {
-   if(  ( classId == ShareableRect_CLASS_ID    )
-      ||( classId == ShareableEllipse_CLASS_ID ))
-   {
-      return (dcrudShareable *)malloc( sizeof( ShareableShape ));
-   }
-   fprintf( stderr, "Unexpected class Id: %d\n", classId );
-   exit(-1);
-}
-
 static double nextDouble( double max, double min ) {
    return min + ((double)rand() / RAND_MAX )*( max - min );
 }
 
 static unsigned g_rank;
 
-static ShareableShape * createShape( dcrudIRepository * shapes, int classId ) {
+static ShareableShape * createShape( int classId ) {
    ShareableShape * shape = (ShareableShape *)malloc( sizeof( ShareableShape ));
    memset( shape, 0 , sizeof( ShareableShape ));
-   shape->base.classId     = classId;
-   shape->base.set         = (dcrudShareable_set        )ShareableShape_set;
-   shape->base.serialize   = (dcrudShareable_serialize  )ShareableShape_serialize;
-   shape->base.unserialize = (dcrudShareable_unserialize)ShareableShape_unserialize;
+   shape->base = dcrudShareable_init(
+      shape,
+      classId,
+      (dcrudShareable_setF        )ShareableShape_set,
+      (dcrudShareable_serializeF  )ShareableShape_serialize,
+      (dcrudShareable_unserializeF)ShareableShape_unserialize );
    sprintf( shape->name, "%s %03u",
       classId == ShareableRect_CLASS_ID ? "Rectangle" : "Ellipse", ++g_rank );
    shape->x                = nextDouble( 540.0,  0.0 );
@@ -140,15 +132,25 @@ static ShareableShape * createShape( dcrudIRepository * shapes, int classId ) {
    shape->stroke.opacity   = nextDouble(   1.0,  0.0 );
    shape->dx               = 1.0;
    shape->dy               = 1.0;
-   dcrudIRepository_create( shapes, (dcrudShareable *)shape );
    return shape;
+}
+
+static dcrudShareable shapeFactory( int classId ) {
+   if(  ( classId == ShareableRect_CLASS_ID    )
+      ||( classId == ShareableEllipse_CLASS_ID ))
+   {
+      ShareableShape * shape = createShape( classId );
+      return shape->base;
+   }
+   fprintf( stderr, "Unexpected class Id: %d\n", classId );
+   exit(-1);
 }
 
 static double areaMaxX = 640.0;
 static double areaMaxY = 480.0;
 #define MOVE 2.0
 
-static void move( dcrudIRepository * shapes, ShareableShape * shape ) {
+static void move( dcrudIRepository shapes, ShareableShape * shape ) {
    bool outOfBounds;
    do {
       outOfBounds = false;
@@ -171,7 +173,7 @@ static void move( dcrudIRepository * shapes, ShareableShape * shape ) {
          shape->dy = -MOVE;
       }
    } while( outOfBounds );
-   dcrudIRepository_update( shapes, (dcrudShareable *)shape );
+   dcrudIRepository_update( shapes, shape->base );
 }
 
 int functionalTest( int argc, char * argv[] ) {
@@ -179,7 +181,7 @@ int functionalTest( int argc, char * argv[] ) {
    unsigned short port    = MC_PORT;
    const char *   intrfc  = MC_INTRFC;
    int i;
-   dcrudIRepositoryFactory * repositories;
+   dcrudIRepositoryFactory repositories;
    for( i = 1; i < argc; ++i ) {
       if( 0 == strcmp( "--address", argv[i] )) {
          address = argv[++i];
@@ -197,13 +199,17 @@ int functionalTest( int argc, char * argv[] ) {
    }
    repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port );
    if( repositories ) {
-      dcrudIRepository * shapes =
+      struct timespec  req    = { 0, 40*1000*1000 };
+      dcrudIRepository shapes =
          dcrudIRepositoryFactory_getRepository( repositories, SHAPES_SOURCE, true, shapeFactory );
-      ShareableShape * rect1 = createShape( shapes, ShareableRect_CLASS_ID );
-      ShareableShape * elli1 = createShape( shapes, ShareableEllipse_CLASS_ID );
-      ShareableShape * rect2 = createShape( shapes, ShareableRect_CLASS_ID );
-      ShareableShape * elli2 = createShape( shapes, ShareableEllipse_CLASS_ID );
-      struct timespec req = { 0, 40*1000*1000 };
+      ShareableShape * rect1 = createShape( ShareableRect_CLASS_ID );
+      ShareableShape * elli1 = createShape( ShareableEllipse_CLASS_ID );
+      ShareableShape * rect2 = createShape( ShareableRect_CLASS_ID );
+      ShareableShape * elli2 = createShape( ShareableEllipse_CLASS_ID );
+      dcrudIRepository_create( shapes, rect1->base );
+      dcrudIRepository_create( shapes, elli1->base );
+      dcrudIRepository_create( shapes, rect2->base );
+      dcrudIRepository_create( shapes, elli2->base );
       for( i = 0; i < 1000; ++i ) {
          dcrudIRepository_publish( shapes );
          nanosleep( &req, NULL );
@@ -212,7 +218,7 @@ int functionalTest( int argc, char * argv[] ) {
          move( shapes, rect2 );
          move( shapes, elli2 );
       }
-      printf( "Well done." );
+      printf( "Well done.\n" );
    }
    else {
       fprintf( stderr, "Error catched." );

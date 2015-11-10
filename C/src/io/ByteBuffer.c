@@ -87,7 +87,7 @@ void dcrudByteBuffer_putDouble( ioByteBuffer * This, double value ) {
    This->position += 8;
 }
 
-void dcrudByteBuffer_putByteBuffer( ioByteBuffer * This, ioByteBuffer * source ) {
+void dcrudByteBuffer_putBuffer( ioByteBuffer * This, ioByteBuffer * source ) {
    unsigned count = source->limit - source->position;
    memcpy( This->bytes + This->position, source->bytes + source->position, count );
    source->position += count;

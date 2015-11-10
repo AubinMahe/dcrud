@@ -10,7 +10,7 @@ int main( int argc, char * argv[] ) {
 #ifdef _WIN32
    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
-   if( argc > 1 && 0 == strcmp( "tu", argv[1] )) {
+   if( argc > 1 && 0 == strcmp( "tu-coll", argv[1] )) {
 	   unitTests( argc, argv );
    }
    else {

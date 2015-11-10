@@ -24,19 +24,19 @@ void catchError() {
    longjmp( env, 1 );
 }
 
-dcrudIRepositoryFactory * dcrudIRepositoryFactory_Repositories(
+dcrudIRepositoryFactory dcrudIRepositoryFactory_Repositories(
    const char *   address,
    const char *   intrfc,
    unsigned short port     );
 
-dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
+dcrudIRepositoryFactory dcrudRepositoryFactoryBuilder_join(
    const char *   address,
    const char *   intrfc,
    unsigned short port    )
 {
    unsigned int mcastAddr;
    unsigned int * key;
-   dcrudIRepositoryFactory * factory;
+   dcrudIRepositoryFactory factory;
    if( !factories ) {
       if( setjmp( env )) {
          return NULL;

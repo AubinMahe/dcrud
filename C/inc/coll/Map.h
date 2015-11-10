@@ -2,7 +2,7 @@
 #include <util/types.h>
 #include <coll/Comparator.h>
 
-CREATE_ADT( collMap );
+DCRUD_ADT( collMap );
 
 typedef void * collMapKey;
 typedef void * collMapValue;

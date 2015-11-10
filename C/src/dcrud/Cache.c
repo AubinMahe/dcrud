@@ -8,16 +8,16 @@
 
 typedef struct Cache_s {
 
-   collSet                   updated;
-   collSet                   deleted;
-   collSet                   toUpdate;
-   collSet                   toDelete;
-   collMap                   local;
-   int                       sourceId;
-   bool                      producer;
-   dcrudShareableFactory     factory;
-   dcrudIRepositoryFactory * network;
-   int                       lastInstanceId;
+   collSet                 updated;
+   collSet                 deleted;
+   collSet                 toUpdate;
+   collSet                 toDelete;
+   collMap                 local;
+   int                     sourceId;
+   bool                    producer;
+   dcrudShareableFactory   factory;
+   dcrudIRepositoryFactory network;
+   int                     lastInstanceId;
 
 } Cache;
 
@@ -27,11 +27,11 @@ static int shareableComparator( dcrudShareable * * left, dcrudShareable * * righ
    return (int)( *left - *right );
 }
 
-dcrudIRepository * dcrudCache_init(
-   int                       sourceId,
-   bool                      producer,
-   dcrudShareableFactory     factory,
-   dcrudIRepositoryFactory * network )
+dcrudIRepository dcrudCache_init(
+   int                     sourceId,
+   bool                    producer,
+   dcrudShareableFactory   factory,
+   dcrudIRepositoryFactory network )
 {
    Cache * cache;
    if( caches == NULL ) {
@@ -49,31 +49,37 @@ dcrudIRepository * dcrudCache_init(
    cache->factory  = factory;
    cache->network  = network;
    cache->lastInstanceId = 0;
-   return (dcrudIRepository *)cache;
+   return (dcrudIRepository)cache;
 }
 
-void dcrudIRepository_create( dcrudIRepository * This, dcrudShareable * item ) {
+/* private interface, not published in public headers */
+dcrudGUID dcrudGUID_init( int source, int instance );
+void dcrudShareable_setId( dcrudShareable self, dcrudGUID id );
+
+void dcrudIRepository_create( dcrudIRepository This, dcrudShareable item ) {
    Cache * cache = (Cache *)This;
-   if( item->id.instance ) {
+   dcrudGUID id = dcrudShareable_getId( item );
+   if( id ) {
       char buffer[16];
-      dcrudGUID_toString( &item->id, buffer, sizeof( buffer ));
+      dcrudGUID_toString( id, buffer, sizeof( buffer ));
       fprintf( stderr, "Item already published: %s!\n", buffer );
       return;
    }
    if( ! cache->producer ) {
       char buffer[16];
-      dcrudGUID_toString( &item->id, buffer, sizeof( buffer ) );
+      dcrudGUID_toString( id, buffer, sizeof( buffer ) );
       fprintf( stderr, "Only owner can create; %s!\n", buffer );
    }
-   item->id.source   = cache->sourceId;
-   item->id.instance = ++cache->lastInstanceId;
-   collMap_put( cache->local, &item->id, item );
+   dcrudShareable_setId( item, dcrudGUID_init( cache->sourceId, ++cache->lastInstanceId ));
+   id = dcrudShareable_getId( item );
+   collMap_put( cache->local, id, item );
    collSet_add( cache->updated, item );
 }
 
-bool dcrudIRepository_update( dcrudIRepository * This, dcrudShareable * item ) {
+bool dcrudIRepository_update( dcrudIRepository This, dcrudShareable item ) {
    Cache * cache = (Cache *)This;
-   if( item->id.instance < 1 ) {
+   dcrudGUID id = dcrudShareable_getId( item );
+   if( !id || !dcrudGUID_isValid( id )) {
       fprintf( stderr, "Item must be created first!\n" );
       return false;
    }
@@ -81,9 +87,9 @@ bool dcrudIRepository_update( dcrudIRepository * This, dcrudShareable * item ) {
       fprintf( stderr, "Only owner can update!\n" );
       return false;
    }
-   if( ! collMap_get( cache->local, &item->id )) {
+   if( ! collMap_get( cache->local, id )) {
       char itemId[10];
-      dcrudGUID_toString( &item->id, itemId, sizeof( itemId ));
+      dcrudGUID_toString( id, itemId, sizeof( itemId ));
       fprintf( stderr, "Repository doesn't contains item %s to update!\n", itemId );
       return false;
    }
@@ -91,7 +97,7 @@ bool dcrudIRepository_update( dcrudIRepository * This, dcrudShareable * item ) {
    return true;
 }
 
-void dcrudIRepository_publish( dcrudIRepository * This ) {
+void dcrudIRepository_publish( dcrudIRepository This ) {
    Cache * cache = (Cache *)This;
    Repositories_publish( cache->network, cache->updated, cache->deleted );
    collSet_clear( cache->updated );

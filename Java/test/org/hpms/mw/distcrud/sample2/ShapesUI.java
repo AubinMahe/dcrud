@@ -77,7 +77,7 @@ public class ShapesUI implements Controller {
    }
 
    @Override
-   public void setArgs( Object context, Parameters args ) throws Exception {
+   public void initialize( Object context, Parameters args ) throws Exception {
       final boolean publisher =
          args.getNamed().containsKey( "publisher" ) &&
          Boolean.parseBoolean( args.getNamed().get( "publisher" ));

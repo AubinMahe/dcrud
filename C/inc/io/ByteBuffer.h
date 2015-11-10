@@ -18,13 +18,13 @@ typedef struct dcrudByteBuffer_s {
 
 } ioByteBuffer;
 
-void dcrudByteBuffer_init( ioByteBuffer * This, unsigned int capacity );
-void dcrudByteBuffer_setOrder( ioByteBuffer * This, dcrudByteOrder order );
-dcrudByteOrder dcrudByteBuffer_order( ioByteBuffer * This );
-void dcrudByteBuffer_clear( ioByteBuffer * This );
-void dcrudByteBuffer_flip( ioByteBuffer * This );
-unsigned dcrudByteBuffer_remaining( ioByteBuffer * This );
-void dcrudByteBuffer_put( ioByteBuffer * This, byte * bytes, unsigned int count );
-void dcrudByteBuffer_putInt( ioByteBuffer * This, unsigned value );
-void dcrudByteBuffer_putDouble( ioByteBuffer * This, double value );
-void dcrudByteBuffer_putByteBuffer( ioByteBuffer * This, ioByteBuffer * source );
+void           dcrudByteBuffer_init     ( ioByteBuffer * This, unsigned int capacity );
+void           dcrudByteBuffer_setOrder ( ioByteBuffer * This, dcrudByteOrder order );
+dcrudByteOrder dcrudByteBuffer_order    ( ioByteBuffer * This );
+void           dcrudByteBuffer_clear    ( ioByteBuffer * This );
+void           dcrudByteBuffer_flip     ( ioByteBuffer * This );
+unsigned       dcrudByteBuffer_remaining( ioByteBuffer * This );
+void           dcrudByteBuffer_put      ( ioByteBuffer * This, byte * bytes, unsigned int count );
+void           dcrudByteBuffer_putInt   ( ioByteBuffer * This, unsigned value );
+void           dcrudByteBuffer_putDouble( ioByteBuffer * This, double value );
+void           dcrudByteBuffer_putBuffer( ioByteBuffer * This, ioByteBuffer * source );

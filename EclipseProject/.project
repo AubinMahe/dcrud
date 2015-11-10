@@ -45,6 +45,11 @@
 			<locationURI>DCRUD_ROOT/C/test</locationURI>
 		</link>
 		<link>
+			<name>doc</name>
+			<type>2</type>
+			<locationURI>DCRUD_ROOT/doc</locationURI>
+		</link>
+		<link>
 			<name>jsrc</name>
 			<type>2</type>
 			<locationURI>DCRUD_ROOT/Java/src</locationURI>
@@ -53,6 +58,11 @@
 			<name>jtst</name>
 			<type>2</type>
 			<locationURI>DCRUD_ROOT/Java/test</locationURI>
+		</link>
+		<link>
+			<name>doc/README.md</name>
+			<type>1</type>
+			<locationURI>DCRUD_ROOT/README.md</locationURI>
 		</link>
 	</linkedResources>
 	<variableList>

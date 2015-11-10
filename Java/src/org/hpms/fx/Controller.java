@@ -5,7 +5,7 @@ import javafx.stage.Stage;
 
 public interface Controller {
 
-   public void setArgs( Object context, Parameters parameters ) throws Exception;
+   public void initialize( Object context, Parameters parameters ) throws Exception;
 
    public String getAppTitle();
 

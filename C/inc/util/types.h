@@ -9,4 +9,4 @@ typedef int bool;
 
 typedef unsigned char byte;
 
-#define CREATE_ADT(T) typedef struct T##_s { int unused; } * T
+#define DCRUD_ADT(T) typedef struct T##_s { int unused; } * T

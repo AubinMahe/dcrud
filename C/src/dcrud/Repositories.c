@@ -93,14 +93,14 @@ dcrudIRepositoryFactory * dcrudIRepositoryFactory_Repositories(
    (void)intrfc;
 }
 
-dcrudIRepository * dcrudIRepositoryFactory_getRepository(
-   dcrudIRepositoryFactory * self,
-   int                       sourceId,
-   int                       producer,
-   dcrudShareableFactory     factory  )
+dcrudIRepository dcrudIRepositoryFactory_getRepository(
+   dcrudIRepositoryFactory self,
+   int                     sourceId,
+   int                     producer,
+   dcrudShareableFactory   factory  )
 {
    Repositories * This = (Repositories *)self;
-   dcrudIRepository * repo = dcrudCache_init( sourceId, producer, factory, self );
+   dcrudIRepository repo = dcrudCache_init( sourceId, producer, factory, self );
    collList repositories = collMap_get( This->repositories, &sourceId );
    if( repositories == NULL ) {
       int * key = (int *)malloc( sizeof( int ));
@@ -137,51 +137,53 @@ static void sendFrame( Repositories * This ) {
       countBytes, inet_ntoa( This->target.sin_addr ), ntohs( This->target.sin_port ));
 }
 
-static void pushCreateOrUpdateItem( Repositories * This, dcrudShareable * item ) {
+static void pushCreateOrUpdateItem( Repositories * This, dcrudShareable item ) {
    unsigned int size;
+   dcrudGUID id = dcrudShareable_getId( item );
+
    dcrudByteBuffer_clear( &This->payload );
-   item->serialize( item, &This->payload );
+   dcrudShareable_serialize( item, &This->payload );
    dcrudByteBuffer_flip( &This->payload );
    size = dcrudByteBuffer_remaining( &This->payload );
    dcrudByteBuffer_clear( &This->header );
    dcrudByteBuffer_putInt( &This->header, size );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->id.source );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->id.instance );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->classId );
+   dcrudGUID_serialize( id, &This->header );
+   dcrudByteBuffer_putInt( &This->header, (unsigned)dcrudShareable_getClassId( item ));
    dcrudByteBuffer_flip( &This->header );
    if( dcrudByteBuffer_remaining( &This->frame ) < MSG_HEADER_SIZE + size ) {
       sendFrame( This );
       initFrame( This );
    }
-   dcrudByteBuffer_putByteBuffer( &This->frame, &This->header );
-   dcrudByteBuffer_putByteBuffer( &This->frame, &This->payload );
+   dcrudByteBuffer_putBuffer( &This->frame, &This->header );
+   dcrudByteBuffer_putBuffer( &This->frame, &This->payload );
    ++This->messageCount;
 }
 
-static void pushDeleteItem( Repositories * This, dcrudShareable * item ) {
+static void pushDeleteItem( Repositories * This, dcrudShareable item ) {
+   dcrudGUID id = dcrudShareable_getId( item );
+
    dcrudByteBuffer_clear( &This->header );
    dcrudByteBuffer_putInt( &This->header, 0 );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->id.source );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->id.instance );
-   dcrudByteBuffer_putInt( &This->header, (unsigned)item->classId );
+   dcrudGUID_serialize( id, &This->header );
+   dcrudByteBuffer_putInt( &This->header, (unsigned)dcrudShareable_getClassId( item ));
    dcrudByteBuffer_flip( &This->header );
    if( dcrudByteBuffer_remaining( &This->frame ) < MSG_HEADER_SIZE ) {
       sendFrame( This );
       initFrame( This );
    }
-   dcrudByteBuffer_putByteBuffer( &This->frame, &This->header );
+   dcrudByteBuffer_putBuffer( &This->frame, &This->header );
    ++This->messageCount;
 }
 
 typedef struct pushCreateOrUpdateItemForeachCtx_s {
-   
+
    bool           initDone;
    Repositories * repositories;
 
 } pushCreateOrUpdateItemForeachCtx;
 
 static bool pushCreateOrUpdateItemForeach( collForeach * context ) {
-   dcrudShareable * item = (dcrudShareable *)context->item;
+   dcrudShareable item = (dcrudShareable)context->item;
    pushCreateOrUpdateItemForeachCtx * ctx = (pushCreateOrUpdateItemForeachCtx *)context->user;
    if( !ctx->initDone ) {
       ctx->initDone = true;
@@ -192,7 +194,7 @@ static bool pushCreateOrUpdateItemForeach( collForeach * context ) {
 }
 
 static bool pushDeleteItemForeach( collForeach * context ) {
-   dcrudShareable * item = (dcrudShareable *)context->item;
+   dcrudShareable item = (dcrudShareable)context->item;
    pushCreateOrUpdateItemForeachCtx * ctx = (pushCreateOrUpdateItemForeachCtx *)context->user;
    if( !ctx->initDone ) {
       ctx->initDone = true;
@@ -203,9 +205,9 @@ static bool pushDeleteItemForeach( collForeach * context ) {
 }
 
 void Repositories_publish(
-   dcrudIRepositoryFactory * self,
-   collSet                   updated,
-   collSet                   deleted )
+   dcrudIRepositoryFactory self,
+   collSet                 updated,
+   collSet                 deleted )
 {
    Repositories * This = (Repositories *)self;
    pushCreateOrUpdateItemForeachCtx ctx;

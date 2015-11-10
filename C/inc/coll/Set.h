@@ -3,7 +3,7 @@
 #include <coll/Comparator.h>
 #include "ForeachFunction.h"
 
-CREATE_ADT( collSet );
+DCRUD_ADT( collSet );
 
 typedef void * collSetItem;
 
