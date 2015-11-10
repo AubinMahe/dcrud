@@ -15,10 +15,10 @@ bool dcrudGUID_toString( const dcrudGUID * This, char * target, size_t targetSiz
    return ret > 0 && ret < (int)targetSize;
 }
 
-int dcrudGUID_compareTo( const dcrudGUID * left, const dcrudGUID * right ) {
-   int diff = left->source - right->source;
+int dcrudGUID_compareTo( const dcrudGUID * * left, const dcrudGUID * * right ) {
+   int diff = (*left)->source - (*right)->source;
    if( diff == 0 ) {
-      diff = left->instance - right->instance;
+      diff = (*left)->instance - (*right)->instance;
    }
    return diff;
 }

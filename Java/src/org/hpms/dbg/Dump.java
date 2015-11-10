@@ -43,7 +43,7 @@ public class Dump {
          ++addr;
          final byte c = bytes[i];
          hexa = hexa + String.format( " %02X", c );
-         ascii += ( c > 32 ) ? (char)c : '.';
+         ascii += ( c > 32 && c < 127 ) ? (char)c : '.';
       }
       if( ! hexa.isEmpty()) {
          dumpLine( addStr + hexa, ascii );

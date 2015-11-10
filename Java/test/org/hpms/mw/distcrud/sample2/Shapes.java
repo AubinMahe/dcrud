@@ -77,8 +77,8 @@ final class ShareableRect extends ShareableShape {
       target.putDouble( r.getY());
       target.putDouble( r.getWidth());
       target.putDouble( r.getHeight());
-      SerializerHelper.putFxColor((Color)_shape.getFill()  , target );
-      SerializerHelper.putFxColor((Color)_shape.getStroke(), target );
+      SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
+      SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
    }
 
    @Override
@@ -158,8 +158,8 @@ final class ShareableEllipse extends ShareableShape {
       target.putDouble( e.getCenterY());
       target.putDouble( e.getRadiusX());
       target.putDouble( e.getRadiusY());
-      SerializerHelper.putFxColor((Color)_shape.getFill()  , target );
-      SerializerHelper.putFxColor((Color)_shape.getStroke(), target );
+      SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
+      SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
    }
 
    @Override

@@ -33,27 +33,21 @@ public class SerializerHelper {
       return LocalDate.of( year, month, dayOfMonth );
    }
 
-   public static void putFxColor( Color color, ByteBuffer target ) {
+   public static void putFxColor( Color color, ByteBuffer target, Color def ) {
       if( color == null ) {
-         target.put((byte)0 );
+         color = def;
       }
-      else {
-         target.put((byte)1 );
-         target.putDouble( color.getRed());
-         target.putDouble( color.getGreen());
-         target.putDouble( color.getBlue());
-         target.putDouble( color.getOpacity());
-      }
+      target.putDouble( color.getRed());
+      target.putDouble( color.getGreen());
+      target.putDouble( color.getBlue());
+      target.putDouble( color.getOpacity());
    }
 
    public static Color getFxColor( ByteBuffer source ) {
-      if( source.get() > 0 ) {
-         final double red     = source.getDouble();
-         final double green   = source.getDouble();
-         final double blue    = source.getDouble();
-         final double opacity = source.getDouble();
-         return Color.color( red, green, blue, opacity );
-      }
-      return null;
+      final double red     = source.getDouble();
+      final double green   = source.getDouble();
+      final double blue    = source.getDouble();
+      final double opacity = source.getDouble();
+      return Color.color( red, green, blue, opacity );
    }
 }

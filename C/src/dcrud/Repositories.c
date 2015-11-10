@@ -12,16 +12,24 @@
 #  include <winsock2.h>
 #  include <Ws2tcpip.h>
 #  include <mswsock.h>
+#elif __linux__
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <netinet/ip.h>
+#  include <arpa/inet.h>
+#  include <string.h>
+#  define SOCKET int
+#  define INVALID_SOCKET (-1)
 #endif
+#include <stdio.h>
 
 static byte     SIGNATURE[]     = { 'D','I','S','T','C','R','U','D' };
-//static unsigned FRM_HEADER_SIZE = sizeof( SIGNATURE ) + 4; // SIGNATURE, Count
-static unsigned MSG_HEADER_SIZE = 4 + 4 + 4 + 4;           // Size, Source, Instance, Class
+/*static unsigned FRM_HEADER_SIZE = sizeof( SIGNATURE ) + 4; / * SIGNATURE, Count */
+static unsigned MSG_HEADER_SIZE = 4 + 4 + 4 + 4;           /* Size, Source, Instance, Class */
 
 typedef struct Repositories_s {
 
    SOCKET             sckt;
-   unsigned short     port;
    struct sockaddr_in target;
    collMap            repositories;
    ioByteBuffer       header;
@@ -35,44 +43,54 @@ static int sourceComparator( int * * left, int * * right ) {
    return **left - **right;
 }
 
+#ifdef _WIN32
+static void exitHook( void ) {
+   WSACleanup();
+}
+#endif
+
+#define RECV_IP_ADDR      "224.0.0.3"
+
 dcrudIRepositoryFactory * dcrudIRepositoryFactory_Repositories(
-   unsigned long  ipV4MCastAddress,
-   unsigned long  ipV4Intrfc,
+   const char *   address,
+   const char *   intrfc,
    unsigned short port    )
 {
-   Repositories * This = (Repositories*)malloc( sizeof( Repositories ));
-   This->sckt = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-   check( This->sckt != INVALID_SOCKET, __FILE__, __LINE__, "socket" );
    int trueValue = 1;
+   struct sockaddr_in local_sin;
+   struct ip_mreq mreq;
+#ifdef _WIN32
+   WSADATA wsaData;
+   check( 0 == WSAStartup( MAKEWORD( 2, 2 ), &wsaData ), __FILE__, __LINE__, "WSAStartup" );
+   atexit( exitHook );
+#endif
+   Repositories * This = (Repositories*)malloc( sizeof( Repositories ) );
+   This->sckt = socket( AF_INET, SOCK_DGRAM, 0 );
+   check( This->sckt != INVALID_SOCKET, __FILE__, __LINE__, "socket" );
    check( 0 ==
-      setsockopt( This->sckt, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
+      setsockopt( This->sckt, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue ) ),
       __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" );
-   struct sockaddr_in bindAddr;
-   memset( &bindAddr, 0, sizeof( bindAddr ));
+   memset( &local_sin, 0, sizeof( local_sin ) );
+   local_sin.sin_family = AF_INET;
+   local_sin.sin_port = htons( port );
+   local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
+   check( 0 == bind( This->sckt, (struct sockaddr *)&local_sin, sizeof( local_sin )),
+      __FILE__, __LINE__, "bind(%s,%d)", address, 0 );
+   memset( &mreq, 0, sizeof( mreq ));
+   mreq.imr_multiaddr.s_addr = inet_addr( RECV_IP_ADDR );
+   mreq.imr_interface.s_addr = INADDR_ANY;
+   check( 0 == setsockopt( This->sckt, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
+      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address );
    memset( &This->target, 0, sizeof( This->target ) );
-   bindAddr.sin_family = AF_INET;
-   bindAddr.sin_addr.s_addr = INADDR_ANY;
-   bindAddr.sin_port = htons( port );
    This->target.sin_family = AF_INET;
-   This->target.sin_addr.s_addr = ipV4MCastAddress;
-   This->target.sin_port = bindAddr.sin_port;
-   check( 0 ==
-      bind( This->sckt, (SOCKADDR *)&bindAddr, sizeof( bindAddr )),
-      __FILE__, __LINE__, "bind(%s,%d)", inet_ntoa( bindAddr.sin_addr ), port );
-   struct ip_mreq_source imr;
-   memset( &imr, 0, sizeof( imr ));
-   imr.imr_multiaddr.s_addr = ipV4MCastAddress;
-   imr.imr_sourceaddr.s_addr = ipV4Intrfc;
-   imr.imr_interface.s_addr = ipV4Intrfc;
-   check( 0 ==
-      setsockopt( This->sckt, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, (char *)&imr, sizeof( imr )),
-      __FILE__, __LINE__, "setsockopt(IP_ADD_SOURCE_MEMBERSHIP)" );
-   This->port         = port;
+   This->target.sin_port = htons( port );
+   This->target.sin_addr.s_addr = inet_addr( address );
    This->repositories = collMap_reserve((collComparator)sourceComparator );
    dcrudByteBuffer_init( &This->header, MSG_HEADER_SIZE );
    dcrudByteBuffer_init( &This->payload, 10*1024 );
    dcrudByteBuffer_init( &This->frame, 500*1024 );
    return (dcrudIRepositoryFactory *)This;
+   (void)intrfc;
 }
 
 dcrudIRepository * dcrudIRepositoryFactory_getRepository(
@@ -85,8 +103,8 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
    dcrudIRepository * repo = dcrudCache_init( sourceId, producer, factory, self );
    collList repositories = collMap_get( This->repositories, &sourceId );
    if( repositories == NULL ) {
-      repositories = collList_reserve( repositories );
       int * key = (int *)malloc( sizeof( int ));
+      repositories = collList_reserve( repositories );
       *key = sourceId;
       collMap_put( This->repositories, key, repositories );
    }
@@ -102,25 +120,29 @@ static void initFrame( Repositories * This ) {
 }
 
 static void sendFrame( Repositories * This ) {
-   unsigned r = This->frame.position;
+	size_t countBytes = (size_t)This->frame.position;
    This->frame.position = sizeof( SIGNATURE );
    dcrudByteBuffer_putInt( &This->frame, This->messageCount );
-   This->frame.position = r;
-   dcrudByteBuffer_flip( &This->frame );
-   sendto(
-      This->sckt,
-      (const char *)This->frame.bytes,
-      (int)This->frame.position,
-      0,
-      (struct sockaddr *)&This->target,
-      sizeof( This->target ));
+   check( countBytes == (size_t)
+      sendto(
+         This->sckt,
+         (const char *)This->frame.bytes,
+         countBytes,
+         0,
+         (struct sockaddr *)&This->target,
+         sizeof( This->target )),
+      __FILE__, __LINE__, "sendTo %d bytes sent to %s:%d",
+      countBytes, inet_ntoa( This->target.sin_addr ), ntohs( This->target.sin_port ));
+   printf( "%lu bytes sent to %s:%d\n",
+      countBytes, inet_ntoa( This->target.sin_addr ), ntohs( This->target.sin_port ));
 }
 
 static void pushCreateOrUpdateItem( Repositories * This, dcrudShareable * item ) {
+   unsigned int size;
    dcrudByteBuffer_clear( &This->payload );
    item->serialize( item, &This->payload );
    dcrudByteBuffer_flip( &This->payload );
-   unsigned int size = dcrudByteBuffer_remaining( &This->payload );
+   size = dcrudByteBuffer_remaining( &This->payload );
    dcrudByteBuffer_clear( &This->header );
    dcrudByteBuffer_putInt( &This->header, size );
    dcrudByteBuffer_putInt( &This->header, (unsigned)item->id.source );
@@ -151,7 +173,7 @@ static void pushDeleteItem( Repositories * This, dcrudShareable * item ) {
    ++This->messageCount;
 }
 
-typedef struct {
+typedef struct pushCreateOrUpdateItemForeachCtx_s {
    
    bool           initDone;
    Repositories * repositories;
@@ -186,7 +208,9 @@ void Repositories_publish(
    collSet                   deleted )
 {
    Repositories * This = (Repositories *)self;
-   pushCreateOrUpdateItemForeachCtx ctx = { false, This };
+   pushCreateOrUpdateItemForeachCtx ctx;
+   ctx.initDone     = false;
+   ctx.repositories = This;
    collSet_foreach( updated, pushCreateOrUpdateItemForeach, &ctx );
    collSet_foreach( deleted, pushDeleteItemForeach        , &ctx );
    if( ctx.initDone ) {

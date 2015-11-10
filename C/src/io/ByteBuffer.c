@@ -2,7 +2,12 @@
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <winsock2.h>
+#elif __linux__
+#  include <arpa/inet.h>
+#  include <string.h>
 #endif
+
+#include <stdio.h>
 
 static bool init = true;
 static bool hostIsBigEndian = false;
@@ -47,45 +52,37 @@ void dcrudByteBuffer_put( ioByteBuffer * This, byte * bytes, unsigned int count 
 }
 
 void dcrudByteBuffer_putInt( ioByteBuffer * This, unsigned value ) {
-   unsigned ton;
-   if( This->order == dcrudByteOrder_LITTLE_ENDIAN ) {
-      if( hostIsBigEndian ) {
-         ton = 0;
-         ton |= (value & 0x000000FF) << 24;
-         ton |= (value & 0x0000FF00) << 8;
-         ton |= (value & 0x00FF0000) >> 8;
-         ton |= (value & 0xFF000000) >> 24;
-      }
-      else {
-         ton = value;
-      }
+   if( ( This->order == dcrudByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+     ||( This->order == dcrudByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+   {
+      unsigned ton = 0;
+      ton |= (value & 0x000000FF) << 24;
+      ton |= (value & 0x0000FF00) << 8;
+      ton |= (value & 0x00FF0000) >> 8;
+      ton |= (value & 0xFF000000) >> 24;
+      memcpy( This->bytes + This->position, &ton, 4 );
    }
    else {
-      ton = htonl( value );
+      memcpy( This->bytes + This->position, &value, 4 );
    }
-   memcpy( This->bytes + This->position, &ton, 4 );
    This->position += 4;
 }
 
 void dcrudByteBuffer_putDouble( ioByteBuffer * This, double value ) {
-   if( hostIsBigEndian ) {
-      memcpy( This->bytes + This->position, &value, 8 );
+   if( ( This->order == dcrudByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+     ||( This->order == dcrudByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+   {
+      byte *   p   = (byte *)&value;
+      byte     ton[8];
+      unsigned i;
+      for( i = 0U; i < 4U; ++i ) {
+         ton[  i] = p[7-i];
+         ton[7-i] = p[  i];
+      }
+      memcpy( This->bytes + This->position, ton, 8 );
    }
    else {
-      byte * ton = (byte *)&value;
-      byte   tmp0 = ton[0];
-      byte   tmp1 = ton[1];
-      byte   tmp2 = ton[2];
-      byte   tmp3 = ton[3];
-      ton[0] = ton[7];
-      ton[1] = ton[6];
-      ton[2] = ton[5];
-      ton[3] = ton[4];
-      ton[4] = tmp3;
-      ton[5] = tmp2;
-      ton[6] = tmp1;
-      ton[7] = tmp0;
-      memcpy( This->bytes + This->position, ton, 8 );
+      memcpy( This->bytes + This->position, &value, 8 );
    }
    This->position += 8;
 }

@@ -68,7 +68,8 @@ void collList_add( collList self, collListItem item ) {
 
 bool collList_remove( collList self, collListItem item ) {
    collPrivateList * This = (collPrivateList *)self;
-   for( unsigned i = 0; i < This->count; ++i ) {
+   unsigned i;
+   for( i = 0; i < This->count; ++i ) {
       if( This->items[i] == item ) {
          memmove(
             This->items + i,

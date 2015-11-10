@@ -62,12 +62,16 @@ void collMap_clear( collMap self ) {
 }
 
 collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value ) {
-   collPrivateMap * This    = (collPrivateMap *)self;
-   collMapPair      keyPair = { key, NULL };
-   collMapPair *    pair    =
+   collPrivateMap * This = (collPrivateMap *)self;
+   collMapPair *    pair;
+   collMapValue     oldValue = NULL;
+   collMapPair      keyPair;
+
+   keyPair.key   = key;
+   keyPair.value = NULL;
+   pair =
       bsearch(
          &keyPair, This->pairs, This->count, sizeof( collMapPair ), (PVoidComparator)This->cmp );
-   collMapValue oldValue = NULL;
    if( pair ) {
       oldValue = pair->value;
       pair->value = value;
@@ -93,9 +97,13 @@ collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value
 }
 
 collMapValue collMap_get( collMap self, const collMapKey key ) {
-   collPrivateMap * This    = (collPrivateMap *)self;
-   collMapPair      keyPair = { key, NULL };
-   collMapPair *    pair    =
+   collPrivateMap * This = (collPrivateMap *)self;
+   collMapPair *    pair;
+   collMapPair      keyPair;
+
+   keyPair.key   = key;
+   keyPair.value = NULL;
+   pair =
       bsearch(
          &keyPair,
          This->pairs,
@@ -110,8 +118,12 @@ collMapValue collMap_get( collMap self, const collMapKey key ) {
 
 collMapValue collMap_remove( collMap self, collMapKey key ) {
    collPrivateMap * This = (collPrivateMap *)self;
-   collMapPair      keyPair = { key, NULL };
-   for( unsigned i = 0; i < This->count; ++i ) {
+   unsigned         i;
+   collMapPair      keyPair;
+
+   keyPair.key   = key;
+   keyPair.value = NULL;
+   for( i = 0; i < This->count; ++i ) {
       if( 0 == This->cmp( This->pairs + i, &keyPair )) {
          collMapValue retVal = This->pairs[i].value;
          memmove(

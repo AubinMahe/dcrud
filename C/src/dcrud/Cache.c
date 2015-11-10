@@ -23,8 +23,8 @@ typedef struct Cache_s {
 
 static collList caches = NULL;
 
-static int shareableComparator( dcrudShareable * left, dcrudShareable * right ) {
-   return (int)( left - right );
+static int shareableComparator( dcrudShareable * * left, dcrudShareable * * right ) {
+   return (int)( *left - *right );
 }
 
 dcrudIRepository * dcrudCache_init(
@@ -33,10 +33,11 @@ dcrudIRepository * dcrudCache_init(
    dcrudShareableFactory     factory,
    dcrudIRepositoryFactory * network )
 {
+   Cache * cache;
    if( caches == NULL ) {
       caches = collList_reserve();
    }
-   Cache * cache = (Cache *)malloc( sizeof( Cache ) );
+   cache = (Cache *)malloc( sizeof( Cache ) );
    collList_add( caches, cache );
    cache->updated  = collSet_reserve((collComparator)shareableComparator );
    cache->deleted  = collSet_reserve((collComparator)shareableComparator );
@@ -92,7 +93,7 @@ bool dcrudIRepository_update( dcrudIRepository * This, dcrudShareable * item ) {
 
 void dcrudIRepository_publish( dcrudIRepository * This ) {
    Cache * cache = (Cache *)This;
-   Repositories_publish( cache->network, &cache->updated, &cache->deleted );
+   Repositories_publish( cache->network, cache->updated, cache->deleted );
    collSet_clear( cache->updated );
    collSet_clear( cache->deleted);
 }

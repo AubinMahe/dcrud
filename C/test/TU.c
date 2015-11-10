@@ -33,6 +33,10 @@ static int personMapCompare( const char * * left, const char * * right ) {
    return strncmp( *left, *right, sizeof( name_t ));
 }
 
+static int unsignedMapCompare( const unsigned * * left, const unsigned * * right ) {
+   return (int)( *left - *right );
+}
+
 static int personCompare( const Person * * left, const Person * * right ) {
    const char * l = (*left )->forname;
    const char * r = (*right)->forname;
@@ -49,21 +53,35 @@ static bool printPerson( collForeach * context ) {
 }
 
 static bool printPersonEntry( collForeachMap * context ) {
-   const char   * forname = (const char *  )context->key;
-   const Person * person  = (const Person *)context->value;
-   const char *   test    = (const char *  )context->user;
+   const char   * key    = (const char *  )context->key;
+   const Person * person = (const Person *)context->value;
+   const char *   test   = (const char *  )context->user;
    printf( "|%s|    |%d: %s -> { %s, %s, %d }\n",
-      test, context->index, forname, person->forname, person->name, person->age );
+      test, context->index, key, person->forname, person->name, person->age );
+   context->retVal = NULL;
+   return true;
+}
+
+static bool printPersonEntry2( collForeachMap * context ) {
+   const unsigned * key    = (const unsigned *)context->key;
+   const Person *   person = (const Person *  )context->value;
+   const char *     test   = (const char *    )context->user;
+   printf( "|%s|    |%d: %u -> { %s, %s, %d }\n",
+      test, context->index, *key, person->forname, person->name, person->age );
    context->retVal = NULL;
    return true;
 }
 
 int unitTests( int argc, char * argv[] ) {
-   (void)argc;
-   (void)argv;
-   Person * aubin  = Person_create( "Mahe", "Aubin", 49 );
+   Person * aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
    Person * muriel = Person_create( "Le Nain", "Muriel", 42 );
    Person * eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
+   bool     add;
+   bool     removed;
+   Person * person;
+   Person * removedPerson;
+   (void)argc;
+   (void)argv;
    printf( "+----+----+----------------------------------------\n" );
    {
       collList persons = collList_reserve();
@@ -71,7 +89,7 @@ int unitTests( int argc, char * argv[] ) {
       collList_add( persons, aubin );
       collList_add( persons, eve );
       collList_foreach( persons, printPerson, "List" );
-      bool removed = collList_remove( persons, aubin );
+      removed = collList_remove( persons, aubin );
       if( removed ) {
          printf( "|List|OK  |remove\n" );
       }
@@ -94,14 +112,14 @@ int unitTests( int argc, char * argv[] ) {
       collSet_add( persons, aubin );
       collSet_add( persons, eve );
       collSet_foreach( persons, printPerson, "Set " );
-      bool add = collSet_add( persons, aubin );
+      add = collSet_add( persons, aubin );
       if( add == false ) {
          printf( "|Set |OK  |add: doublon refused\n" );
       }
       else {
          printf( "|Set |FAIL|add: doublon accepted\n" );
       }
-      bool removed = collSet_remove( persons, aubin );
+      removed = collSet_remove( persons, aubin );
       if( removed ) {
          printf( "|Set |OK  |remove\n" );
       }
@@ -124,7 +142,7 @@ int unitTests( int argc, char * argv[] ) {
       collMap_put( persons, aubin ->forname, aubin );
       collMap_put( persons, eve   ->forname, eve );
       collMap_foreach( persons, printPersonEntry, "Map " );
-      Person * person = collMap_get( persons, "Eve" );
+      person = collMap_get( persons, "Eve" );
       if( person == NULL ) {
          printf( "|Map |FAIL|get: not found!\n" );
       }
@@ -146,8 +164,8 @@ int unitTests( int argc, char * argv[] ) {
          printf( "|Map |FAIL|put: { %s, %s, %d }\n",
             person->forname, person->name, person->age );
       }
-      Person * removed = collMap_remove( persons, "Aubin" );
-      if( removed == aubin ) {
+      removedPerson = collMap_remove( persons, "Aubin" );
+      if( removedPerson == aubin ) {
          printf( "|Map |OK  |remove\n" );
       }
       else {
@@ -160,6 +178,54 @@ int unitTests( int argc, char * argv[] ) {
          printf( "|Map |FAIL|remove: size() != 2\n" );
       }
       collMap_foreach( persons, printPersonEntry, "Map " );
+      collMap_release( &persons );
+   }
+   printf( "+----+----+----------------------------------------\n" );
+   {
+      collMap persons = collMap_reserve((collComparator)unsignedMapCompare );
+      static unsigned keyMuriel = 12;
+      static unsigned keyAubin  = 24;
+      static unsigned keyEve    = 36;
+      collMap_put( persons, &keyMuriel, muriel );
+      collMap_put( persons, &keyAubin , aubin );
+      collMap_put( persons, &keyEve   , eve );
+      collMap_foreach( persons, printPersonEntry2, "Map " );
+      person = collMap_get( persons, &keyEve );
+      if( person == NULL ) {
+         printf( "|Map |FAIL|get: not found!\n" );
+      }
+      else if( person == eve ) {
+         printf( "|Map |OK  |get\n" );
+      }
+      else {
+         printf( "|Map |FAIL|get: { %s, %s, %d }\n",
+            person->forname, person->name, person->age );
+      }
+      person = collMap_put( persons, &keyAubin, aubin );
+      if( person == NULL ) {
+         printf( "|Map |FAIL|put: doublon accepted!\n" );
+      }
+      else if( person == aubin ) {
+         printf( "|Map |OK  |put: doublon refused\n" );
+      }
+      else {
+         printf( "|Map |FAIL|put: { %s, %s, %d }\n",
+            person->forname, person->name, person->age );
+      }
+      removedPerson = collMap_remove( persons, &keyAubin );
+      if( removedPerson == aubin ) {
+         printf( "|Map |OK  |remove\n" );
+      }
+      else {
+         printf( "|Map |FAIL|remove: unexpected removed item\n" );
+      }
+      if( collMap_size( persons ) == 2 ) {
+         printf( "|Map |OK  |remove\n" );
+      }
+      else {
+         printf( "|Map |FAIL|remove: size() != 2\n" );
+      }
+      collMap_foreach( persons, printPersonEntry2, "Map " );
       collMap_release( &persons );
    }
    printf( "+----+----+----------------------------------------\n" );

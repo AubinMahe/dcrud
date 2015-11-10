@@ -3,5 +3,5 @@
 
 void Repositories_publish(
    dcrudIRepositoryFactory * network,
-   collSet *                updated, 
-   collSet *                deleted  );
+   collSet                  updated, 
+   collSet                  deleted  );

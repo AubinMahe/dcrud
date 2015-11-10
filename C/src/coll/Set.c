@@ -79,7 +79,8 @@ bool collSet_add( collSet self, collSetItem item ) {
 
 bool collSet_remove( collSet self, collSetItem item ) {
    collPrivateSet * This = (collPrivateSet *)self;
-   for( unsigned i = 0; i < This->count; ++i ) {
+   unsigned         i;
+   for( i = 0; i < This->count; ++i ) {
       if( This->items[i] == item ) {
          memmove(
             This->items + i,
@@ -99,6 +100,7 @@ unsigned int collSet_size( collSet self ) {
 collForeachResult collSet_foreach( collSet self, collForeachFunction fn, void * userData ) {
    collPrivateSet * This = (collPrivateSet *)self;
    collForeach context;
+   memset( &context, 0, sizeof( context ));
    context.user = userData;
    for( context.index = 0; context.index < This->count; ++context.index ) {
       context.item = This->items[context.index];

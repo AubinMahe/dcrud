@@ -11,4 +11,4 @@ typedef struct dcrudGUID_s {
 void dcrudGUID_init       ( /* */ dcrudGUID * This, int source, int instance );
 bool dcrudGUID_matchSource( const dcrudGUID * This, int source );
 bool dcrudGUID_toString   ( const dcrudGUID * This, char * target, size_t targetSize );
-int  dcrudGUID_compareTo  ( const dcrudGUID * left, const dcrudGUID * right );
+int  dcrudGUID_compareTo  ( const dcrudGUID * * left, const dcrudGUID * * right );

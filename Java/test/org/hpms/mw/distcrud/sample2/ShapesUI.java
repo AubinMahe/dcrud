@@ -37,8 +37,9 @@ import javafx.stage.Stage;
 
 public class ShapesUI implements Controller {
 
-   private static final String MC_GROUP      = "224.0.0.1";
+   private static final String MC_GROUP      = "224.0.0.3";
    private static final int    MC_PORT       = 2416;
+   private static final String MC_INTRFC     = "eth1";
    private static final int    SHAPES_SOURCE = 42;
 
    private final Random _random = new Random();
@@ -86,9 +87,12 @@ public class ShapesUI implements Controller {
       else {
          _title = "Afficheur de formes";
          _publisherMnu.setDisable( true );
-      }
+      } 
+      String address = args.getNamed().get( "address" ); if( address == null ) address = MC_GROUP;
+      String port    = args.getNamed().get( "port"    ); if( port    == null ) port    = "" + MC_PORT;
+      String intrfc  = args.getNamed().get( "intrfc"  ); if( intrfc  == null ) intrfc  = MC_INTRFC;
       final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( MC_GROUP, "eth4", MC_PORT );
+         RepositoryFactoryBuilder.join( address, intrfc, Integer.parseInt( port ));
       _shapes = repositories.getRepository( SHAPES_SOURCE, publisher, this::shapeFactory );
       _strokeColor.setValue( Color.BLACK );
       _fillColor  .setValue( Color.LIGHTSALMON );

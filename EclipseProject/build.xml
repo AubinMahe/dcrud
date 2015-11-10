@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="project" default="jar">
+
+   <property name="build" value="BUILD" />
+   <property name="jar"   value="dcrud-ui.jar" />
+
+   <target name="clean" description="">
+      <delete dir="${build}" />
+      <delete file="${jar}" />
+   </target>
+
+   <target name="javac" description="">
+      <mkdir dir="${build}" />
+      <javac
+         debug            ="true"
+         debuglevel       ="lines,vars,source"
+         destdir          ="${build}"
+         includeantruntime="false">
+         <src path="../Java/src" />
+         <src path="../Java/test" />
+      </javac>
+    </target>
+
+    <target name="jar" description="" depends="javac" >
+       <copy todir="${build}">
+          <fileset
+             dir     ="../Java/test"
+             includes="**/*.fxml"
+          />
+       </copy>
+       <jar
+          destfile="${jar}"
+          basedir ="${build}">
+          <manifest>
+             <attribute name="Main-Class" value="org.hpms.mw.distcrud.sample2.ShapesUI" />
+          </manifest>
+       </jar>
+    </target>
+
+   <target name="publisher" description="Create, move and publish shapes" depends="jar" >
+      <java fork="true" jar="${jar}">
+      	<arg value="--publisher=true" />
+   	</java>
+   </target>
+
+   <target name="subscriber" description="Refresh and display shapes" depends="jar" >
+      <java fork="true" jar="${jar}"/>
+   </target>
+</project>
