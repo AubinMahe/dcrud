@@ -46,15 +46,19 @@ Interfaces
 ### RepositoryFactoryBuilder ###
 
 Java, `org.hpms.mw.distcrud.RepositoryFactoryBuilder`:
+
 ```Java
-IRepositoryFactory join( String address, String intrfc, int port )```
+IRepositoryFactory join( String address, String intrfc, int port )
+```
 
 C, `inc/dcrud/RepositoryFactoryBuilder.h`:
+
 ```C
 dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
    const char *   address,
    const char *   intrfc,
-   unsigned short port    )```
+   unsigned short port    )
+```
 
   - `address` the multicast address to join
   - `intrfc` the network adapter to use (i.e. eth*x* in Java, IP address in C)
@@ -63,13 +67,16 @@ dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
 ### IRepositoryFactory ###
 
 Java, `org.hpms.mw.distcrud.IRepositoryFactory`:
+
 ```Java
 IRepository<T> getRepository(
       int                                    classId,
       boolean                                owner,
-      Function<Integer, ? extends Shareable> factory )```
+      Function<Integer, ? extends Shareable> factory )
+```
 
 C, `inc/dcrud/IRepositoryFactory.h`:
+
 ```C
 typedef dcrudShareable * ( * dcrudShareableFactory)( int classId );
 
@@ -79,7 +86,8 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
    dcrudIRepositoryFactory * This,
    int                       classId,
    int                       owner,
-   dcrudShareableFactory     factory )```
+   dcrudShareableFactory     factory )
+```
 
   - `This`    is the instance of repository factory
   - `classId` is the class identifier
