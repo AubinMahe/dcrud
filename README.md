@@ -67,7 +67,8 @@ Java, `org.hpms.mw.distcrud.IRepositoryFactory`:
 IRepository<T> getRepository(
       int                                    classId,
       boolean                                owner,
-      Function<Integer, ? extends Shareable> factory )```
+      Function<Integer, ? extends Shareable> factory )
+```
 
 C, `inc/dcrud/IRepositoryFactory.h`:
 ```C
@@ -79,7 +80,8 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
    dcrudIRepositoryFactory * This,
    int                       classId,
    int                       owner,
-   dcrudShareableFactory     factory )```
+   dcrudShareableFactory     factory )
+```
 
   - `This`    is the instance of repository factory
   - `classId` is the class identifier
