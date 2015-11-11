@@ -110,8 +110,9 @@ static unsigned g_rank;
 static ShareableShape * createShape( int classId ) {
    ShareableShape * shape = (ShareableShape *)malloc( sizeof( ShareableShape ));
    memset( shape, 0 , sizeof( ShareableShape ));
-   shape->base = dcrudShareable_init(
+   dcrudShareable_init(
       shape,
+      &shape->base,
       classId,
       (dcrudShareable_setF        )ShareableShape_set,
       (dcrudShareable_serializeF  )ShareableShape_serialize,
