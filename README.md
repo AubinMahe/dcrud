@@ -99,6 +99,3 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
 ###Shareable###
 
 ###SerializerHelper###
-
-<textarea cols="100" rows="24">
-</textarea>
