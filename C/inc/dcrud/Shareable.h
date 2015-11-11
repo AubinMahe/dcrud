@@ -10,8 +10,9 @@ typedef void (* dcrudShareable_setF        )( dcrudSerializable This, const dcru
 typedef void (* dcrudShareable_serializeF  )( dcrudSerializable This, ioByteBuffer * target );
 typedef void (* dcrudShareable_unserializeF)( dcrudSerializable This, ioByteBuffer * source );
 
-dcrudShareable dcrudShareable_init(
+void dcrudShareable_init(
    dcrudSerializable           serializable,
+   dcrudShareable *            baseInSerializable,
    int                         classId,
    dcrudShareable_setF         set,
    dcrudShareable_serializeF   serialize,

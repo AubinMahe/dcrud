@@ -11,8 +11,9 @@ typedef struct dcrudShareableImpl_s {
 
 } dcrudShareableImpl;
 
-dcrudShareable dcrudShareable_init(
+void dcrudShareable_init(
    dcrudSerializable           serializable,
+   dcrudShareable *            baseInSerializable,
    int                         classId,
    dcrudShareable_setF         set,
    dcrudShareable_serializeF   serialize,
@@ -25,7 +26,7 @@ dcrudShareable dcrudShareable_init(
    This->set          = set;
    This->serialize    = serialize;
    This->unserialize  = unserialize;
-   return (dcrudShareable)This;
+   *baseInSerializable = (dcrudShareable)This;
 }
 
 int dcrudShareable_getClassId( dcrudShareable self ) {

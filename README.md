@@ -20,7 +20,7 @@ Design and usage
 ----------------
 
 Interfaces and implementation are separated and implementation is hidden, even
-in C, thanks to of Abstract Data Type (ADT) intensive usage.
+in C, thanks to Abstract Data Type (ADT) intensive usage.
 
 Overview
 --------
@@ -39,6 +39,15 @@ Overview
 - `SerializerHelper` is an utility static class which provides methods to
   deal with the network, handling endianness, serialization and
   deserialization.
+  
+**ShareableXXX** classes belongs to samples space.
+  
+### Implementation of the inheritance in C language ###
+
+Shared piece of data are derived from `Shareable`. dcrud use delegation to
+emulate this behavior in C language. Bidirectional link initialization between
+base and inherited instances are made by dcrud library, see
+[dcrudShareable_init()](#dcrudShareable_init). 
 
 Interfaces sample usage
 -----------------------
@@ -64,6 +73,7 @@ ellipse.moveIt();
 shapes.update( ellipse );
 shapes.publish();
 ```
+------------
 
 C: [tf_shapes_publisher](C/test/tf_shapes_publisher.c) has been *simplified*
 below for clarity reason
@@ -78,8 +88,9 @@ repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port );
 shapes = dcrudIRepositoryFactory_getRepository( repositories, 42, true, shapeFactory );
 ellipse = (ShareableShape *)malloc( sizeof( ShareableShape ));
 memset( ellipse, 0 , sizeof( ShareableShape ));
-ellipse->base = dcrudShareable_init(
+dcrudShareable_init(
    ellipse,
+   &ellipse->base,
    classId,
    (dcrudShareable_setF        )ShareableShape_set,
    (dcrudShareable_serializeF  )ShareableShape_serialize,
@@ -107,13 +118,16 @@ Interfaces references
 
 ### RepositoryFactoryBuilder ###
 
-Java, `org.hpms.mw.distcrud.RepositoryFactoryBuilder`:
+[RepositoryFactoryBuilder.java](Java/src/org/hpms/mw/distcrud/RepositoryFactoryBuilder),
+[RepositoryFactoryBuilder.h](C/inc/dcrud/RepositoryFactoryBuilder.h)
+
+Java:
 
 ```Java
 IRepositoryFactory join( String address, String intrfc, int port )
 ```
 
-C, `inc/dcrud/RepositoryFactoryBuilder.h`:
+C:
 
 ```C
 dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
@@ -128,7 +142,10 @@ dcrudIRepositoryFactory * dcrudRepositoryFactoryBuilder_join(
 
 ### IRepositoryFactory ###
 
-Java, `org.hpms.mw.distcrud.IRepositoryFactory`:
+[IRepositoryFactory.java](src/org/hpms/mw/distcrud/IRepositoryFactory.java),
+[IRepositoryFactory.h](C/inc/dcrud/IRepositoryFactory.h)
+
+Java:
 
 ```Java
 IRepository<T> getRepository(
@@ -137,12 +154,10 @@ IRepository<T> getRepository(
       Function<Integer, ? extends Shareable> factory )
 ```
 
-C, `inc/dcrud/IRepositoryFactory.h`:
+C:
 
 ```C
 typedef dcrudShareable * ( * dcrudShareableFactory)( int classId );
-
-CREATE_ADT( dcrudIRepositoryFactory );
 
 dcrudIRepository * dcrudIRepositoryFactory_getRepository(
    dcrudIRepositoryFactory * This,
@@ -156,8 +171,98 @@ dcrudIRepository * dcrudIRepositoryFactory_getRepository(
   - `owner`   is true when the caller own the instance, as a publisher
   - `factory` is the item factory
 
-###IRepository##
+### IRepository ##
 
-###Shareable###
+[IRepository.java](Java/src/org/hpms/mw/distcrud/IRepository.java),
+[IRepository.h](C/inc/dcrud/IRepository.h)
+
+#### create ####
+
+Java:
+
+```Java
+void create( T item )
+```
+
+C:
+
+```C
+void dcrudIRepository_create( dcrudIRepository This, dcrudShareable item )
+```
+
+  - `This`    is the instance of repository factory
+  - `item` is an instance of the class handled by this repository
+
+#### read ####
+
+Java:
+
+```Java
+T read( GUID id )
+```
+
+C:
+
+```C
+dcrudShareable * dcrudIRepository_read( dcrudIRepository This, dcrudGUID id )
+```
+
+  - `This` is the instance of repository factory
+  - `id`   the id of the piece of data to read
+
+#### update ####
+
+Java:
+
+```Java
+void update( T item )
+```
+
+C:
+
+```C
+bool dcrudIRepository_update( dcrudIRepository This, dcrudShareable item )
+```
+
+  - `This`    is the instance of repository factory
+  - `item` is an instance of the class handled by this repository
+
+#### delete ####
+
+Java:
+
+```Java
+void delete ( T item )
+```
+
+#### select ####
+
+Java:
+
+```Java
+Map<GUID, T> select ( Predicate<T> query )
+```
+
+#### publish ####
+
+Java:
+
+```Java
+void publish()
+```
+
+#### refresh ####
+
+Java:
+
+```Java
+void refresh()
+```
+
+### GUID ###
+
+### Shareable ###
+
+<a name="dcrudShareable_init"></a>C'est là.
 
 ###SerializerHelper###
