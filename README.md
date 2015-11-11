@@ -40,8 +40,70 @@ Overview
   deal with the network, handling endianness, serialization and
   deserialization.
 
-Interfaces
-----------
+Interfaces sample usage
+-----------------------
+
+Java: [ShapesUI](Java/test/org/hpms/mw/distcrud/sample2/ShapesUI.java) has been
+*simplified* below for clarity reason.
+
+```Java
+IRepositoryFactory repositories =
+   RepositoryFactoryBuilder.join( "224.0.0.3", "192.168.1.6", 2416 );
+IRepository<ShareableShape> shapes;
+   repositories.getRepository( 42, true, classId -> new ShareableEllipse());
+ShareableEllipse ellipse =
+   new ShareableEllipse( "Ellipse 001", new Ellipse( 640, 480, 64, 48 ));
+shapes.create( ellipse );
+shapes.publish();
+...
+ellipse.moveIt();
+shapes.update( ellipse );
+shapes.publish();
+...
+ellipse.moveIt();
+shapes.update( ellipse );
+shapes.publish();
+```
+
+C: [tf_shapes_publisher](C/test/tf_shapes_publisher.c) has been *simplified*
+below for clarity reason
+
+```C
+dcrudIRepositoryFactory repositories;
+dcrudIRepository shapes;
+ShareableShape * ellipse;
+struct timespec req = { 0, 40*1000*1000 };
+
+repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port );
+shapes = dcrudIRepositoryFactory_getRepository( repositories, 42, true, shapeFactory );
+ellipse = (ShareableShape *)malloc( sizeof( ShareableShape ));
+memset( ellipse, 0 , sizeof( ShareableShape ));
+ellipse->base = dcrudShareable_init(
+   ellipse,
+   classId,
+   (dcrudShareable_setF        )ShareableShape_set,
+   (dcrudShareable_serializeF  )ShareableShape_serialize,
+   (dcrudShareable_unserializeF)ShareableShape_unserialize );
+strcpy( ellipse->name, "Ellipse 001" );
+ellipse->x = 640;
+ellipse->y = 480;
+ellipse->w = 64;
+ellipse->h = 48;
+dcrudIRepository_create( shapes, ellipse->base );
+...
+dcrudIRepository_publish( shapes );
+nanosleep( &req, NULL );
+move( ellipse );
+dcrudIRepository_update( shapes, ellipse->base );
+...
+dcrudIRepository_publish( shapes );
+nanosleep( &req, NULL );
+move( ellipse );
+dcrudIRepository_update( shapes, ellipse->base );
+```
+
+Interfaces references
+---------------------
 
 ### RepositoryFactoryBuilder ###
 

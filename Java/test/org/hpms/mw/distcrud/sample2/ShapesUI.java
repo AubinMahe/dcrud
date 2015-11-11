@@ -76,30 +76,6 @@ public class ShapesUI implements Controller {
       return _title;
    }
 
-   @Override
-   public void initialize( Object context, Parameters args ) throws Exception {
-      final boolean publisher =
-         args.getNamed().containsKey( "publisher" ) &&
-         Boolean.parseBoolean( args.getNamed().get( "publisher" ));
-      if( publisher ) {
-         _title = "Créateur de formes";
-      }
-      else {
-         _title = "Afficheur de formes";
-         _publisherMnu.setDisable( true );
-      } 
-      String address = args.getNamed().get( "address" ); if( address == null ) address = MC_GROUP;
-      String port    = args.getNamed().get( "port"    ); if( port    == null ) port    = "" + MC_PORT;
-      String intrfc  = args.getNamed().get( "intrfc"  ); if( intrfc  == null ) intrfc  = MC_INTRFC;
-      final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( address, intrfc, Integer.parseInt( port ));
-      _shapes = repositories.getRepository( SHAPES_SOURCE, publisher, this::shapeFactory );
-      _strokeColor.setValue( Color.BLACK );
-      _fillColor  .setValue( Color.LIGHTSALMON );
-      new Timer( "Ticker", true ).scheduleAtFixedRate(
-         new TimerTask() { @Override public void run() { tick(); }}, 0, 40L );
-   }
-
    private Shareable shapeFactory( int classId ) {
       if( classId == ShareableRect.CLASS_ID ) {
          return new ShareableRect();
@@ -111,6 +87,36 @@ public class ShapesUI implements Controller {
    }
 
    @Override
+   public void initialize( Object context, Parameters args ) throws Exception {
+      final boolean publisher =
+         args.getNamed().containsKey( "publisher" ) &&
+         Boolean.parseBoolean( args.getNamed().get( "publisher" ));
+      if( publisher ) {
+         _title = "Créateur de formes";
+      }
+      else {
+         _title = "Afficheur de formes";
+         _publisherMnu.setDisable( true );
+      }
+      String address = args.getNamed().get( "address" ); if( address == null ){
+         address = MC_GROUP;
+      }
+      String port    = args.getNamed().get( "port"    ); if( port    == null ){
+         port    = "" + MC_PORT;
+      }
+      String intrfc  = args.getNamed().get( "intrfc"  ); if( intrfc  == null ){
+         intrfc  = MC_INTRFC;
+      }
+      final IRepositoryFactory repositories =
+         RepositoryFactoryBuilder.join( address, intrfc, Integer.parseInt( port ));
+      _shapes = repositories.getRepository( SHAPES_SOURCE, publisher, this::shapeFactory );
+      _strokeColor.setValue( Color.BLACK );
+      _fillColor  .setValue( Color.LIGHTSALMON );
+      new Timer( "Ticker", true ).scheduleAtFixedRate(
+         new TimerTask() { @Override public void run() { tick(); }}, 0, 40L );
+   }
+
+   @Override
    public void onShown( Stage stage ) {
       if( _shapes.isProducer()) {
          stage.setX( -4 );
@@ -119,14 +125,14 @@ public class ShapesUI implements Controller {
       else {
          Platform.runLater(() -> {
             final Rectangle2D screen = Screen.getPrimary().getBounds();
-            stage.setX( screen.getWidth () - stage.getWidth () + 4 );
-            stage.setY( screen.getHeight() - stage.getHeight() + 4 );
+            stage.setX( ( screen.getWidth () - stage.getWidth () ) + 4 );
+            stage.setY( ( screen.getHeight() - stage.getHeight() ) + 4 );
          });
       }
    }
 
    private double nextDouble( double max, double min ) {
-      return min + _random.nextDouble()*(max-min);
+      return min + ( _random.nextDouble()*(max-min) );
    }
 
    @FXML
@@ -254,7 +260,7 @@ public class ShapesUI implements Controller {
 
    @FXML
    private void drop( MouseEvent event ) {
-      if( _shapes.isProducer() && _dragged != null ) {
+      if( _shapes.isProducer() && ( _dragged != null ) ) {
          try {
             final double dx = event.getX() - _fromX;
             final double dy = event.getY() - _fromY;
