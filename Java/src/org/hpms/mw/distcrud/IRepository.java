@@ -6,13 +6,11 @@ import java.util.function.Predicate;
 
 public interface IRepository<T extends Shareable> {
 
-   public void         create ( T            item  );
-   public T            read   ( GUID         id    );
-   public void         update ( T            item  );
-   public void         delete ( T            item  );
-   public Map<GUID, T> select ( Predicate<T> query );
-   public boolean      isProducer();
-   public boolean      isConsumer();
-   public void         publish() throws IOException;
-   public void         refresh();
+   void         create ( T            item, int classId );
+   T            read   ( GUID         id    );
+   void         update ( T            item  );
+   void         delete ( T            item  );
+   Map<GUID, T> select ( Predicate<T> query );
+   void         publish() throws IOException;
+   void         refresh();
 }

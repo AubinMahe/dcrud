@@ -1,6 +1,7 @@
 package org.hpms.mw.distcrud;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,49 +14,46 @@ import java.util.stream.Collectors;
 
 final class Cache<T extends Shareable> implements IRepository<T> {
 
-   private final Set<T>            _updated  = new HashSet<>();
-   private final Set<T>            _deleted  = new HashSet<>();
-   private final Set<T>            _toUpdate = new HashSet<>();
-   private final Set<GUID>         _toDelete = new TreeSet<>();
-   private final Map<GUID, T>      _local    = new TreeMap<>();
-   private final int               _sourceId;
-   private final boolean           _producer;
-   private final Function<Integer,
-      ? extends Shareable>         _factory;
-   private final Repositories      _network;
-   private /* */ int               _lastInstanceId;
+   private final Set<T>          _updated  = new HashSet<>();
+   private final Set<T>          _deleted  = new HashSet<>();
+   private final Set<T>          _toUpdate = new HashSet<>();
+   private final Set<GUID>       _toDelete = new TreeSet<>();
+   private final Map<GUID, T>    _local    = new TreeMap<>();
+   private final String          _topic;
+   private final Function<GUID,
+      ? extends Shareable>       _factory;
+   private final Repositories    _network;
+   private /* */ int             _lastInstanceId;
 
-   Cache(
-      int                                    sourceId,
-      boolean                                producer,
-      Function<Integer, ? extends Shareable> factory,
-      Repositories                           network )
-   {
-      _sourceId = sourceId;
-      _producer = producer;
-      _factory  = factory;
-      _network  = network;
+   Cache( String topic, Function<GUID, ? extends Shareable> factory, Repositories network ) {
+      _topic   = topic;
+      _factory = factory;
+      _network = network;
+   }
+
+   boolean matchesTopic( String topic ) {
+      return _topic.equals( topic );
    }
 
    Collection<T> getContents() {
       return _local.values();
    }
 
-   Shareable newInstance( int classId ) {
-      return _factory.apply( classId );
+   Shareable newInstance( GUID id, ByteBuffer frame ) {
+      final Shareable item = _factory.apply( id );
+      item.unserialize( frame );
+      return item;
    }
 
    @Override
-   public void create( T item ) {
-      if( item.getId() != null ) {
+   public void create( T item, int classId ) {
+      final GUID id = item.getId();
+      if( id.isShared()) {
          throw new IllegalArgumentException( "Item already published!" );
       }
-      if( ! _producer ) {
-         throw new IllegalStateException( "Only owner can create!" );
-      }
-      item.setId( new GUID( _sourceId, ++_lastInstanceId ));
+      id.setInstance( ++_lastInstanceId );
       synchronized( _local ) {
-         _local.put( item.getId(), item );
+         _local.put( id, item );
       }
       synchronized( _updated ) {
          _updated.add( item );
@@ -80,9 +78,6 @@ final class Cache<T extends Shareable> implements IRepository<T> {
       if( item.getId() == null ) {
          throw new IllegalArgumentException( "Item must be created first!" );
       }
-      if( ! _producer ) {
-         throw new IllegalStateException( "Only owner can update!" );
-      }
       if( ! _local.containsKey( item.getId())) {
          throw new IllegalArgumentException( "Repository doesn't contains item to update!" );
       }
@@ -93,11 +88,8 @@ final class Cache<T extends Shareable> implements IRepository<T> {
 
    @Override
    public void delete( T item ) {
-      if( ! item.getId().matchClass( _sourceId )) {
+      if( ! item.getId()._topic.equals( _topic )) {
          throw new IllegalArgumentException( "Repository mismatch!" );
-      }
-      if( ! _producer ) {
-         throw new IllegalStateException( "Only owner can update!" );
       }
       synchronized( _local ) {
          _local.remove( item.getId());
@@ -105,16 +97,6 @@ final class Cache<T extends Shareable> implements IRepository<T> {
       synchronized( _deleted ) {
          _deleted.add( item );
       }
-   }
-
-   @Override
-   public boolean isProducer() {
-      return _producer;
-   }
-
-   @Override
-   public boolean isConsumer() {
-      return ! _producer;
    }
 
    @Override

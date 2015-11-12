@@ -3,21 +3,21 @@
 #include <dcrud/GUID.h>
 #include <util/types.h>
 
-DCRUD_ADT( dcrudShareable );
+UTIL_ADT( dcrudShareable );
 
 typedef void * dcrudSerializable;
-typedef void (* dcrudShareable_setF        )( dcrudSerializable This, const dcrudShareable source );
-typedef void (* dcrudShareable_serializeF  )( dcrudSerializable This, ioByteBuffer * target );
-typedef void (* dcrudShareable_unserializeF)( dcrudSerializable This, ioByteBuffer * source );
+typedef void    (* dcrudShareable_setF )( dcrudSerializable This, const dcrudShareable source );
+typedef ioError (* dcrudShareable_serializeF  )( dcrudSerializable This, ioByteBuffer target );
+typedef ioError (* dcrudShareable_unserializeF)( dcrudSerializable This, ioByteBuffer source );
 
 void dcrudShareable_init(
    dcrudSerializable           serializable,
    dcrudShareable *            baseInSerializable,
-   int                         classId,
+   dcrudGUID                   id,
    dcrudShareable_setF         set,
    dcrudShareable_serializeF   serialize,
    dcrudShareable_unserializeF unserialize );
-int       dcrudShareable_getClassId ( dcrudShareable This );
 dcrudGUID dcrudShareable_getId      ( dcrudShareable This );
-void      dcrudShareable_serialize  ( dcrudShareable This, ioByteBuffer * target );
-void      dcrudShareable_unserialize( dcrudShareable This, ioByteBuffer * source );
+void      dcrudShareable_set        ( dcrudShareable This, dcrudShareable source );
+ioError   dcrudShareable_serialize  ( dcrudShareable This, ioByteBuffer target );
+ioError   dcrudShareable_unserialize( dcrudShareable This, ioByteBuffer source );

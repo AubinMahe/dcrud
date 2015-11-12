@@ -18,29 +18,23 @@ static int addressComparator( const unsigned int * left, const unsigned int * ri
 }
 
 static collMap factories;
-static jmp_buf env;
-
-void catchError() {
-   longjmp( env, 1 );
-}
 
 dcrudIRepositoryFactory dcrudIRepositoryFactory_Repositories(
    const char *   address,
    const char *   intrfc,
-   unsigned short port     );
+   unsigned short port,
+   unsigned int   id );
 
 dcrudIRepositoryFactory dcrudRepositoryFactoryBuilder_join(
    const char *   address,
    const char *   intrfc,
-   unsigned short port    )
+   unsigned short port,
+   unsigned int   id      )
 {
    unsigned int mcastAddr;
    unsigned int * key;
    dcrudIRepositoryFactory factory;
    if( !factories ) {
-      if( setjmp( env )) {
-         return NULL;
-      }
       factories = collMap_reserve((collComparator)addressComparator );
    }
    mcastAddr = (unsigned int)inet_addr( address );
@@ -48,7 +42,7 @@ dcrudIRepositoryFactory dcrudRepositoryFactoryBuilder_join(
    if( factory ) {
       return factory;
    }
-   factory = dcrudIRepositoryFactory_Repositories( address, intrfc, port );
+   factory = dcrudIRepositoryFactory_Repositories( address, intrfc, port, id );
    key = (unsigned int *)malloc( sizeof( unsigned int ));
    *key = mcastAddr;
    collMap_put( factories, key, factory );

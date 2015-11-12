@@ -72,7 +72,7 @@ static bool printPersonEntry2( collForeachMap * context ) {
    return true;
 }
 
-int unitTests( int argc, char * argv[] ) {
+int collTests( int argc, char * argv[] ) {
    Person * aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
    Person * muriel = Person_create( "Le Nain", "Muriel", 42 );
    Person * eve    = Person_create( "Mahe"   , "Eve"   ,  7 );

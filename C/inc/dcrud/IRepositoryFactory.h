@@ -2,12 +2,11 @@
 #include <dcrud/Shareable.h>
 #include <dcrud/IRepository.h>
 
-typedef dcrudShareable ( * dcrudShareableFactory)( int classId );
+typedef dcrudShareable ( * dcrudShareableFactory)( dcrudGUID id );
 
-DCRUD_ADT( dcrudIRepositoryFactory );
+UTIL_ADT( dcrudIRepositoryFactory );
 
 dcrudIRepository dcrudIRepositoryFactory_getRepository(
    dcrudIRepositoryFactory This,
-   int                     classId,
-   int                     owner,
+   const char *            topic,
    dcrudShareableFactory   factory );

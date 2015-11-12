@@ -2,7 +2,7 @@
 #include <util/types.h>
 #include "ForeachFunction.h"
 
-DCRUD_ADT( collList );
+UTIL_ADT( collList );
 
 typedef void * collListItem;
 

@@ -10,8 +10,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-extern void catchError();
-
 void check(
    bool         ok,
    const char * file,
@@ -34,6 +32,5 @@ void check(
       va_start( args, format );
       vsnprintf( userMsg, sizeof( userMsg ), format, args );
       fprintf( stderr, "%s:%d:%s:%s", file, line, userMsg, systMsg );
-      catchError();
    }
 }

@@ -61,7 +61,7 @@ void collMap_clear( collMap self ) {
 #endif
 }
 
-collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value ) {
+collMapValue collMap_put( collMap self, collMapKey key, collMapValue value ) {
    collPrivateMap * This = (collPrivateMap *)self;
    collMapPair *    pair;
    collMapValue     oldValue = NULL;
@@ -96,7 +96,7 @@ collMapValue collMap_put( collMap self, const collMapKey key, collMapValue value
    return oldValue;
 }
 
-collMapValue collMap_get( collMap self, const collMapKey key ) {
+collMapValue collMap_get( collMap self, collMapKey key ) {
    collPrivateMap * This = (collPrivateMap *)self;
    collMapPair *    pair;
    collMapPair      keyPair;

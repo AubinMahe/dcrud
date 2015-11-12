@@ -5,6 +5,7 @@
 #include <coll/List.h>
 #include "Repositories.h"
 #include <stdio.h>
+#include <string.h>
 
 typedef struct Cache_s {
 
@@ -13,11 +14,10 @@ typedef struct Cache_s {
    collSet                 toUpdate;
    collSet                 toDelete;
    collMap                 local;
-   int                     sourceId;
-   bool                    producer;
+   char                    topic[1024];
    dcrudShareableFactory   factory;
    dcrudIRepositoryFactory network;
-   int                     lastInstanceId;
+   unsigned int            lastInstanceId;
 
 } Cache;
 
@@ -28,8 +28,7 @@ static int shareableComparator( dcrudShareable * * left, dcrudShareable * * righ
 }
 
 dcrudIRepository dcrudCache_init(
-   int                     sourceId,
-   bool                    producer,
+   const char *            topic,
    dcrudShareableFactory   factory,
    dcrudIRepositoryFactory network )
 {
@@ -44,8 +43,7 @@ dcrudIRepository dcrudCache_init(
    cache->toUpdate = collSet_reserve((collComparator)shareableComparator );
    cache->toDelete = collSet_reserve((collComparator)dcrudGUID_compareTo );
    cache->local    = collMap_reserve((collComparator)dcrudGUID_compareTo );
-   cache->sourceId = sourceId;
-   cache->producer = producer;
+   strncpy( cache->topic, topic, sizeof( cache->topic ));
    cache->factory  = factory;
    cache->network  = network;
    cache->lastInstanceId = 0;
@@ -53,53 +51,44 @@ dcrudIRepository dcrudCache_init(
 }
 
 /* private interface, not published in public headers */
-dcrudGUID dcrudGUID_init( int source, int instance );
-void dcrudShareable_setId( dcrudShareable self, dcrudGUID id );
+void dcrudGUID_setInstance( const dcrudGUID self, unsigned int instance );
 
-void dcrudIRepository_create( dcrudIRepository This, dcrudShareable item ) {
-   Cache * cache = (Cache *)This;
-   dcrudGUID id = dcrudShareable_getId( item );
-   if( id ) {
-      char buffer[16];
+dcrudErrorCode dcrudIRepository_create( dcrudIRepository This, dcrudShareable item ) {
+   Cache *   cache = (Cache *)This;
+   dcrudGUID id    = dcrudShareable_getId( item );
+   if( dcrudGUID_isShared( id )) {
+      char buffer[40];
       dcrudGUID_toString( id, buffer, sizeof( buffer ));
       fprintf( stderr, "Item already published: %s!\n", buffer );
-      return;
+      return DCRUD_ALREADY_CREATED;
    }
-   if( ! cache->producer ) {
-      char buffer[16];
-      dcrudGUID_toString( id, buffer, sizeof( buffer ) );
-      fprintf( stderr, "Only owner can create; %s!\n", buffer );
-   }
-   dcrudShareable_setId( item, dcrudGUID_init( cache->sourceId, ++cache->lastInstanceId ));
-   id = dcrudShareable_getId( item );
+   dcrudGUID_setInstance( id, ++cache->lastInstanceId );
    collMap_put( cache->local, id, item );
    collSet_add( cache->updated, item );
+   return DCRUD_NO_ERROR;
 }
 
-bool dcrudIRepository_update( dcrudIRepository This, dcrudShareable item ) {
+dcrudErrorCode dcrudIRepository_update( dcrudIRepository This, dcrudShareable item ) {
    Cache * cache = (Cache *)This;
    dcrudGUID id = dcrudShareable_getId( item );
-   if( !id || !dcrudGUID_isValid( id )) {
+   if( ! dcrudGUID_isShared( id )) {
       fprintf( stderr, "Item must be created first!\n" );
-      return false;
-   }
-   if( ! cache->producer ) {
-      fprintf( stderr, "Only owner can update!\n" );
-      return false;
+      return DCRUD_NOT_CREATED;
    }
    if( ! collMap_get( cache->local, id )) {
-      char itemId[10];
+      char itemId[40];
       dcrudGUID_toString( id, itemId, sizeof( itemId ));
       fprintf( stderr, "Repository doesn't contains item %s to update!\n", itemId );
       return false;
    }
    collSet_add( cache->updated, item );
-   return true;
+   return DCRUD_NO_ERROR;
 }
 
-void dcrudIRepository_publish( dcrudIRepository This ) {
+dcrudErrorCode dcrudIRepository_publish( dcrudIRepository This ) {
    Cache * cache = (Cache *)This;
    Repositories_publish( cache->network, cache->updated, cache->deleted );
    collSet_clear( cache->updated );
-   collSet_clear( cache->deleted);
+   collSet_clear( cache->deleted );
+   return DCRUD_NO_ERROR;
 }
