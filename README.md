@@ -22,14 +22,9 @@ Interfaces and implementation are separated and implementation is hidden, even i
 Overview
 --------
 
-<p align="center">
-
 ![UML diagram interfaces](interfaces.png "UML diagram interfaces")
 
-<small>
 *Interface and utility classes needed to use DCRUD*
-</small>
-</p>
 
 - `RepositoryFactoryBuilder` offers a single method to obtain a `IRepositoryFactory` instance for a particular ring or cloud, identified by its multicast address.
 - `IRepositoryFactory` offers a single method to obtain a `IRepository` instance which act as an items cache. Items may be of different classes. It's an applicative decision to use one or several repositories.
