@@ -5,4 +5,4 @@ dcrudIRepositoryFactory dcrudRepositoryFactoryBuilder_join(
    const char *   address,
    const char *   intrfc,
    unsigned short port,
-   int            id );
+   unsigned int   id );

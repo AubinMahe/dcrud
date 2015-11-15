@@ -4,17 +4,12 @@ import java.nio.ByteBuffer;
 
 public abstract class Shareable {
 
-   private final GUID _id;
+   public final GUID    _id = new GUID();
+   public final ClassID _class;
 
-   protected Shareable( GUID id ) {
-      _id = id;
+   protected Shareable( ClassID classId ) {
+      _class = classId;
    }
-
-   public final GUID getId() {
-      return _id;
-   }
-
-   public abstract void set( Shareable source );
 
    public abstract void serialize( ByteBuffer target );
 

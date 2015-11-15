@@ -191,6 +191,7 @@ int shapesPublisherTests( int argc, char * argv[] ) {
    const char *   address = MC_GROUP;
    unsigned short port    = MC_PORT;
    const char *   intrfc  = MC_INTRFC;
+   unsigned int   srcId   = 0;
    int i;
    dcrudIRepositoryFactory repositories;
    for( i = 1; i < argc; ++i ) {
@@ -203,12 +204,19 @@ int shapesPublisherTests( int argc, char * argv[] ) {
       else if( 0 == strcmp( "--interface", argv[i] )) {
          intrfc = argv[++i];
       }
+      else if( 0 == strcmp( "--src-id", argv[i] )) {
+         srcId = (unsigned int)atoi( argv[++i] );
+      }
       else {
          fprintf( stderr, "unexpected argument: %s\n", argv[i] );
          exit(-1);
       }
    }
-   repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port );
+   if( srcId < 1 ) {
+      fprintf( stderr, "--src-id <id> must be used and id must be positive\n", argv[i] );
+      exit(-1);
+   }
+   repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port, srcId );
    if( repositories ) {
       dcrudIRepository shapes =
          dcrudIRepositoryFactory_getRepository( repositories, SHAPES_TOPIC, shapeFactory );

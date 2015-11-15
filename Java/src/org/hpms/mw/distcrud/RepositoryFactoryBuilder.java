@@ -11,7 +11,13 @@ public class RepositoryFactoryBuilder {
 
    private static final Map<InetAddress, IRepositoryFactory> _Groups = new HashMap<>();
 
-   public static IRepositoryFactory join( String addr, String intrfc, int port, int id ) throws IOException {
+   public static IRepositoryFactory join(
+      String addr,
+      String intrfc,
+      int    port,
+      byte   platformId,
+      byte   execId      ) throws IOException
+   {
       final NetworkInterface netwkIntrfc = NetworkInterface.getByName( intrfc );
       if( netwkIntrfc == null ) {
          for( final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
@@ -32,10 +38,13 @@ public class RepositoryFactoryBuilder {
          throw new IllegalArgumentException( address + " isn't a valid multicast address!" );
       }
       assert port > 0;
-      IRepositoryFactory factory = _Groups.get( address );
-      if( factory == null ) {
-         _Groups.put( address, factory = new Repositories( address, netwkIntrfc, port, id ));
+      synchronized( _Groups ) {
+         IRepositoryFactory factory = _Groups.get( address );
+         if( factory == null ) {
+            _Groups.put( address, factory =
+               new Repositories( address, netwkIntrfc, port, platformId, execId ));
+         }
+         return factory;
       }
-      return factory;
    }
 }

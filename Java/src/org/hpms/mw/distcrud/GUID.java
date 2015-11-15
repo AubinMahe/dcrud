@@ -5,44 +5,53 @@ import java.nio.ByteBuffer;
 public final class GUID implements Comparable<GUID> {
 
    static GUID unserialize( ByteBuffer buffer ) {
-      final String topic    = SerializerHelper.getString( buffer );
-      final int    classId  = buffer.getInt();
-      final int    instance = buffer.getInt();
-      return new GUID( topic, classId, instance );
+      final GUID id = new GUID();
+      id._platform = buffer.get();
+      id._exec     = buffer.get();
+      id._cache    = buffer.get();
+      id._instance = buffer.getInt();
+      assert id._platform > 0;
+      assert id._exec     > 0;
+      assert id._cache    > 0;
+      return id;
    }
 
-   public final String _topic;
-   public final int    _class;
-   public /* */ int    _instance;
-
-   GUID( String topic, int classId, int instance ) {
-      _topic    = topic;
-      _class    = classId;
-      _instance = instance;
-   }
-
-   public GUID( String topic, int classId ) {
-      this( topic, classId, 0 );
-   }
+   byte _platform;
+   byte _exec;
+   byte _cache;
+   int  _instance;
 
    boolean isShared() {
       return _instance > 0;
    }
 
-   void setInstance( int instance ) {
-      _instance = instance;
+   void set( GUID id ) {
+      _platform = id._platform;
+      _exec     = id._exec;
+      _cache    = id._cache;
+      _instance = id._instance;
+      assert id._platform > 0;
+      assert id._exec     > 0;
+      assert id._cache    > 0;
    }
 
    @Override
    public String toString() {
-      return String.format( "%s.%04X-%04X", _topic, _class, _instance );
+      return String.format( "Instance-%02X-%02X-%02X-%04X",
+         _platform, _exec, _cache, _instance );
    }
 
    @Override
    public int compareTo( GUID right ) {
-      int delta = this._topic.compareTo( right._topic );
+      int delta = 0;
       if( delta == 0 ) {
-         delta = this._class - right._class;
+         delta = this._platform - right._platform;
+      }
+      if( delta == 0 ) {
+         delta = this._exec     - right._exec;
+      }
+      if( delta == 0 ) {
+         delta = this._cache    - right._cache;
       }
       if( delta == 0 ) {
          delta = this._instance - right._instance;
@@ -51,8 +60,9 @@ public final class GUID implements Comparable<GUID> {
    }
 
    public void serialize( ByteBuffer buffer ) {
-      SerializerHelper.putString( _topic, buffer );
-      buffer.putInt( _class );
+      buffer.put   ( _platform );
+      buffer.put   ( _exec     );
+      buffer.put   ( _cache    );
       buffer.putInt( _instance );
    }
 }

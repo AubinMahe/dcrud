@@ -4,16 +4,15 @@ DCRUD
 Goal
 ----
 
-Manage distributed collections, providing CRUD interface (**C**reate, **R**ead, **U**pdate, **D**elete).
+DCRUD manage distributed collections of items - local caches - providing CRUD interface (**C**reate, **R**ead, **U**pdate, **D**elete). All items dispose of an identity, unique system wide. Items may reference others ([UML association](https://en.wikipedia.org/wiki/Association_%28object-oriented_programming%29)). An item may be internally structured ([UML composition](https://en.wikipedia.org/wiki/Object_composition)), treated as a whole, indivisible piece of data. Granularity of a publication is the whole item, which size are expected to be small (<2 kB).
 
 Features
 --------
 
  - Data distribution on local area network, the Internet (WAN) is not a target.
  - Multi-OS: currently Windows and Linux
- - Multi-languages: currently Java and C
+ - Multi-languages: currently Java and C, C++ may be addressed in a near future.
  - Low level resources (CPU, RAM) consumption
- - Embeddable, static allocation
 
 Design and usage
 ----------------
@@ -26,8 +25,8 @@ Overview
 ![UML diagram interfaces](interfaces.png "UML diagram interfaces")
 
 - `RepositoryFactoryBuilder` offers a single method to obtain a `IRepositoryFactory` instance for a particular ring or cloud, identified by its multicast address.
-- `IRepositoryFactory` offers a single method to obtain a `IRepository` instance dedicated to a particular polymorphic class.
-- `IRepository` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with one kind of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize local and remote caches using `refresh` and `publish` operations. `read` operation is always local.
+- `IRepositoryFactory` offers a single method to obtain a `IRepository` instance which act as an items cache. Items may be of different classes. It's an applicative decision to use one or several repositories.
+- `IRepository` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local.
 - `Shareable` is an abstract class which owns a GUID (**G**lobal **U**nique **ID**entifier)
 - `SerializerHelper` is an utility static class which provides methods to deal with the network, handling endianness, serialization and deserialization.
   

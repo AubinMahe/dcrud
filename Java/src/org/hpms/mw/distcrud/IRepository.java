@@ -1,16 +1,21 @@
 package org.hpms.mw.distcrud;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public interface IRepository<T extends Shareable> {
+public interface IRepository {
 
-   void         create ( T            item, int classId );
-   T            read   ( GUID         id    );
-   void         update ( T            item  );
-   void         delete ( T            item  );
-   Map<GUID, T> select ( Predicate<T> query );
-   void         publish() throws IOException;
-   void         refresh();
+   void           ownership( boolean enabled );
+   void           subscribe( ClassID id, Supplier<Shareable> factory  );
+   boolean        matches  ( GUID    id );
+   Status         create   ( Shareable            item  );
+   <T extends Shareable>
+   T              read     ( GUID                 id    );
+   Status         update   ( Shareable            item  );
+   Status         delete   ( Shareable            item  );
+   Set<Shareable> select   ( Predicate<Shareable> query );
+   void           publish  () throws IOException;
+   void           refresh  ();
 }

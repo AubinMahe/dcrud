@@ -3,7 +3,7 @@ package org.hpms.mw.distcrud.samples.shapes;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.hpms.mw.distcrud.GUID;
+import org.hpms.mw.distcrud.ClassID;
 import org.hpms.mw.distcrud.SerializerHelper;
 import org.hpms.mw.distcrud.Shareable;
 
@@ -15,28 +15,22 @@ import javafx.scene.shape.Shape;
 
 abstract class ShareableShape extends Shareable {
 
-   public static final String TOPIC           = "shapes";
-   public static final int    RECTANGLE_CLASS = 1;
-   public static final int    ELLIPSE_CLASS   = 2;
-
    protected static final double MOVE = 1.0;
 
    protected static Random _Random = new Random();
 
-   protected String _name;
-   protected Shape  _shape;
-   protected double _dx = +MOVE;
-   protected double _dy = +MOVE;
+   protected /* */ String _name;
+   protected final Shape  _shape;
+   protected /* */ double _dx = +MOVE;
+   protected /* */ double _dy = +MOVE;
 
-   public ShareableShape( GUID id ) {
-      super( id );
-      assert id._topic.equals( TOPIC );
+   public ShareableShape( ClassID classId, Shape shape ) {
+      super( classId );
+      _shape = shape;
    }
 
-   public ShareableShape( int classId, String name, Shape shape ) {
-      super( new GUID( TOPIC, classId ));
-      assert (( shape instanceof Ellipse   ) && (classId == ELLIPSE_CLASS ))
-         ||  (( shape instanceof Rectangle ) && (classId == RECTANGLE_CLASS ));
+   public ShareableShape( ClassID classId, String name, Shape shape ) {
+      super( classId );
       _name  = name;
       _shape = shape;
       _shape.setUserData( this );
@@ -60,22 +54,14 @@ abstract class ShareableShape extends Shareable {
 
 final class ShareableRect extends ShareableShape {
 
-   public static final int CLASS_ID = 1;
+   public static final ClassID CLASS_ID = new ClassID((byte)1, (byte)1, (byte)1, (byte)1 );
 
-   public ShareableRect( GUID id ) {
-      super( id );
-      assert id._class == CLASS_ID;
+   public ShareableRect() {
+      super( CLASS_ID, new Rectangle());
    }
 
    public ShareableRect( String name, Rectangle shape ) {
       super( CLASS_ID, name, shape );
-   }
-
-   @Override
-   public void set( Shareable source ) {
-      final ShareableRect src = (ShareableRect)source;
-      this._name  = src._name;
-      this._shape = src._shape;
    }
 
    @Override
@@ -93,7 +79,7 @@ final class ShareableRect extends ShareableShape {
    @Override
    public void unserialize( ByteBuffer source ) {
       _name = SerializerHelper.getString( source );
-      final Rectangle r = new Rectangle();
+      final Rectangle r = getShape();
       r.setUserData( this );
       r.setX     ( source.getDouble());
       r.setY     ( source.getDouble());
@@ -101,7 +87,6 @@ final class ShareableRect extends ShareableShape {
       r.setHeight( source.getDouble());
       r.setFill  ( SerializerHelper.getFxColor( source ));
       r.setStroke( SerializerHelper.getFxColor( source ));
-      _shape = r;
    }
 
    @Override
@@ -142,22 +127,14 @@ final class ShareableRect extends ShareableShape {
 
 final class ShareableEllipse extends ShareableShape {
 
-   public static final int CLASS_ID = 2;
+   public static final ClassID CLASS_ID = new ClassID((byte)1, (byte)1, (byte)1, (byte)2 );
 
-   public ShareableEllipse( GUID id ) {
-      super( id );
-      assert id._class == CLASS_ID;
+   public ShareableEllipse() {
+      super( CLASS_ID, new Ellipse());
    }
 
    public ShareableEllipse( String name, Ellipse shape ) {
       super( CLASS_ID, name, shape );
-   }
-
-   @Override
-   public void set( Shareable source ) {
-      final ShareableEllipse src = (ShareableEllipse)source;
-      this._name  = src._name;
-      this._shape = src._shape;
    }
 
    @Override
@@ -175,7 +152,7 @@ final class ShareableEllipse extends ShareableShape {
    @Override
    public void unserialize( ByteBuffer source ) {
       _name  = SerializerHelper.getString( source );
-      final Ellipse e = new Ellipse();
+      final Ellipse e = getShape();
       e.setUserData( this );
       e.setCenterX( source.getDouble());
       e.setCenterY( source.getDouble());
@@ -183,7 +160,6 @@ final class ShareableEllipse extends ShareableShape {
       e.setRadiusY( source.getDouble());
       e.setFill   ( SerializerHelper.getFxColor( source ));
       e.setStroke ( SerializerHelper.getFxColor( source ));
-      _shape = e;
    }
 
    @Override

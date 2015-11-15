@@ -1,23 +1,28 @@
 package org.hpms.mw.distcrud.samples.person;
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Map;
+import java.util.Set;
 
-import org.hpms.mw.distcrud.GUID;
 import org.hpms.mw.distcrud.IRepository;
 import org.hpms.mw.distcrud.IRepositoryFactory;
 import org.hpms.mw.distcrud.RepositoryFactoryBuilder;
+import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.Settings;
 
 public class Sample implements Settings {
 
-   private static void producer( IRepository<Item> repository ) {
+   private static final byte PLATFORM_ID = 1;
+   private static final byte EXEC_ID     = 1;
+
+   private static void producer() {
       try {
+         final IRepositoryFactory repositories =
+            RepositoryFactoryBuilder.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
+         final IRepository repository = repositories.createRepository();
          for( int i = 0; i < 100; ++i ) {
             final Item item = new Item( "Aubin", "Mahé", LocalDate.parse( "1966-01-24" ), i );
-            repository.create( item, Item.CLASS );
-            System.err.printf( "producer|id: %s\n", item.getId());
+            repository.create( item );
+            System.err.printf( "producer|id: %s\n", item );
             repository.publish();
             Thread.sleep( 100 );
          }
@@ -27,14 +32,18 @@ public class Sample implements Settings {
       }
    }
 
-   private static void consumer( IRepository<Item> repository ) {
+   private static void consumer() {
       try {
+         final IRepositoryFactory repositories =
+            RepositoryFactoryBuilder.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
+         final IRepository repository = repositories.createRepository();
+         repository.subscribe( Item.CLASS_ID, Item::new );
          for( int i = 0; i < 10; ++i ) {
             Thread.sleep( 1000 );
             repository.refresh();
-            final Map<GUID, Item> items = repository.select( t -> true );
-            for( final Item item : items.values()) {
-               System.err.printf( "consumer|id: %s\n", item.getId());
+            final Set<Shareable> items = repository.select( t -> true );
+            for( final Shareable item : items ) {
+               System.err.printf( "consumer|%s\n", item );
             }
          }
       }
@@ -43,13 +52,9 @@ public class Sample implements Settings {
       }
    }
 
-   public static void main( String[] args ) throws IOException {
-      final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( MC_GROUP, MC_INTRFC, MC_PORT, 1 );
-      final IRepository<Item>  repository   =
-         repositories.createRepository( Item.TOPIC, classId -> new Item());
-      new Thread(() -> consumer( repository )).start();
-      producer( repository );
+   public static void main( String[] args ) {
+      new Thread( Sample::consumer ).start();
+      producer();
       System.exit( 0 );
    }
 }

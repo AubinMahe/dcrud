@@ -3,14 +3,13 @@ package org.hpms.mw.distcrud.samples.person;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 
-import org.hpms.mw.distcrud.GUID;
+import org.hpms.mw.distcrud.ClassID;
 import org.hpms.mw.distcrud.SerializerHelper;
 import org.hpms.mw.distcrud.Shareable;
 
 final class Item extends Shareable {
 
-   public static final String TOPIC = "person";
-   public static final int    CLASS = 42;
+   public static final ClassID CLASS_ID = new ClassID((byte)1, (byte)1, (byte)1, (byte)1 );
 
    private String    _name;
    private String    _forname;
@@ -18,11 +17,11 @@ final class Item extends Shareable {
    private int       _count;
 
    public Item() {
-      super( new GUID( TOPIC, CLASS ));
+      super( CLASS_ID );
    }
 
    public Item( String name, String forname, LocalDate birth, int count ) {
-      super( new GUID( TOPIC, CLASS ));
+      super( CLASS_ID );
       _name    = name;
       _forname = forname;
       _birth   = birth;
@@ -46,15 +45,6 @@ final class Item extends Shareable {
    }
 
    @Override
-   public void set( Shareable source ) {
-      final Item src = (Item)source;
-      this._name    = src._name;
-      this._forname = src._forname;
-      this._birth   = src._birth;
-      this._count   = src._count;
-   }
-
-   @Override
    public void serialize( ByteBuffer target ) {
       SerializerHelper.putString   ( _name   , target );
       SerializerHelper.putString   ( _forname, target );
@@ -68,5 +58,10 @@ final class Item extends Shareable {
       _forname = SerializerHelper.getString   ( source );
       _birth   = SerializerHelper.getLocalDate( source );
       _count   = source.getInt();
+   }
+
+   @Override
+   public String toString() {
+      return _forname + ' ' + _name + ' ' + _birth;
    }
 }

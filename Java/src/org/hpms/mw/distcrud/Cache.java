@@ -8,119 +8,171 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-final class Cache<T extends Shareable> implements IRepository<T> {
+final class Cache implements IRepository {
 
-   private final Set<T>          _updated  = new HashSet<>();
-   private final Set<T>          _deleted  = new HashSet<>();
-   private final Set<T>          _toUpdate = new HashSet<>();
-   private final Set<GUID>       _toDelete = new TreeSet<>();
-   private final Map<GUID, T>    _local    = new TreeMap<>();
-   private final String          _topic;
-   private final Function<GUID,
-      ? extends Shareable>       _factory;
-   private final Repositories    _network;
-   private /* */ int             _lastInstanceId;
+   private static byte _NextCacheId = 1;
 
-   Cache( String topic, Function<GUID, ? extends Shareable> factory, Repositories network ) {
-      _topic   = topic;
-      _factory = factory;
-      _network = network;
+   private final Set<Shareable>                    _updated      = new HashSet<>();
+   private final Set<Shareable>                    _deleted      = new HashSet<>();
+   private final Set<ByteBuffer>                   _toUpdate     = new HashSet<>();
+   private final Set<GUID>                         _toDelete     = new TreeSet<>();
+   private final Map<GUID, Shareable>              _local        = new TreeMap<>();
+   private final Map<ClassID, Supplier<Shareable>> _factories    = new TreeMap<>();
+   private /* */ int                               _nextInstance = 1;
+   private /* */ boolean                           _ownership    = false;
+   private final Repositories                      _network;
+   private final byte                              _platformId;
+   private final byte                              _execId;
+   private final byte                              _cacheId;
+
+   Cache( Repositories network, byte platformId, byte execId ) {
+      _network    = network;
+      _platformId = platformId;
+      _execId     = execId;
+      _cacheId    = _NextCacheId++;
    }
 
-   boolean matchesTopic( String topic ) {
-      return _topic.equals( topic );
+   boolean matches( byte platformId, byte execId, byte cacheId ) {
+      return( platformId == _platformId )
+         && ( execId     == _execId     )
+         && ( cacheId    == _cacheId    );
    }
 
-   Collection<T> getContents() {
+   @Override
+   public boolean matches( GUID id ) {
+      return( id._platform == _platformId )
+         && ( id._exec     == _execId     )
+         && ( id._cache    == _cacheId    );
+   }
+
+   Collection<Shareable> getContents() {
       return _local.values();
    }
 
-   Shareable newInstance( GUID id, ByteBuffer frame ) {
-      final Shareable item = _factory.apply( id );
+   Shareable newInstance( ClassID classId, ByteBuffer frame ) {
+      final Supplier<Shareable> factory = _factories.get( classId );
+      if( factory == null ) {
+         return null;
+      }
+      final Shareable item = factory.get();
       item.unserialize( frame );
       return item;
    }
 
    @Override
-   public void create( T item, int classId ) {
-      final GUID id = item.getId();
-      if( id.isShared()) {
-         throw new IllegalArgumentException( "Item already published!" );
+   public void ownership( boolean enabled ) {
+      _ownership = enabled;
+   }
+
+   @Override
+   public void subscribe( ClassID id, Supplier<Shareable> factory ) {
+      _factories.put( id, factory );
+   }
+
+   @Override
+   public Status create( Shareable item ) {
+      if( item._id.isShared()) {
+         return Status.ALREADY_CREATED;
       }
-      id.setInstance( ++_lastInstanceId );
+      item._id._platform = _platformId;
+      item._id._exec     = _execId;
+      item._id._cache    = _cacheId;
+      item._id._instance = _nextInstance++;
       synchronized( _local ) {
-         _local.put( id, item );
+         _local.put( item._id, item );
       }
       synchronized( _updated ) {
          _updated.add( item );
       }
+      return Status.NO_ERROR;
+   }
+
+   @SuppressWarnings("unchecked")
+   @Override
+   public <T extends Shareable> T read( GUID id ) {
+      return (T)_local.get( id );
    }
 
    @Override
-   public T read( GUID id ) {
-      return _local.get( id );
-   }
-
-   @Override
-   public Map<GUID, T> select( Predicate<T> query ) {
+   public Set<Shareable> select( Predicate<Shareable> query ) {
       return _local.values()
          .parallelStream()
          .filter( query )
-         .collect( Collectors.toConcurrentMap( T::getId, Function.identity()));
+         .collect( Collectors.toSet());
    }
 
    @Override
-   public void update( T item ) {
-      if( item.getId() == null ) {
-         throw new IllegalArgumentException( "Item must be created first!" );
+   public Status update( Shareable item ) {
+      if( _ownership && ! matches( item._id )) {
+         return Status.NOT_OWNER;
       }
-      if( ! _local.containsKey( item.getId())) {
-         throw new IllegalArgumentException( "Repository doesn't contains item to update!" );
+      if( item._id._instance == 0 ) {
+         return Status.NOT_CREATED;
+      }
+      if( ! _local.containsKey( item._id )) {
+         return Status.NOT_IN_THIS_REPOSITORY;
       }
       synchronized( _updated ) {
          _updated.add( item );
       }
+      return Status.NO_ERROR;
    }
 
    @Override
-   public void delete( T item ) {
-      if( ! item.getId()._topic.equals( _topic )) {
-         throw new IllegalArgumentException( "Repository mismatch!" );
-      }
+   public Status delete( Shareable item ) {
       synchronized( _local ) {
-         _local.remove( item.getId());
+         if( _ownership && ! matches( item._id )) {
+            return Status.NOT_OWNER;
+         }
+         if( _local.remove( item._id ) == null ) {
+            return Status.NOT_IN_THIS_REPOSITORY;
+         }
+         synchronized( _deleted ) {
+            _deleted.add( item );
+         }
       }
-      synchronized( _deleted ) {
-         _deleted.add( item );
-      }
+      return Status.NO_ERROR;
    }
 
    @Override
    public void publish() throws IOException {
+      final long atStart = System.nanoTime();
       synchronized( _updated ) {
          synchronized( _deleted ) {
-            _network.publish( _updated, _deleted );
+            _network.publish( _cacheId, _updated, _deleted );
             _deleted.clear();
          }
          _updated.clear();
       }
+      Performance.record( "publish", System.nanoTime() - atStart );
    }
 
    @Override
    public void refresh() {
+      final long atStart = System.nanoTime();
       synchronized( _local ) {
          synchronized( _toUpdate ) {
-            for( final T item : _toUpdate ) {
-               final T t = _local.get( item.getId());
+            for( final ByteBuffer update : _toUpdate ) {
+               final GUID      id = GUID.unserialize( update );
+               final Shareable t  = _local.get( id );
                if( t == null ) {
-                  _local.put( item.getId(), item );
+                  final ClassID   classId = ClassID.unserialize( update );
+                  final Shareable item    = newInstance( classId, update );
+                  if( item != null ) {
+                     item._id.set( id );
+                     _local.put( id, item );
+                  }
+                  else {
+                     System.err.printf( "Unknown %s of %s\n", classId, id );
+                  }
                }
-               else {
-                  t.set( item );
+               else if( ! _ownership || ! matches( id )) {
+                  update.position( update.position() + Repositories.CLASS_ID_SIZE );
+                  t.unserialize( update );
                }
             }
             _toUpdate.clear();
@@ -132,12 +184,12 @@ final class Cache<T extends Shareable> implements IRepository<T> {
             _toDelete.clear();
          }
       }
+      Performance.record( "refresh", System.nanoTime() - atStart );
    }
 
-   @SuppressWarnings("unchecked")
-   void updateFromNetwork( Shareable item ) {
+   void updateFromNetwork( ByteBuffer source ) {
       synchronized( _toUpdate ) {
-         _toUpdate.add((T)item );
+         _toUpdate.add( source );
       }
    }
 
