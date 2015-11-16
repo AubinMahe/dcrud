@@ -40,6 +40,28 @@ Overview
 
 Shared piece of data are derived from `Shareable`. dcrud use delegation to emulate this behavior in C language. Bidirectional link initialization between base and inherited instances are made by dcrud library, see [dcrudShareable_init()](#dcrudShareable_init). 
 
+Todo list
+---------
+
+ * Ajouter le stockage des requêtes plutôt que leur exécution immédiate
+ * Ajouter l'appel synchrone
+ * Implémenter le service IDispatcher.handleRequests
+ * Ajouter les notions :
+   - appel activant
+   - appel prioritaire
+ * Remettre à niveau l'implémentation C
+ * Développer l'implémentation C sans allocation dynamique
+ * Compléter le fichier build.xml pour générer la Javadoc
+ * Mettre à jour README.md :
+   - mettre à jour les exemples simplifiés
+   - pointer vers la documentation de l'API C (doxygen)
+   - pointer vers la documentation de l'API Java (Javadoc)
+
+ WARNING
+========
+
+From this point, this document isn't up to date!
+
 Interfaces sample usage
 -----------------------
 
