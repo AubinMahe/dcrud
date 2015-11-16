@@ -9,25 +9,24 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 final class Cache implements IRepository {
 
-   private static byte _NextCacheId = 1;
+   private static byte _NextCacheId = 1; // cache 0 doesn't exists, it's a flag for operation
 
-   private final Set<Shareable>                    _updated      = new HashSet<>();
-   private final Set<Shareable>                    _deleted      = new HashSet<>();
-   private final Set<ByteBuffer>                   _toUpdate     = new HashSet<>();
-   private final Set<GUID>                         _toDelete     = new TreeSet<>();
-   private final Map<GUID, Shareable>              _local        = new TreeMap<>();
-   private final Map<ClassID, Supplier<Shareable>> _factories    = new TreeMap<>();
-   private /* */ int                               _nextInstance = 1;
-   private /* */ boolean                           _ownership    = false;
-   private final Repositories                      _network;
-   private final byte                              _platformId;
-   private final byte                              _execId;
-   private final byte                              _cacheId;
+   private final Set<ClassID>         _classes      = new HashSet<>();
+   private final Set<Shareable>       _updated      = new HashSet<>();
+   private final Set<Shareable>       _deleted      = new HashSet<>();
+   private final Set<ByteBuffer>      _toUpdate     = new HashSet<>();
+   private final Set<GUID>            _toDelete     = new TreeSet<>();
+   private final Map<GUID, Shareable> _local        = new TreeMap<>();
+   private /* */ int                  _nextInstance = 1;
+   private /* */ boolean              _ownership    = false;
+   private final Repositories         _network;
+   private final byte                 _platformId;
+   private final byte                 _execId;
+   /*   */ final byte                 _cacheId;
 
    Cache( Repositories network, byte platformId, byte execId ) {
       _network    = network;
@@ -53,24 +52,18 @@ final class Cache implements IRepository {
       return _local.values();
    }
 
-   Shareable newInstance( ClassID classId, ByteBuffer frame ) {
-      final Supplier<Shareable> factory = _factories.get( classId );
-      if( factory == null ) {
-         return null;
-      }
-      final Shareable item = factory.get();
-      item.unserialize( frame );
-      return item;
-   }
-
    @Override
    public void ownership( boolean enabled ) {
       _ownership = enabled;
    }
 
+   boolean isSubscribed( ClassID id ) {
+      return _classes.contains( id );
+   }
+
    @Override
-   public void subscribe( ClassID id, Supplier<Shareable> factory ) {
-      _factories.put( id, factory );
+   public void subscribe( ClassID id ) {
+      _classes.add( id );
    }
 
    @Override
@@ -161,7 +154,7 @@ final class Cache implements IRepository {
                final Shareable t  = _local.get( id );
                if( t == null ) {
                   final ClassID   classId = ClassID.unserialize( update );
-                  final Shareable item    = newInstance( classId, update );
+                  final Shareable item    = _network.newInstance( classId, update );
                   if( item != null ) {
                      item._id.set( id );
                      _local.put( id, item );

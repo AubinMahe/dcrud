@@ -6,9 +6,12 @@ Goal
 
 DCRUD manage distributed collections of items - local caches - providing CRUD interface (**C**reate, **R**ead, **U**pdate, **D**elete). All items dispose of an identity, unique system wide. Items may reference others ([UML association](https://en.wikipedia.org/wiki/Association_%28object-oriented_programming%29)). An item may be internally structured ([UML composition](https://en.wikipedia.org/wiki/Object_composition)), treated as a whole, indivisible piece of data. Granularity of a publication is the whole item, which size are expected to be small (<2 kB).
 
+DCRUD offers remote asynchronous operations too, grouped into interfaces. If an operation have to return a result, a callback must be provided, see [IRequired](Java/src/org/hpms/mw/distcrud/IRequired.java) and [IOperationInOut](Java/src/org/hpms/mw/distcrud/IOperationInOut.java).
+
 Features
 --------
 
+ - Collection's Item and remote call arguments are handled in a same, uniform way.
  - Data distribution on local area network, the Internet (WAN) is not a target.
  - Multi-OS: currently Windows and Linux
  - Multi-languages: currently Java and C, C++ may be addressed in a near future.

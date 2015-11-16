@@ -84,8 +84,8 @@ public class ShapesUI implements Controller, Settings {
 
    private void onShown( Stage stage ) {
       final Rectangle2D screen = Screen.getPrimary().getBounds();
-      final double left = ( screen.getWidth () - stage.getWidth () ) + 4;
-      final double top  = ( screen.getHeight() - stage.getHeight() ) + 4;
+      final double left = ( screen.getWidth () - stage.getWidth ()) + 4;
+      final double top  = ( screen.getHeight() - stage.getHeight()) + 4;
       Platform.runLater(() -> {
          switch( _window ) {
          default:
@@ -142,12 +142,16 @@ public class ShapesUI implements Controller, Settings {
          _strokeColor.setValue( Color.BLACK );
       }
       Performance.enable( perf );
+
       final IRepositoryFactory repositories =
          RepositoryFactoryBuilder.join( address, intrfc, port, platformId, execId );
+      repositories.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
+      repositories.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
+
       _cache = repositories.createRepository();
       _cache.ownership( ownership );
-      _cache.subscribe( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
-      _cache.subscribe( ShareableRect   .CLASS_ID, ShareableRect   ::new );
+      _cache.subscribe( ShareableEllipse.CLASS_ID );
+      _cache.subscribe( ShareableRect   .CLASS_ID );
 
       new Timer( "UI-Periodic-Activity", true ).schedule(
          new TimerTask() { @Override public void run() { uiActivity(); }}, 0, 40L );
@@ -174,6 +178,10 @@ public class ShapesUI implements Controller, Settings {
             }
          }
       }
+      final Thread repositoriesThread = new Thread( repositories::run );
+      repositoriesThread.setName( "network" );
+      repositoriesThread.setDaemon( true );
+      repositoriesThread.start();
    }
 
    private double nextDouble( double max, double min ) {
