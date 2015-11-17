@@ -6,12 +6,21 @@ import java.util.function.BiConsumer;
 
 public interface IRequired {
 
-   void call( String opName ) throws IOException;
+   void enqueue( String opName ) throws IOException;
 
-   void call( String opName, Map<String, Shareable> arguments ) throws IOException;
+   void execute( String opName ) throws IOException;
 
-   int call(
-      String                                      opName,
-      Map<String, Shareable>                      arguments,
-      BiConsumer<Integer, Map<String, Shareable>> callback  ) throws IOException;
+   void enqueue( String opName, Map<String, Object> arguments ) throws IOException;
+
+   void execute( String opName, Map<String, Object> arguments ) throws IOException;
+
+   int  enqueue(
+      String                                   opName,
+      Map<String, Object>                      arguments,
+      BiConsumer<Integer, Map<String, Object>> callback  ) throws IOException;
+
+   int  execute(
+      String                                   opName,
+      Map<String, Object>                      arguments,
+      BiConsumer<Integer, Map<String, Object>> callback  ) throws IOException;
 }

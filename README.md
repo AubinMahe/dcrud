@@ -11,8 +11,8 @@ DCRUD offers remote asynchronous operations too, grouped into interfaces. If an 
 Features
 --------
 
- - Collection's Item and remote call arguments are handled in a same, uniform way.
  - Data distribution on local area network, the Internet (WAN) is not a target.
+ - Remote operation, asynchronous or synchronous, with or without returned result.
  - Multi-OS: currently Windows and Linux
  - Multi-languages: currently Java and C, C++ may be addressed in a near future.
  - Low level resources (CPU, RAM) consumption
@@ -30,8 +30,9 @@ Overview
 *Interface and utility classes needed to use DCRUD*
 
 - `RepositoryFactoryBuilder` offers a single method to obtain a `IRepositoryFactory` instance for a particular ring or cloud, identified by its multicast address.
-- `IRepositoryFactory` offers a single method to obtain a `IRepository` instance which act as an items cache. Items may be of different classes. It's an applicative decision to use one or several repositories.
-- `IRepository` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local.
+- `IRepositoryFactory` registers data factories, give the `IDispatcher` singleton and offers methods to create and get `IRepository` instances which act as items caches.
+- `IRepository` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local. It's an applicative decision to use one or several repositories.
+- `IDispatcher` allows application to declare theirs operation in terms of *provide* and *require*. Method `handleRequests` allow application to trigger the enqueued operation requests when desired.
 - `Shareable` is an abstract class which owns a GUID (**G**lobal **U**nique **ID**entifier)
 - `SerializerHelper` is an utility static class which provides methods to deal with the network, handling endianness, serialization and deserialization.
   
@@ -43,19 +44,17 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list
 ---------
 
- * Ajouter le stockage des requêtes plutôt que leur exécution immédiate
- * Ajouter l'appel synchrone
- * Implémenter le service IDispatcher.handleRequests
  * Ajouter les notions :
    - appel activant
    - appel prioritaire
+ * Ajouter l'appel synchrone
  * Remettre à niveau l'implémentation C
  * Développer l'implémentation C sans allocation dynamique
- * Compléter le fichier build.xml pour générer la Javadoc
  * Mettre à jour README.md :
    - mettre à jour les exemples simplifiés
    - pointer vers la documentation de l'API C (doxygen)
    - pointer vers la documentation de l'API Java (Javadoc)
+ * Documenter les sources pour générer un Javadoc riche et valide
 
  WARNING
 ========

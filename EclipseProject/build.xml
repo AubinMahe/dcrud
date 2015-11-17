@@ -9,6 +9,18 @@
       <delete file="${jar}" />
    </target>
 
+   <target name="javadoc" description="">
+   	<mkdir dir="../javadoc" />
+      <javadoc
+      	author    ="Aubin Mahé"
+      	destdir   ="../javadoc"
+      	doctitle  ="DCRUD v0.0.0"
+      	linksource="true"
+      	sourcepath="../Java/src"
+      	use       ="true"
+   	/>
+   </target>
+
    <target name="javac" description="">
       <mkdir dir="${build}" />
       <javac
@@ -19,23 +31,23 @@
          <src path="../Java/src" />
          <src path="../Java/test" />
       </javac>
-    </target>
+   </target>
 
-    <target name="jar" description="" depends="javac" >
-       <copy todir="${build}">
-          <fileset
-             dir     ="../Java/test"
-             includes="**/*.fxml,**/*.png"
-          />
-       </copy>
-       <jar
-          destfile="${jar}"
-          basedir ="${build}">
-          <manifest>
-             <attribute name="Main-Class" value="org.hpms.mw.distcrud.samples.shapes.ShapesUI" />
-          </manifest>
-       </jar>
-    </target>
+   <target name="jar" description="" depends="javac">
+      <copy todir="${build}">
+         <fileset
+            dir     ="../Java/test"
+            includes="**/*.fxml,**/*.png"
+         />
+      </copy>
+      <jar
+         destfile="${jar}"
+         basedir ="${build}">
+         <manifest>
+            <attribute name="Main-Class" value="org.hpms.mw.distcrud.samples.shapes.ShapesUI" />
+         </manifest>
+      </jar>
+   </target>
 
    <target name="run-shapes" description="Launch 4 shapes editors" depends="jar" >
       <java fork="true" spawn="true" jar="${jar}">

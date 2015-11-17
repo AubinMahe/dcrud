@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 public interface IRepository {
 
+   byte           getId();
    void           ownership( boolean enabled );
    boolean        matches  ( GUID    id );
    Status         create   ( Shareable            item  );

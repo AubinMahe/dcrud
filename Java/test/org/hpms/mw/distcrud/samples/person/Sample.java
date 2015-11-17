@@ -28,11 +28,14 @@ public class Sample implements Settings {
    private static final byte PLATFORM_ID = 1;
    private static final byte EXEC_ID     = 1;
 
-   private static boolean create( IRepository repository, Map<String, Shareable> arguments ) {
+   private static final Map<String, Object> _arguments = new HashMap<>();
+   private static /* */ IRequired           _iPerson;
+
+   private static boolean create( IRepository repository, Map<String, Object> arguments ) {
       try {
          final Item item = (Item)arguments.get( "newPerson" );
          repository.create( item );
-         System.err.printf( "producer|id: %s\n", item );
+         System.err.printf( "producer|%s\n", item );
          repository.publish();
          return true;
       }
@@ -49,27 +52,31 @@ public class Sample implements Settings {
          final IProvided   iPerson    = dispatcher.provide( "IPerson" );
          iPerson.addOperation( "create", in -> create( repository, in ));
          iPerson.addOperation( "exit"  , () -> { System.exit(0); return true; });
+         for( int i = 0; i < 100; ++i ) {
+            Thread.sleep( 100 );
+            dispatcher.handleRequests();
+         }
       }
       catch( final Throwable t ) {
          t.printStackTrace();
       }
    }
 
+   private static void createPerson( Item item ) throws IOException {
+      _arguments.clear();
+      _arguments.put( "newPerson", item );
+      _iPerson.execute( "create", _arguments );
+   }
+
    private static void consumer( IRepositoryFactory repositories ) {
       try {
-         final IRepository            repository = repositories.createRepository();
-         final IDispatcher            dispatcher = repositories.getDispatcher();
-         final IRequired              iPerson    = dispatcher.require( "IPerson" );
-         final Map<String, Shareable> arguments  = new HashMap<>();
+         final IRepository repository = repositories.createRepository();
+         final IDispatcher dispatcher = repositories.getDispatcher();
+         _iPerson = dispatcher.require( "IPerson" );
          repository.subscribe( Item.CLASS_ID );
          for( int i = 0; i < 10; ++i ) {
             Thread.sleep( 500 );
-            {
-               final Item item = new Item( "Aubin", "Mahé", LocalDate.parse( "1966-01-24" ), i );
-               arguments.clear();
-               arguments.put( "newPerson", item );
-               iPerson.call( "create", arguments );
-            }
+            createPerson( new Item( "Aubin", "Mahé", LocalDate.parse( "1966-01-24" ), i ));
             Thread.sleep( 500 );
             {
                repository.refresh();
@@ -79,7 +86,7 @@ public class Sample implements Settings {
                }
             }
          }
-         iPerson.call( "exit" );
+         _iPerson.execute( "exit" );
       }
       catch( final Throwable t ) {
          t.printStackTrace();
@@ -91,7 +98,7 @@ public class Sample implements Settings {
          RepositoryFactoryBuilder.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
       repositories.registerClass( Item.CLASS_ID, Item::new );
       new Thread(() -> consumer( repositories )).start();
-      producer( repositories );
+      new Thread(() -> producer( repositories )).start();
       repositories.run();
    }
 }

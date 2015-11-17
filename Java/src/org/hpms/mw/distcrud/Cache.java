@@ -35,6 +35,11 @@ final class Cache implements IRepository {
       _cacheId    = _NextCacheId++;
    }
 
+   @Override
+   public byte getId() {
+      return _cacheId;
+   }
+
    boolean matches( byte platformId, byte execId, byte cacheId ) {
       return( platformId == _platformId )
          && ( execId     == _execId     )

@@ -36,7 +36,7 @@ final class Repositories implements IRepositoryFactory {
       Supplier<Shareable>>         _factories  = new TreeMap<>();
    private final Map<Integer,
       BiConsumer<Integer,
-         Map<String, Shareable>>>  _callbacks  = new HashMap<>();
+         Map<String, Object>>>     _callbacks  = new HashMap<>();
    private final InetSocketAddress _target;
    private final DatagramChannel   _channel;
    private final byte              _platformId;
@@ -187,7 +187,26 @@ final class Repositories implements IRepositoryFactory {
       }
    }
 
-   public void call( String intrfcName, String opName, Map<String, Shareable> in ) throws IOException {
+   private void serializeArguments( Map<String, Object> in ) {
+      for( final Entry<String, Object> e : in.entrySet()) {
+         final String name  = e.getKey();
+         final Object value = e.getValue();
+         SerializerHelper.putString( name, _frame );
+         switch( name ) {
+         case "@urgent":
+         case "@activate":
+            _frame.put((byte)(((Boolean)value) ? 1 : 0 ));
+            break;
+         default:
+            final Shareable item = (Shareable)e.getValue();
+            _payload.clear();
+            item._class.serialize( _frame );
+            item.serialize( _frame );
+         }
+      }
+   }
+
+   public void call( String intrfcName, String opName, Map<String, Object> in ) throws IOException {
       synchronized( _frame ) {
          _frame.clear();
          _frame.put( SIGNATURE   );
@@ -197,23 +216,17 @@ final class Repositories implements IRepositoryFactory {
          _frame.putInt( in.size());
          SerializerHelper.putString( intrfcName, _frame );
          SerializerHelper.putString( opName, _frame );
-         for( final Entry<String, Shareable> e : in.entrySet()) {
-            SerializerHelper.putString( e.getKey(), _frame );
-            final Shareable item = e.getValue();
-            _payload.clear();
-            item._class.serialize( _frame );
-            item.serialize( _frame );
-         }
+         serializeArguments( in );
          _frame.flip();
          _channel.send( _frame, _target );
       }
    }
 
    public int call(
-      String                                      intrfcName,
-      String                                      opName,
-      Map<String, Shareable>                      in,
-      BiConsumer<Integer, Map<String, Shareable>> callback ) throws IOException
+      String                                   intrfcName,
+      String                                   opName,
+      Map<String, Object>                      in,
+      BiConsumer<Integer, Map<String, Object>> callback ) throws IOException
    {
       synchronized( _frame ) {
          _frame.clear();
@@ -224,12 +237,7 @@ final class Repositories implements IRepositoryFactory {
          _frame.putInt( in.size() + 1 );
          SerializerHelper.putString( intrfcName, _frame );
          SerializerHelper.putString( opName, _frame );
-         for( final Entry<String, Shareable> e : in.entrySet()) {
-            SerializerHelper.putString( e.getKey(), _frame );
-            final Shareable item = e.getValue();
-            item._class.serialize( _frame );
-            item.serialize( _frame );
-         }
+         serializeArguments( in );
          SerializerHelper.putString( "", _frame );
          _frame.putInt( _callId );
          _callbacks.put( _callId, callback );
@@ -258,17 +266,21 @@ final class Repositories implements IRepositoryFactory {
                final byte execId     = frame.get();
                final byte cacheId    = frame.get();
                final int  count      = frame.getInt();
-               final Map<String, Shareable> arguments = new HashMap<>();
+               final Map<String, Object> arguments = new HashMap<>();
                if( cacheId == 0 ) { // cache 0 doesn't exists, it's a flag for operation
                   final String intrfcName = SerializerHelper.getString( frame );
                   final String opName     = SerializerHelper.getString( frame );
                   int callId = -1;
+                  boolean activate = false;
                   for( int i = 0; i < count; ++i ) {
                      final String argName = SerializerHelper.getString( frame );
                      if( argName.isEmpty()) {
                         assert i == ( count - 1 ) :
                            "Only the last argument may be empty and for internal use only";
                         callId = _frame.getInt();
+                     }
+                     else if( argName.equals("@activate")) {
+                        activate = true;
                      }
                      else {
                         final ClassID   classId = ClassID.unserialize( frame );
@@ -277,14 +289,14 @@ final class Repositories implements IRepositoryFactory {
                      }
                   }
                   if( count == 0 ) {
-                     _dispatcher.call( intrfcName, opName );
+                     _dispatcher.execute( intrfcName, opName, activate );
                   }
                   else if( callId < 0 ) {
-                     _dispatcher.call( intrfcName, opName, arguments );
+                     _dispatcher.execute( intrfcName, opName, arguments, activate );
                   }
                   else {
-                     final Map<String, Shareable> out = new HashMap<>();
-                     _dispatcher.call( intrfcName, opName, arguments, out );
+                     final Map<String, Object> out = new HashMap<>();
+                     _dispatcher.execute( intrfcName, opName, arguments, out, activate );
                      // TODO construire un message à partir de 'callId' et 'out'
                   }
                }
