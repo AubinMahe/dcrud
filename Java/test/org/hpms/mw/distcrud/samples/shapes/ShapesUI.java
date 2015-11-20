@@ -149,7 +149,7 @@ public class ShapesUI implements Controller, Settings {
       repositories.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
 
       _cache = repositories.createRepository();
-      _cache.ownership( ownership );
+      _cache.setOwnershipCheck( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
 
@@ -281,7 +281,7 @@ public class ShapesUI implements Controller, Settings {
       final Set<Shareable> shareables = _cache.select( s -> true );
       for( final Shareable shareable : shareables ) {
          final ShareableShape shape = (ShareableShape)shareable;
-         if( _cache.matches( shape._id )) {
+         if( _cache.owns( shape._id )) {
             shape.moveIt( _shapesArea.getLayoutBounds());
             _cache.update( shape );
          }

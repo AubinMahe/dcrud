@@ -11,6 +11,7 @@ import org.hpms.mw.distcrud.IProvided;
 import org.hpms.mw.distcrud.IRepository;
 import org.hpms.mw.distcrud.IRepositoryFactory;
 import org.hpms.mw.distcrud.IRequired;
+import org.hpms.mw.distcrud.IRequired.CallMode;
 import org.hpms.mw.distcrud.RepositoryFactoryBuilder;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.Settings;
@@ -50,8 +51,8 @@ public class Sample implements Settings {
          final IRepository repository = repositories.createRepository();
          final IDispatcher dispatcher = repositories.getDispatcher();
          final IProvided   iPerson    = dispatcher.provide( "IPerson" );
-         iPerson.addOperation( "create", in -> create( repository, in ));
-         iPerson.addOperation( "exit"  , () -> { System.exit(0); return true; });
+         iPerson.addOperation( "create", ( in, out ) -> create( repository, in ));
+         iPerson.addOperation( "exit"  , ( in, out ) -> { System.exit(0); return true; });
          for( int i = 0; i < 100; ++i ) {
             Thread.sleep( 100 );
             dispatcher.handleRequests();
@@ -65,7 +66,7 @@ public class Sample implements Settings {
    private static void createPerson( Item item ) throws IOException {
       _arguments.clear();
       _arguments.put( "newPerson", item );
-      _iPerson.execute( "create", _arguments );
+      _iPerson.call( "create", _arguments, null );
    }
 
    private static void consumer( IRepositoryFactory repositories ) {
@@ -86,7 +87,10 @@ public class Sample implements Settings {
                }
             }
          }
-         _iPerson.execute( "exit" );
+         _arguments.clear();
+         _arguments.put("@queue", IRequired.URGENT_QUEUE );
+         _arguments.put("@mode" , CallMode.SYNCHRONOUS );
+         _iPerson.call( "exit", _arguments, null );
       }
       catch( final Throwable t ) {
          t.printStackTrace();

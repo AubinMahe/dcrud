@@ -15,8 +15,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+
+import org.hpms.mw.distcrud.IRequired.CallMode;
 
 final class Repositories implements IRepositoryFactory {
 
@@ -27,22 +28,20 @@ final class Repositories implements IRepositoryFactory {
    public static final int CLASS_ID_SIZE = 1 + 1 + 1 + 1;
    public static final int HEADER_SIZE   = SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE;
 
-   private final Cache[]           _caches     = new Cache[256];
-   private final Dispatcher        _dispatcher = new Dispatcher( this );
-   private final ByteBuffer        _header     = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer        _payload    = ByteBuffer.allocate( 10*1024 );
-   private final ByteBuffer        _frame      = ByteBuffer.allocate( 500*1024 );
+   private final Cache[]                 _caches     = new Cache[256];
+   private final Dispatcher              _dispatcher = new Dispatcher( this );
+   private final ByteBuffer              _header     = ByteBuffer.allocate( HEADER_SIZE );
+   private final ByteBuffer              _payload    = ByteBuffer.allocate( 10*1024 );
+   private final ByteBuffer              _frame      = ByteBuffer.allocate( 500*1024 );
    private final Map<ClassID,
-      Supplier<Shareable>>         _factories  = new TreeMap<>();
-   private final Map<Integer,
-      BiConsumer<Integer,
-         Map<String, Object>>>     _callbacks  = new HashMap<>();
-   private final InetSocketAddress _target;
-   private final DatagramChannel   _channel;
-   private final byte              _platformId;
-   private final byte              _execId;
-   private /* */ int               _itemCount;
-   private /* */ int               _callId;
+      Supplier<Shareable>>               _factories  = new TreeMap<>();
+   private final Map<Integer, ICallback> _callbacks  = new HashMap<>();
+   private final InetSocketAddress       _target;
+   private final DatagramChannel         _channel;
+   private final byte                    _platformId;
+   private final byte                    _execId;
+   private /* */ int                     _itemCount;
+   private /* */ int                     _callId = 1;
 
    Repositories(
       InetAddress      group,
@@ -177,36 +176,7 @@ final class Repositories implements IRepositoryFactory {
       }
    }
 
-   public void call( String intrfcName, String opName ) throws IOException {
-      synchronized( _frame ) {
-         initFrame((byte)0 );
-         SerializerHelper.putString( intrfcName, _frame );
-         SerializerHelper.putString( opName, _frame );
-         _frame.flip();
-         _channel.send( _frame, _target );
-      }
-   }
-
-   private void serializeArguments( Map<String, Object> in ) {
-      for( final Entry<String, Object> e : in.entrySet()) {
-         final String name  = e.getKey();
-         final Object value = e.getValue();
-         SerializerHelper.putString( name, _frame );
-         switch( name ) {
-         case "@urgent":
-         case "@activate":
-            _frame.put((byte)(((Boolean)value) ? 1 : 0 ));
-            break;
-         default:
-            final Shareable item = (Shareable)e.getValue();
-            _payload.clear();
-            item._class.serialize( _frame );
-            item.serialize( _frame );
-         }
-      }
-   }
-
-   public void call( String intrfcName, String opName, Map<String, Object> in ) throws IOException {
+   private void call( String intrfcName, String opName, Map<String, Object> in, int callId ) throws IOException {
       synchronized( _frame ) {
          _frame.clear();
          _frame.put( SIGNATURE   );
@@ -215,36 +185,39 @@ final class Repositories implements IRepositoryFactory {
          _frame.put( (byte)0     ); // cache 0 doesn't exists, it's a flag for operation
          _frame.putInt( in.size());
          SerializerHelper.putString( intrfcName, _frame );
-         SerializerHelper.putString( opName, _frame );
-         serializeArguments( in );
+         SerializerHelper.putString( opName    , _frame );
+         _frame.putInt( callId );
+         for( final Entry<String, Object> e : in.entrySet()) {
+            final String name  = e.getKey();
+            final Object value = e.getValue();
+            SerializerHelper.putString( name, _frame );
+            switch( name ) {
+            case "@queue":
+               _frame.put(((Integer)value ).byteValue());
+               break;
+            case "@mode":
+               _frame.put((byte)((IRequired.CallMode)value ).ordinal());
+               break;
+            default:
+               final Shareable item = (Shareable)e.getValue();
+               _payload.clear();
+               item._class.serialize( _frame );
+               item.serialize( _frame );
+               break;
+            }
+         }
          _frame.flip();
          _channel.send( _frame, _target );
       }
    }
 
-   public int call(
-      String                                   intrfcName,
-      String                                   opName,
-      Map<String, Object>                      in,
-      BiConsumer<Integer, Map<String, Object>> callback ) throws IOException
-   {
-      synchronized( _frame ) {
-         _frame.clear();
-         _frame.put( SIGNATURE   );
-         _frame.put( _platformId );
-         _frame.put( _execId     );
-         _frame.put( (byte)0     ); // cache 0 doesn't exists, it's a flag for operation
-         _frame.putInt( in.size() + 1 );
-         SerializerHelper.putString( intrfcName, _frame );
-         SerializerHelper.putString( opName, _frame );
-         serializeArguments( in );
-         SerializerHelper.putString( "", _frame );
-         _frame.putInt( _callId );
+   int call( String intrfcName, String opName, Map<String, Object> in, ICallback callback ) throws IOException {
+      call( intrfcName, opName, in, _callId );
+      if( callback != null ) {
          _callbacks.put( _callId, callback );
-         _frame.flip();
-         _channel.send( _frame, _target );
          return _callId++;
       }
+      return 0;
    }
 
    @Override
@@ -270,17 +243,19 @@ final class Repositories implements IRepositoryFactory {
                if( cacheId == 0 ) { // cache 0 doesn't exists, it's a flag for operation
                   final String intrfcName = SerializerHelper.getString( frame );
                   final String opName     = SerializerHelper.getString( frame );
-                  int callId = -1;
-                  boolean activate = false;
+                  final int    callId     = frame.getInt();
+                  int      queueNdx    = IRequired.DEFAULT_QUEUE;
+                  CallMode callMode    = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
                   for( int i = 0; i < count; ++i ) {
                      final String argName = SerializerHelper.getString( frame );
-                     if( argName.isEmpty()) {
-                        assert i == ( count - 1 ) :
-                           "Only the last argument may be empty and for internal use only";
-                        callId = _frame.getInt();
+                     if( argName.equals("@queue")) {
+                        queueNdx = _frame.get();
+                        if( queueNdx < 0 ) {
+                           queueNdx += 256;
+                        }
                      }
-                     else if( argName.equals("@activate")) {
-                        activate = true;
+                     else if( argName.equals("@mode")) {
+                        callMode = CallMode.values()[_frame.get()];
                      }
                      else {
                         final ClassID   classId = ClassID.unserialize( frame );
@@ -288,16 +263,22 @@ final class Repositories implements IRepositoryFactory {
                         arguments.put( argName, item );
                      }
                   }
-                  if( count == 0 ) {
-                     _dispatcher.execute( intrfcName, opName, activate );
+                  if( callId > 0 ) {
+                     final Map<String, Object> out = new HashMap<>();
+                     _dispatcher.execute( intrfcName, opName, arguments, out, queueNdx, callMode );
+                     if( ! out.isEmpty()) {
+                        call( intrfcName, opName, out, -callId );
+                     }
                   }
                   else if( callId < 0 ) {
-                     _dispatcher.execute( intrfcName, opName, arguments, activate );
-                  }
-                  else {
-                     final Map<String, Object> out = new HashMap<>();
-                     _dispatcher.execute( intrfcName, opName, arguments, out, activate );
-                     // TODO construire un message à partir de 'callId' et 'out'
+                     final ICallback callback = _callbacks.get( -callId );
+                     if( callback == null ) {
+                        System.err.printf( "Unknown Callback received: %s.%s, id: %d\n",
+                           intrfcName, opName, -callId );
+                     }
+                     else {
+                        callback.callback( intrfcName, opName, arguments );
+                     }
                   }
                }
                else {

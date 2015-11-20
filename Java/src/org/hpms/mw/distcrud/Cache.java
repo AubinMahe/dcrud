@@ -15,14 +15,14 @@ final class Cache implements IRepository {
 
    private static byte _NextCacheId = 1; // cache 0 doesn't exists, it's a flag for operation
 
-   private final Set<ClassID>         _classes      = new HashSet<>();
-   private final Set<Shareable>       _updated      = new HashSet<>();
-   private final Set<Shareable>       _deleted      = new HashSet<>();
-   private final Set<ByteBuffer>      _toUpdate     = new HashSet<>();
-   private final Set<GUID>            _toDelete     = new TreeSet<>();
-   private final Map<GUID, Shareable> _local        = new TreeMap<>();
-   private /* */ int                  _nextInstance = 1;
-   private /* */ boolean              _ownership    = false;
+   private final Set<ClassID>         _classes        = new HashSet<>();
+   private final Set<Shareable>       _updated        = new HashSet<>();
+   private final Set<Shareable>       _deleted        = new HashSet<>();
+   private final Set<ByteBuffer>      _toUpdate       = new HashSet<>();
+   private final Set<GUID>            _toDelete       = new TreeSet<>();
+   private final Map<GUID, Shareable> _local          = new TreeMap<>();
+   private /* */ int                  _nextInstance   = 1;
+   private /* */ boolean              _ownershipCheck = false;
    private final Repositories         _network;
    private final byte                 _platformId;
    private final byte                 _execId;
@@ -47,7 +47,7 @@ final class Cache implements IRepository {
    }
 
    @Override
-   public boolean matches( GUID id ) {
+   public boolean owns( GUID id ) {
       return( id._platform == _platformId )
          && ( id._exec     == _execId     )
          && ( id._cache    == _cacheId    );
@@ -58,8 +58,8 @@ final class Cache implements IRepository {
    }
 
    @Override
-   public void ownership( boolean enabled ) {
-      _ownership = enabled;
+   public void setOwnershipCheck( boolean enabled ) {
+      _ownershipCheck = enabled;
    }
 
    boolean isSubscribed( ClassID id ) {
@@ -105,7 +105,7 @@ final class Cache implements IRepository {
 
    @Override
    public Status update( Shareable item ) {
-      if( _ownership && ! matches( item._id )) {
+      if( _ownershipCheck && ! owns( item._id )) {
          return Status.NOT_OWNER;
       }
       if( item._id._instance == 0 ) {
@@ -123,7 +123,7 @@ final class Cache implements IRepository {
    @Override
    public Status delete( Shareable item ) {
       synchronized( _local ) {
-         if( _ownership && ! matches( item._id )) {
+         if( _ownershipCheck && ! owns( item._id )) {
             return Status.NOT_OWNER;
          }
          if( _local.remove( item._id ) == null ) {
@@ -168,7 +168,7 @@ final class Cache implements IRepository {
                      System.err.printf( "Unknown %s of %s\n", classId, id );
                   }
                }
-               else if( ! _ownership || ! matches( id )) {
+               else if( ! _ownershipCheck || ! owns( id )) {
                   update.position( update.position() + Repositories.CLASS_ID_SIZE );
                   t.unserialize( update );
                }

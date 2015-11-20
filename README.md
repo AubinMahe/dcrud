@@ -11,7 +11,7 @@ DCRUD offers remote asynchronous operations too, grouped into interfaces. If an 
 Features
 --------
 
- - Data distribution on local area network, the Internet (WAN) is not a target.
+ - Data distribution on LAN using multicast, the Internet (WAN) is not a target.
  - Remote operation, asynchronous or synchronous, with or without returned result.
  - Multi-OS: currently Windows and Linux
  - Multi-languages: currently Java and C, C++ may be addressed in a near future.
@@ -44,17 +44,13 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list
 ---------
 
- * Ajouter les notions :
-   - appel activant
-   - appel prioritaire
- * Ajouter l'appel synchrone
- * Remettre à niveau l'implémentation C
- * Développer l'implémentation C sans allocation dynamique
- * Mettre à jour README.md :
-   - mettre à jour les exemples simplifiés
-   - pointer vers la documentation de l'API C (doxygen)
-   - pointer vers la documentation de l'API Java (Javadoc)
- * Documenter les sources pour générer un Javadoc riche et valide
+ * Update C implementation
+ * Update C static allocation implementation
+ * Update README.md :
+   - Samples
+   - Add link to doxygen documentation for C language
+   - Add link to Javadoc documentation
+ * Add TCP/IP support
 
  WARNING
 ========

@@ -7,8 +7,8 @@ import java.util.function.Predicate;
 public interface IRepository {
 
    byte           getId();
-   void           ownership( boolean enabled );
-   boolean        matches  ( GUID    id );
+   void           setOwnershipCheck( boolean enabled );
+   boolean        owns  ( GUID    id );
    Status         create   ( Shareable            item  );
    <T extends Shareable>
    T              read     ( GUID                 id    );
