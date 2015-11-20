@@ -8,10 +8,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
-import org.hpms.mw.distcrud.IRepository;
-import org.hpms.mw.distcrud.IRepositoryFactory;
+import org.hpms.mw.distcrud.IParticipant;
+import org.hpms.mw.distcrud.ICache;
+import org.hpms.mw.distcrud.Networks;
 import org.hpms.mw.distcrud.Performance;
-import org.hpms.mw.distcrud.RepositoryFactoryBuilder;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.App;
 import org.hpms.mw.distcrud.samples.Controller;
@@ -42,7 +42,7 @@ public class ShapesUI implements Controller, Settings {
 
    private final Random _random = new Random();
 
-   private IRepository _cache;
+   private ICache _cache;
    private int         _rank;
    private Node        _dragged;
    private double      _nodeX;
@@ -143,13 +143,13 @@ public class ShapesUI implements Controller, Settings {
       }
       Performance.enable( perf );
 
-      final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( address, intrfc, port, platformId, execId );
-      repositories.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
-      repositories.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
+      final IParticipant participant =
+         Networks.join( address, intrfc, port, platformId, execId );
+      participant.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
+      participant.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
 
-      _cache = repositories.createRepository();
-      _cache.setOwnershipCheck( ownership );
+      _cache = participant.createCache();
+      _cache.setOwnership( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
 
@@ -178,10 +178,10 @@ public class ShapesUI implements Controller, Settings {
             }
          }
       }
-      final Thread repositoriesThread = new Thread( repositories::run );
-      repositoriesThread.setName( "network" );
-      repositoriesThread.setDaemon( true );
-      repositoriesThread.start();
+      final Thread participantThread = new Thread( participant::run );
+      participantThread.setName( "participant" );
+      participantThread.setDaemon( true );
+      participantThread.start();
    }
 
    private double nextDouble( double max, double min ) {

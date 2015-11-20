@@ -6,5 +6,5 @@ public enum Status {
    ALREADY_CREATED,
    NOT_OWNER,
    NOT_CREATED,
-   NOT_IN_THIS_REPOSITORY,
+   NOT_IN_THIS_CACHE,
 }

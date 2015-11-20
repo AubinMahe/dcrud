@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
-final class Repositories implements IRepositoryFactory {
+final class Network implements IParticipant {
 
    private static final byte[] SIGNATURE = { 'D','I','S','T','C','R','U','D'};
 
@@ -43,7 +43,7 @@ final class Repositories implements IRepositoryFactory {
    private /* */ int                     _itemCount;
    private /* */ int                     _callId = 1;
 
-   Repositories(
+   Network(
       InetAddress      group,
       NetworkInterface intrfc,
       int              port,
@@ -83,7 +83,7 @@ final class Repositories implements IRepositoryFactory {
    }
 
    @Override
-   public IRepository createRepository() {
+   public ICache createCache() {
       synchronized( _caches ) {
          final Cache cache = new Cache( this, _platformId, _execId );
          assert cache._cacheId > 0; // cache 0 doesn't exists, it's a flag for operation
@@ -92,7 +92,7 @@ final class Repositories implements IRepositoryFactory {
    }
 
    @Override
-   public IRepository getRepository( byte cacheId ) {
+   public ICache getCache( byte cacheId ) {
       synchronized( _caches ) {
          return _caches[cacheId];
       }

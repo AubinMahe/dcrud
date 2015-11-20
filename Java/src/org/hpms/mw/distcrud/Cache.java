@@ -11,7 +11,7 @@ import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class Cache implements IRepository {
+final class Cache implements ICache {
 
    private static byte _NextCacheId = 1; // cache 0 doesn't exists, it's a flag for operation
 
@@ -23,12 +23,12 @@ final class Cache implements IRepository {
    private final Map<GUID, Shareable> _local          = new TreeMap<>();
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
-   private final Repositories         _network;
+   private final Network              _network;
    private final byte                 _platformId;
    private final byte                 _execId;
    /*   */ final byte                 _cacheId;
 
-   Cache( Repositories network, byte platformId, byte execId ) {
+   Cache( Network network, byte platformId, byte execId ) {
       _network    = network;
       _platformId = platformId;
       _execId     = execId;
@@ -58,7 +58,7 @@ final class Cache implements IRepository {
    }
 
    @Override
-   public void setOwnershipCheck( boolean enabled ) {
+   public void setOwnership( boolean enabled ) {
       _ownershipCheck = enabled;
    }
 
@@ -112,7 +112,7 @@ final class Cache implements IRepository {
          return Status.NOT_CREATED;
       }
       if( ! _local.containsKey( item._id )) {
-         return Status.NOT_IN_THIS_REPOSITORY;
+         return Status.NOT_IN_THIS_CACHE;
       }
       synchronized( _updated ) {
          _updated.add( item );
@@ -127,7 +127,7 @@ final class Cache implements IRepository {
             return Status.NOT_OWNER;
          }
          if( _local.remove( item._id ) == null ) {
-            return Status.NOT_IN_THIS_REPOSITORY;
+            return Status.NOT_IN_THIS_CACHE;
          }
          synchronized( _deleted ) {
             _deleted.add( item );
@@ -169,7 +169,7 @@ final class Cache implements IRepository {
                   }
                }
                else if( ! _ownershipCheck || ! owns( id )) {
-                  update.position( update.position() + Repositories.CLASS_ID_SIZE );
+                  update.position( update.position() + Network.CLASS_ID_SIZE );
                   t.unserialize( update );
                }
             }

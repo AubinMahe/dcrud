@@ -2,13 +2,13 @@ package org.hpms.mw.distcrud;
 
 import java.util.function.Supplier;
 
-public interface IRepositoryFactory {
+public interface IParticipant {
 
    void registerClass( ClassID id, Supplier<Shareable> factory );
 
-   IRepository createRepository();
+   ICache createCache();
 
-   IRepository getRepository( byte ID );
+   ICache getCache( byte ID );
 
    IDispatcher getDispatcher();
 
