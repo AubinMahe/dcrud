@@ -9,10 +9,10 @@ import java.util.Set;
 import org.hpms.mw.distcrud.IDispatcher;
 import org.hpms.mw.distcrud.IProvided;
 import org.hpms.mw.distcrud.IRepository;
-import org.hpms.mw.distcrud.IRepositoryFactory;
+import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.IRequired;
 import org.hpms.mw.distcrud.IRequired.CallMode;
-import org.hpms.mw.distcrud.RepositoryFactoryBuilder;
+import org.hpms.mw.distcrud.Networks;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.Settings;
 
@@ -46,7 +46,7 @@ public class Sample implements Settings {
       return false;
    }
 
-   private static void producer( IRepositoryFactory repositories ) {
+   private static void producer( IParticipant repositories ) {
       try {
          final IRepository repository = repositories.createRepository();
          final IDispatcher dispatcher = repositories.getDispatcher();
@@ -69,7 +69,7 @@ public class Sample implements Settings {
       _iPerson.call( "create", _arguments, null );
    }
 
-   private static void consumer( IRepositoryFactory repositories ) {
+   private static void consumer( IParticipant repositories ) {
       try {
          final IRepository repository = repositories.createRepository();
          final IDispatcher dispatcher = repositories.getDispatcher();
@@ -98,8 +98,8 @@ public class Sample implements Settings {
    }
 
    public static void main( String[] args ) throws IOException {
-      final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
+      final IParticipant repositories =
+         Networks.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
       repositories.registerClass( Item.CLASS_ID, Item::new );
       new Thread(() -> consumer( repositories )).start();
       new Thread(() -> producer( repositories )).start();

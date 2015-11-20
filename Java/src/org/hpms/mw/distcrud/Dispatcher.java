@@ -10,7 +10,7 @@ import org.hpms.mw.distcrud.IRequired.CallMode;
 
 class Dispatcher implements IDispatcher {
 
-   private final Repositories              _repositories;
+   private final Network              _repositories;
    private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
    @SuppressWarnings("unchecked")
    private final List<Runnable>[]          _operationQueues = new List[256];
@@ -48,7 +48,7 @@ class Dispatcher implements IDispatcher {
       }
    }
 
-   public Dispatcher( Repositories repositories ) {
+   public Dispatcher( Network repositories ) {
       _repositories = repositories;
       for( int i = 0; i < _operationQueues.length; ++i ) {
          _operationQueues[i] = new LinkedList<>();

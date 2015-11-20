@@ -7,11 +7,11 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RepositoryFactoryBuilder {
+public class Networks {
 
-   private static final Map<InetAddress, IRepositoryFactory> _Groups = new HashMap<>();
+   private static final Map<InetAddress, IParticipant> _Groups = new HashMap<>();
 
-   public static IRepositoryFactory join(
+   public static IParticipant join(
       String addr,
       String intrfc,
       int    port,
@@ -39,10 +39,10 @@ public class RepositoryFactoryBuilder {
       }
       assert port > 0;
       synchronized( _Groups ) {
-         IRepositoryFactory factory = _Groups.get( address );
+         IParticipant factory = _Groups.get( address );
          if( factory == null ) {
             _Groups.put( address, factory =
-               new Repositories( address, netwkIntrfc, port, platformId, execId ));
+               new Network( address, netwkIntrfc, port, platformId, execId ));
          }
          return factory;
       }

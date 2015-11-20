@@ -9,9 +9,9 @@ import java.util.TimerTask;
 import java.util.function.BiFunction;
 
 import org.hpms.mw.distcrud.IRepository;
-import org.hpms.mw.distcrud.IRepositoryFactory;
+import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.Performance;
-import org.hpms.mw.distcrud.RepositoryFactoryBuilder;
+import org.hpms.mw.distcrud.Networks;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.App;
 import org.hpms.mw.distcrud.samples.Controller;
@@ -143,8 +143,8 @@ public class ShapesUI implements Controller, Settings {
       }
       Performance.enable( perf );
 
-      final IRepositoryFactory repositories =
-         RepositoryFactoryBuilder.join( address, intrfc, port, platformId, execId );
+      final IParticipant repositories =
+         Networks.join( address, intrfc, port, platformId, execId );
       repositories.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       repositories.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
 

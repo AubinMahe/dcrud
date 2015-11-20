@@ -23,12 +23,12 @@ final class Cache implements IRepository {
    private final Map<GUID, Shareable> _local          = new TreeMap<>();
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
-   private final Repositories         _network;
+   private final Network         _network;
    private final byte                 _platformId;
    private final byte                 _execId;
    /*   */ final byte                 _cacheId;
 
-   Cache( Repositories network, byte platformId, byte execId ) {
+   Cache( Network network, byte platformId, byte execId ) {
       _network    = network;
       _platformId = platformId;
       _execId     = execId;
@@ -169,7 +169,7 @@ final class Cache implements IRepository {
                   }
                }
                else if( ! _ownershipCheck || ! owns( id )) {
-                  update.position( update.position() + Repositories.CLASS_ID_SIZE );
+                  update.position( update.position() + Network.CLASS_ID_SIZE );
                   t.unserialize( update );
                }
             }
