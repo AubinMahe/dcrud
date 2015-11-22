@@ -29,14 +29,17 @@ Overview
 
 *Interface and utility classes needed to use DCRUD*
 
-- `RepositoryFactoryBuilder` offers a single method to obtain a `IRepositoryFactory` instance for a particular ring or cloud, identified by its multicast address.
-- `IRepositoryFactory` registers data factories, give the `IDispatcher` singleton and offers methods to create and get `IRepository` instances which act as items caches.
-- `IRepository` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local. It's an applicative decision to use one or several repositories.
-- `IDispatcher` allows application to declare theirs operation in terms of *provide* and *require*. Method `handleRequests` allow application to trigger the enqueued operation requests when desired.
-- `Shareable` is an abstract class which owns a GUID (**G**lobal **U**nique **ID**entifier)
+- `Networks` offers a single method to obtain a `IParticipant` instance for a particular ring or cloud, identified by its multicast address.
+- `IParticipant` registers data factories, give the `IDispatcher` singleton and offers methods to create and get `ICache` instances which act as items caches.
+- `ICache` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local. It's an applicative decision to use one or several caches.
+- `Shareable` is an abstract class which owns a GUID (**G**lobal **U**nique **ID**entifier) and a `ClassID`.
+- `Status` is a simple enumeration to report success or failure of the API implementation.
+- `IDispatcher` allows application to declare theirs operation in terms of *provide* and *require*. Method `handleRequests` allow application to trigger the deferred operation requests when desired.
+- `IRequired` is used by a client when `IProvided` is used to add `IOperation` which must be implemented by a server.
+- `ICallback` must be implemented in case of asynchronous calls via `IRequired`.
 - `SerializerHelper` is an utility static class which provides methods to deal with the network, handling endianness, serialization and deserialization.
-  
-  
+- `Performance` is a simple timestamp recorder, GNU plot compatible, see [plot.sh](EclipseProject/plot.sh).
+
 ### Implementation of the inheritance in C language ###
 
 Shared piece of data are derived from `Shareable`. dcrud use delegation to emulate this behavior in C language. Bidirectional link initialization between base and inherited instances are made by dcrud library, see [dcrudShareable_init()](#dcrudShareable_init). 

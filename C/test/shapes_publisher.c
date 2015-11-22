@@ -1,4 +1,4 @@
-#include <dcrud/RepositoryFactoryBuilder.h>
+#include <dcrud/Networks.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,9 +17,8 @@ static const char *         MC_GROUP  = "224.0.0.3";
 static const unsigned short MC_PORT   = 2416;
 static const char *         MC_INTRFC = "192.168.1.6";
 
-static const char * SHAPES_TOPIC       = "shapes";
-static const int    RECTANGLE_CLASS_ID = 1;
-static const int    ELLIPSE_CLASS_ID   = 2;
+static const byte RECTANGLE_CLASS_ID = 1;
+static const byte ELLIPSE_CLASS_ID   = 2;
 
 typedef struct FxColor_s {
 
@@ -105,16 +104,12 @@ static double nextDouble( double max, double min ) {
 
 static unsigned int g_rank;
 
-static ShareableShape * createShapeOfClass( int classId, dcrudGUID id ) {
+static ShareableShape * createShapeOfClass( byte classId ) {
    ShareableShape * shape = (ShareableShape *)malloc( sizeof( ShareableShape ));
-   if( ! id ) {
-      id = dcrudGUID_init( SHAPES_TOPIC, classId );
-   }
    memset( shape, 0, sizeof( ShareableShape ));
    dcrudShareable_init(
       shape,
       &shape->base,
-      id,
       (dcrudShareable_setF        )ShareableShape_set,
       (dcrudShareable_serializeF  )ShareableShape_serialize,
       (dcrudShareable_unserializeF)ShareableShape_unserialize );
@@ -138,30 +133,19 @@ static ShareableShape * createShapeOfClass( int classId, dcrudGUID id ) {
    return shape;
 }
 
-static ShareableShape * createShape( dcrudGUID id ) {
-   return createShapeOfClass( dcrudGUID_getClassId( id ), id );
+static dcrudShareable rectangleFactory() {
+   return createShapeOfClass( RECTANGLE_CLASS_ID )->base;
 }
 
-static dcrudShareable shapeFactory( dcrudGUID id ) {
-   int classId = dcrudGUID_getClassId( id );
-   if(  ( classId == RECTANGLE_CLASS_ID    )
-      ||( classId == ELLIPSE_CLASS_ID ))
-   {
-      return createShape( id )->base;
-   }
-   else {
-      char sId[1024];
-      dcrudGUID_toString( id, sId, sizeof( sId ));
-      fprintf( stderr, "Unexpected GUID: %s\n", sId );
-      exit(-1);
-   }
+static dcrudShareable ellipseFactory() {
+   return createShapeOfClass( ELLIPSE_CLASS_ID )->base;
 }
 
 static double areaMaxX = 640.0;
 static double areaMaxY = 480.0;
 #define MOVE 2.0
 
-static void move( dcrudIRepository shapes, ShareableShape * shape ) {
+static void move( dcrudICache shapes, ShareableShape * shape ) {
    bool outOfBounds;
    do {
       outOfBounds = false;
@@ -184,16 +168,17 @@ static void move( dcrudIRepository shapes, ShareableShape * shape ) {
          shape->dy = -MOVE;
       }
    } while( outOfBounds );
-   dcrudIRepository_update( shapes, shape->base );
+   dcrudICache_update( shapes, shape->base );
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {
-   const char *   address = MC_GROUP;
-   unsigned short port    = MC_PORT;
-   const char *   intrfc  = MC_INTRFC;
-   unsigned int   srcId   = 0;
-   int i;
-   dcrudIRepositoryFactory repositories;
+   const char *   address    = MC_GROUP;
+   unsigned short port       = MC_PORT;
+   const char *   intrfc     = MC_INTRFC;
+   byte           platformId = 0;
+   byte           execId     = 0;
+   int               i;
+   dcrudIParticipant participant;
    for( i = 1; i < argc; ++i ) {
       if( 0 == strcmp( "--address", argv[i] )) {
          address = argv[++i];
@@ -204,33 +189,48 @@ int shapesPublisherTests( int argc, char * argv[] ) {
       else if( 0 == strcmp( "--interface", argv[i] )) {
          intrfc = argv[++i];
       }
-      else if( 0 == strcmp( "--src-id", argv[i] )) {
-         srcId = (unsigned int)atoi( argv[++i] );
+      else if( 0 == strcmp( "--platform-id", argv[i] )) {
+         platformId = (byte)atoi( argv[++i] );
+      }
+      else if( 0 == strcmp( "--exec-id", argv[i] )) {
+         execId     = (byte)atoi( argv[++i] );
       }
       else {
          fprintf( stderr, "unexpected argument: %s\n", argv[i] );
          exit(-1);
       }
    }
-   if( srcId < 1 ) {
-      fprintf( stderr, "--src-id <id> must be used and id must be positive\n", argv[i] );
+   if( platformId < 1 ) {
+      fprintf( stderr, "--platfom-id <id> must be >= 0\n" );
       exit(-1);
    }
-   repositories = dcrudRepositoryFactoryBuilder_join( address, intrfc, port, srcId );
-   if( repositories ) {
-      dcrudIRepository shapes =
-         dcrudIRepositoryFactory_getRepository( repositories, SHAPES_TOPIC, shapeFactory );
-      ShareableShape * rect1 = createShapeOfClass( RECTANGLE_CLASS_ID, NULL );
-      ShareableShape * elli1 = createShapeOfClass( ELLIPSE_CLASS_ID  , NULL );
-      ShareableShape * rect2 = createShapeOfClass( RECTANGLE_CLASS_ID, NULL );
-      ShareableShape * elli2 = createShapeOfClass( ELLIPSE_CLASS_ID  , NULL );
-      dcrudIRepository_create( shapes, rect1->base );
-      dcrudIRepository_create( shapes, elli1->base );
-      dcrudIRepository_create( shapes, rect2->base );
-      dcrudIRepository_create( shapes, elli2->base );
+   if( execId < 1 ) {
+      fprintf( stderr, "--exec-id <id> must be >= 0\n" );
+      exit(-1);
+   }
+   participant = dcrudNetworks_join( address, intrfc, port, platformId, execId );
+   if( participant ) {
+      dcrudClassID     rectangleClass = dcrudClassID_init( 1, 1, 1, RECTANGLE_CLASS_ID );
+      dcrudClassID     ellipseClass   = dcrudClassID_init( 1, 1, 1, ELLIPSE_CLASS_ID );
+      dcrudICache      shapes;
+      ShareableShape * rect1;
+      ShareableShape * elli1;
+      ShareableShape * rect2;
+      ShareableShape * elli2;
+      dcrudIParticipant_registerClass( participant, rectangleClass, rectangleFactory );
+      dcrudIParticipant_registerClass( participant, ellipseClass  , ellipseFactory );
+      dcrudIParticipant_createCache( participant, &shapes );
+      rect1  = createShapeOfClass( RECTANGLE_CLASS_ID );
+      elli1  = createShapeOfClass( ELLIPSE_CLASS_ID );
+      rect2  = createShapeOfClass( RECTANGLE_CLASS_ID );
+      elli2  = createShapeOfClass( ELLIPSE_CLASS_ID );
+      dcrudICache_create( shapes, rect1->base );
+      dcrudICache_create( shapes, elli1->base );
+      dcrudICache_create( shapes, rect2->base );
+      dcrudICache_create( shapes, elli2->base );
       for( i = 0; i < 1000; ++i ) {
          struct timespec req = { 0, 40*1000*1000 };
-         dcrudIRepository_publish( shapes );
+         dcrudICache_publish( shapes );
          nanosleep( &req, NULL );
          move( shapes, rect1 );
          move( shapes, elli1 );

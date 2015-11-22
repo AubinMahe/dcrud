@@ -26,7 +26,7 @@ unsigned int collLimitsSetItemCountMax = 0;
 
 typedef int ( * PVoidComparator )( const void *, const void * );
 
-collSet collSet_reserve( collComparator cmp ) {
+collSet collSet_new( collComparator cmp ) {
 #ifdef STATIC_ALLOCATION
    if( NextSet == COLL_SET_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collSet_reserve: out of memory!\n", __FILE__, __LINE__ );
@@ -43,6 +43,20 @@ collSet collSet_reserve( collComparator cmp ) {
 #endif
    This->cmp   = cmp;
    return (collSet)This;
+}
+
+void collSet_delete( collSet * self ) {
+   collPrivateSet * This = (collPrivateSet *)*self;
+#ifndef STATIC_ALLOCATION
+   free( This->items );
+#endif
+   This->count = 0;
+#ifndef STATIC_ALLOCATION
+   This->limit = 0;
+   This->items = NULL;
+   free( This );
+#endif
+   *self = NULL;
 }
 
 void collSet_clear( collSet self ) {
@@ -109,18 +123,4 @@ collForeachResult collSet_foreach( collSet self, collForeachFunction fn, void * 
       }
    }
    return context.retVal;
-}
-
-void collSet_release( collSet * self ) {
-   collPrivateSet * This = (collPrivateSet *)*self;
-#ifndef STATIC_ALLOCATION
-   free( This->items );
-#endif
-   This->count = 0;
-#ifndef STATIC_ALLOCATION
-   This->limit = 0;
-   This->items = NULL;
-   free( This );
-#endif
-   *self = NULL;
 }

@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.dbg;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -31,7 +31,7 @@ public class Performance {
       records.add( elapsed );
    }
 
-   public static synchronized void display() throws FileNotFoundException {
+   public static synchronized void saveToDisk() throws FileNotFoundException {
       if( ! _enabled ) {
          return;
       }

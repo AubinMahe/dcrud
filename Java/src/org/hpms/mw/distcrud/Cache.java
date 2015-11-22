@@ -11,6 +11,8 @@ import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.hpms.dbg.Performance;
+
 final class Cache implements ICache {
 
    private static byte _NextCacheId = 1; // cache 0 doesn't exists, it's a flag for operation
@@ -48,9 +50,7 @@ final class Cache implements ICache {
 
    @Override
    public boolean owns( GUID id ) {
-      return( id._platform == _platformId )
-         && ( id._exec     == _execId     )
-         && ( id._cache    == _cacheId    );
+      return matches( id._platform, id._exec, id._cache );
    }
 
    Collection<Shareable> getContents() {
@@ -60,10 +60,6 @@ final class Cache implements ICache {
    @Override
    public void setOwnership( boolean enabled ) {
       _ownershipCheck = enabled;
-   }
-
-   boolean isSubscribed( ClassID id ) {
-      return _classes.contains( id );
    }
 
    @Override

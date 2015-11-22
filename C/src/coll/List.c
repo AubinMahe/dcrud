@@ -23,7 +23,7 @@ unsigned int collLimitsListCountMax     = 0;
 unsigned int collLimitsListItemCountMax = 0;
 #endif
 
-collList collList_reserve() {
+collList collList_new() {
 #ifdef STATIC_ALLOCATION
    if( NextList == COLL_LIST_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collList_reserve: out of memory!\n", __FILE__, __LINE__ );
@@ -39,6 +39,18 @@ collList collList_reserve() {
    This->items = (collListItem *)malloc( This->limit * sizeof( collListItem ));
 #endif
    return (collList)This;
+}
+
+void collList_delete( collList * self ) {
+   collPrivateList * This = (collPrivateList *)*self;
+   This->count = 0;
+#ifndef STATIC_ALLOCATION
+   free( This->items );
+   This->limit = 0;
+   This->items = NULL;
+   free( This );
+#endif
+   *self = NULL;
 }
 
 void collList_clear( collList self ) {
@@ -82,6 +94,11 @@ bool collList_remove( collList self, collListItem item ) {
    return false;
 }
 
+collListItem collList_get( collList self, unsigned int index ) {
+   collPrivateList * This = (collPrivateList *)self;
+   return index < This->count ? This->items[index] : NULL;
+}
+
 unsigned int collList_size( collList self ) {
    return ((collPrivateList *)self )->count;
 }
@@ -97,16 +114,4 @@ collForeachResult collList_foreach( collList self, collForeachFunction fn, void 
       }
    }
    return context.retVal;
-}
-
-void collList_release( collList * self ) {
-   collPrivateList * This = (collPrivateList *)*self;
-   This->count = 0;
-#ifndef STATIC_ALLOCATION
-   free( This->items );
-   This->limit = 0;
-   This->items = NULL;
-   free( This );
-#endif
-   *self = NULL;
 }

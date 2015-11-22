@@ -14,4 +14,6 @@ typedef          __int64   int64_t;
 typedef unsigned __int64   uint64_t;
 #endif
 
-#define UTIL_ADT(T) typedef struct T##_s { int unused; } * T
+#define UTIL_CONCAT_(x,y) x ## y
+#define UTIL_CONCAT(x,y)  UTIL_CONCAT_(x,y)
+#define UTIL_ADT(T) typedef struct UTIL_CONCAT(T,_s) { int unused; } * T

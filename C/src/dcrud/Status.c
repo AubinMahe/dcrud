@@ -1,6 +1,6 @@
-#include <dcrud/Errors.h>
+#include <dcrud/Status.h>
 
-const char * dcrudErrorMessages[DCRUD_ERROR_LAST] = {
+const char * dcrudStatusMessages[DCRUD_STATUS_LAST] = {
    "No error",
    "This Shareable has already been published",
    "This Shareable has never been published",

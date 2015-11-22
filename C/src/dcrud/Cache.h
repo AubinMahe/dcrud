@@ -1,12 +1,7 @@
 #pragma once
 
-#include <dcrud/IRepositoryFactory.h>
+#include "Network.h"
 
-dcrudIRepository dcrudCache_init(
-   const char *            topic,
-   dcrudShareableFactory   factory,
-   dcrudIRepositoryFactory network );
-
-void dcrudCache_updateFromNetwork( dcrudShareable item );
-
-void dcrudCache_deleteFromNetwork( dcrudGUID id );
+dcrudICache dcrudCache_init( dcrudIParticipant network, byte platformId, byte execId );
+void        dcrudCache_updateFromNetwork( dcrudICache This, dcrudShareable item );
+void        dcrudCache_deleteFromNetwork( dcrudICache This, dcrudGUID id );

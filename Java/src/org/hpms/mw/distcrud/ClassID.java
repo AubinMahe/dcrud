@@ -24,10 +24,6 @@ public final class ClassID implements Comparable<ClassID> {
       _class     = classId;
    }
 
-   boolean isShared() {
-      return _class > 0;
-   }
-
    @Override
    public String toString() {
       return String.format( "Class-%02X-%02X-%02X-%02X",

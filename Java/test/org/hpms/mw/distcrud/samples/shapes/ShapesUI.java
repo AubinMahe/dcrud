@@ -8,10 +8,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
+import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.ICache;
 import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.Networks;
-import org.hpms.mw.distcrud.Performance;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.App;
 import org.hpms.mw.distcrud.samples.Controller;
@@ -74,7 +74,7 @@ public class ShapesUI implements Controller, Settings {
    @FXML
    private void onQuit() {
       try {
-         Performance.display();
+         Performance.saveToDisk();
       }
       catch( final Throwable t ) {
          t.printStackTrace();

@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
+import org.hpms.dbg.Dump;
+import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
 final class Network implements IParticipant {
@@ -27,12 +29,14 @@ final class Network implements IParticipant {
    public static final int GUID_SIZE     = 1 + 1 + 1 + 4;
    public static final int CLASS_ID_SIZE = 1 + 1 + 1 + 1;
    public static final int HEADER_SIZE   = SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE;
+   public static final int PAYLOAD_SIZE  =  64*1024;
+   public static final int FRAME_SIZE    = 640*1024;
 
    private final Cache[]                 _caches     = new Cache[256];
    private final Dispatcher              _dispatcher = new Dispatcher( this );
    private final ByteBuffer              _header     = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer              _payload    = ByteBuffer.allocate( 10*1024 );
-   private final ByteBuffer              _frame      = ByteBuffer.allocate( 500*1024 );
+   private final ByteBuffer              _payload    = ByteBuffer.allocate( PAYLOAD_SIZE );
+   private final ByteBuffer              _frame      = ByteBuffer.allocate( FRAME_SIZE );
    private final Map<ClassID,
       Supplier<Shareable>>               _factories  = new TreeMap<>();
    private final Map<Integer, ICallback> _callbacks  = new HashMap<>();
@@ -68,18 +72,22 @@ final class Network implements IParticipant {
    }
 
    Shareable newInstance( ClassID classId, ByteBuffer frame ) {
-      final Supplier<Shareable> factory = _factories.get( classId );
-      if( factory == null ) {
-         return null;
+      synchronized( _factories ) {
+         final Supplier<Shareable> factory = _factories.get( classId );
+         if( factory == null ) {
+            return null;
+         }
+         final Shareable item = factory.get();
+         item.unserialize( frame );
+         return item;
       }
-      final Shareable item = factory.get();
-      item.unserialize( frame );
-      return item;
    }
 
    @Override
    public void registerClass( ClassID id, Supplier<Shareable> factory ) {
-      _factories.put( id, factory );
+      synchronized( _factories ) {
+         _factories.put( id, factory );
+      }
    }
 
    @Override
@@ -144,7 +152,7 @@ final class Network implements IParticipant {
       item._class.serialize( _header );
       _header.flip();
       sendFrameIfNeeded( cacheId );
-      _frame.put( _header );
+      _frame.put( _header  );
       _frame.put( _payload );
       ++_itemCount;
    }
@@ -200,7 +208,6 @@ final class Network implements IParticipant {
                break;
             default:
                final Shareable item = (Shareable)e.getValue();
-               _payload.clear();
                item._class.serialize( _frame );
                item.serialize( _frame );
                break;
@@ -232,7 +239,7 @@ final class Network implements IParticipant {
             _channel.receive( frame );
             atStart = System.nanoTime();
             frame.flip();
-//            Dump.dump( frame );
+            Dump.dump( frame );
             frame.get( signa );
             if( Arrays.equals( signa, SIGNATURE )) {
                final byte platformId = frame.get();

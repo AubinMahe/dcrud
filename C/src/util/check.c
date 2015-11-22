@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void check(
+bool check(
    bool         ok,
    const char * file,
    int          line,
@@ -33,4 +33,5 @@ void check(
       vsnprintf( userMsg, sizeof( userMsg ), format, args );
       fprintf( stderr, "%s:%d:%s:%s", file, line, userMsg, systMsg );
    }
+   return ok;
 }

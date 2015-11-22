@@ -5,18 +5,18 @@
 #include <string.h>
 
 int ioTests( int argc, char * argv[] ) {
-   ioByteBuffer buffer = ioByteBuffer_allocate( sizeof( double ));
+   ioByteBuffer buffer = ioByteBuffer_new( sizeof( double ));
    double       ref    = 3.141592653;
-   ioError      status = ioByteBuffer_putDouble( buffer, ref );
-   if( status != ioError_NO_ERROR ) {
-      fprintf( stderr, "%s\n", ioErrorMessages[status] );
+   ioStatus      status = ioByteBuffer_putDouble( buffer, ref );
+   if( status != IO_STATUS_NO_ERROR ) {
+      fprintf( stderr, "%s\n", ioStatusMessages[status] );
    }
    else {
       double value = 0.0;
       ioByteBuffer_flip( buffer );
       status = ioByteBuffer_getDouble( buffer, &value );
-      if( status != ioError_NO_ERROR ) {
-         fprintf( stderr, "%s\n", ioErrorMessages[status] );
+      if( status != IO_STATUS_NO_ERROR ) {
+         fprintf( stderr, "%s\n", ioStatusMessages[status] );
       }
       else {
          printf( "read value: %f, expected: %f\n", value, ref );

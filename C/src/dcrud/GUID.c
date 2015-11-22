@@ -1,91 +1,88 @@
-#include <dcrud/GUID.h>
+#include "GUID_private.h"
 #include <stdio.h>
 #include <string.h>
 
-typedef struct dcrudGUIDImpl_s {
-
-   char topic[1024];
-   int  classId;
-   int  instance;
-
-} dcrudGUIDImpl;
-
-dcrudGUID dcrudGUID_init( const char * topic, int classId ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)malloc( sizeof(dcrudGUIDImpl));
-   strncpy( This->topic, topic, sizeof( This->topic ));
-   This->classId  = classId;
-   This->instance = 0;
-   return (dcrudGUID)This;
+dcrudGUIDImpl * dcrudGUID_init() {
+   dcrudGUIDImpl * This = (dcrudGUIDImpl *)malloc( sizeof( dcrudGUIDImpl ));
+   memset( This, 0, sizeof( dcrudGUIDImpl ));
+   return This;
 }
 
-ioError dcrudGUID_unserialize( ioByteBuffer source, dcrudGUID * target ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)malloc( sizeof(dcrudGUIDImpl));
-   ioError ioStatus = ioByteBuffer_getString( source,  This->topic, sizeof( This->topic ));
-   unsigned v;
-   if( ioError_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getInt( source, &v );
-      This->classId = (int)v;
+ioStatus dcrudGUID_unserialize( ioByteBuffer source, dcrudGUID * target ) {
+   dcrudGUIDImpl * This     = dcrudGUID_init();
+   ioStatus        ioStatus = IO_STATUS_NO_ERROR;
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_getByte( source, &This->platform );
    }
-   if( ioError_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getInt( source, &v );
-      This->instance = (int)v;
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_getByte( source, &This->exec );
    }
-   if( ioError_NO_ERROR == ioStatus ) {
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_getByte( source, &This->cache );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_getInt( source, &This->instance );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
       *target = (dcrudGUID)This;
    }
-   fprintf( stderr, "unable to deserialize a GUID: %s\n", ioErrorMessages[ioStatus] );
+   else {
+      *target = NULL;
+   }
+   if( IO_STATUS_NO_ERROR != ioStatus ) {
+      fprintf( stderr, "unable to deserialize a GUID: %s\n", ioStatusMessages[ioStatus] );
+   }
    return ioStatus;
 }
 
-void dcrudGUID_setInstance( const dcrudGUID self, int instance ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   This->instance = instance;
-}
-
-ioError dcrudGUID_serialize( const dcrudGUID self, ioByteBuffer target ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   ioError ioStatus = ioByteBuffer_putString( target, This->topic );
-   if( ioError_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putInt( target, (unsigned)This->classId );
+ioStatus dcrudGUID_serialize( const dcrudGUID self, ioByteBuffer target ) {
+   dcrudGUIDImpl * This     = (dcrudGUIDImpl *)self;
+   ioStatus        ioStatus = IO_STATUS_NO_ERROR;
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, This->platform );
    }
-   if( ioError_NO_ERROR == ioStatus ) {
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, This->exec );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, This->cache );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
       ioStatus = ioByteBuffer_putInt( target, (unsigned)This->instance );
    }
-   if( ioError_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "unable to serialize a GUID: %s\n", ioErrorMessages[ioStatus] );
+   if( IO_STATUS_NO_ERROR != ioStatus ) {
+      fprintf( stderr, "unable to serialize a GUID: %s\n", ioStatusMessages[ioStatus] );
    }
    return ioStatus;
 }
 
-int dcrudGUID_getClassId( const dcrudGUID self ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   return This->classId;
-}
-
-int dcrudGUID_getInstanceId( const dcrudGUID self ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   return This->instance;
-}
-
-bool dcrudGUID_isShared( const dcrudGUID self ) {
-   dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   return This->instance != 0;
+bool dcrudGUID_isShared( const dcrudGUIDImpl * This ) {
+   return This->instance > 0;
 }
 
 bool dcrudGUID_toString( const dcrudGUID self, char * target, size_t targetSize ) {
    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   int ret =
-      snprintf( target, targetSize, "%s-%04X-%04X",
-         This->topic, This->classId, This->instance );
+   int             ret  =
+      snprintf( target, targetSize, "Instance-%02X-%02X-%02X-%04X",
+         This->platform, This->exec, This->cache, This->instance );
    return ret > 0 && ret < (int)targetSize;
 }
 
 int dcrudGUID_compareTo( const dcrudGUID * l, const dcrudGUID * r ) {
    dcrudGUIDImpl ** left  = (dcrudGUIDImpl **)l;
    dcrudGUIDImpl ** right = (dcrudGUIDImpl **)r;
-   int diff = (*left)->classId - (*right)->classId;
+   int diff = 0;
    if( diff == 0 ) {
-      diff = (*left)->instance - (*right)->instance;
+      diff = (*left)->platform - (*right)->platform;
+   }
+   if( diff == 0 ) {
+      diff = (*left)->exec     - (*right)->exec;
+   }
+   if( diff == 0 ) {
+      diff = (*left)->cache    - (*right)->cache;
+   }
+   if( diff == 0 ) {
+      diff = (int)((*left)->instance - (*right)->instance );
    }
    return diff;
 }
