@@ -3,14 +3,14 @@
 #endif
 
 #include <coll/Comparator.h>
+#include <coll/ForeachFunction.h>
 
 #undef  COLL_MAP_NAME
 #define COLL_MAP_NAME(NAME) UTIL_CONCAT(COLL_MAP_TYPE,NAME)
 
 UTIL_ADT( COLL_MAP_TYPE );
 
-typedef void * COLL_MAP_NAME(Key);
-typedef void * COLL_MAP_NAME(ForeachResult);
+typedef void *                 COLL_MAP_NAME(Key);
 
 typedef struct COLL_MAP_NAME(Pair_s) {
 
@@ -19,23 +19,15 @@ typedef struct COLL_MAP_NAME(Pair_s) {
 
 } COLL_MAP_NAME(Pair);
 
-typedef struct COLL_MAP_NAME(Foreach_s) {
+typedef COLL_MAP_NAME(Pair) * COLL_MAP_NAME(Pairs);
 
-   unsigned int                 index;
-   COLL_MAP_NAME(Key)           key;
-   COLL_MAP_NAME(Value)         value;
-   void *                       user;
-   COLL_MAP_NAME(ForeachResult) retVal;
-
-} COLL_MAP_NAME(Foreach);
-
-typedef bool( * COLL_MAP_NAME(ForeachFunction) )( COLL_MAP_NAME(Foreach) * context );
-
-COLL_MAP_TYPE                COLL_MAP_NAME(_new    )( collComparator cmp );
-void                         COLL_MAP_NAME(_delete )( COLL_MAP_TYPE * This );
-void                         COLL_MAP_NAME(_clear  )( COLL_MAP_TYPE   This );
-bool                         COLL_MAP_NAME(_put    )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key, COLL_MAP_NAME(Value) value, COLL_MAP_NAME(Pair) * previousPair );
-bool                         COLL_MAP_NAME(_remove )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key, COLL_MAP_NAME(Pair) * previousPair  );
-unsigned int                 COLL_MAP_NAME(_size   )( COLL_MAP_TYPE   This );
-COLL_MAP_NAME(Value)         COLL_MAP_NAME(_get    )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key );
-COLL_MAP_NAME(ForeachResult) COLL_MAP_NAME(_foreach)( COLL_MAP_TYPE   This, COLL_MAP_NAME(ForeachFunction) fn, void * userData );
+COLL_MAP_TYPE        COLL_MAP_NAME(_new    )( collComparator cmp );
+void                 COLL_MAP_NAME(_delete )( COLL_MAP_TYPE * This );
+void                 COLL_MAP_NAME(_clear  )( COLL_MAP_TYPE   This );
+bool                 COLL_MAP_NAME(_put    )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key, COLL_MAP_NAME(Value) value, COLL_MAP_NAME(Pair) * previousPair );
+bool                 COLL_MAP_NAME(_remove )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key, COLL_MAP_NAME(Pair) * previousPair  );
+unsigned int         COLL_MAP_NAME(_size   )( COLL_MAP_TYPE   This );
+COLL_MAP_NAME(Value) COLL_MAP_NAME(_get    )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key );
+bool                 COLL_MAP_NAME(_hasKey )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key );
+collForeachResult    COLL_MAP_NAME(_foreach)( COLL_MAP_TYPE   This, collForeachFunction fn, void * userData );
+COLL_MAP_NAME(Pairs) COLL_MAP_NAME(_values )( COLL_MAP_TYPE   This );

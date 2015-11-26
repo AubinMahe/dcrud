@@ -357,3 +357,10 @@ byte * ioByteBuffer_getBytes( ioByteBuffer self ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
    return This->bytes;
 }
+
+ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, size_t length ) {
+   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+   ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
+   memcpy( copy->bytes, This->bytes + This->position, length );
+   return (ioByteBuffer)copy;
+}

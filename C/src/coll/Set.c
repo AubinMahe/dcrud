@@ -124,3 +124,8 @@ collForeachResult collSet_foreach( collSet self, collForeachFunction fn, void * 
    }
    return context.retVal;
 }
+
+collSetValues collSet_values( collSet self ) {
+   collPrivateSet * This = (collPrivateSet *)self;
+   return This->items;
+}

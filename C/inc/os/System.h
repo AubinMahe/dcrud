@@ -2,4 +2,4 @@
 
 #include <util/types.h>
 
-uint64_t System_nanotime( void );
+uint64_t osSystem_nanotime( void );

@@ -44,16 +44,17 @@ Overview
 
 Shared piece of data are derived from `Shareable`. dcrud use delegation to emulate this behavior in C language. Bidirectional link initialization between base and inherited instances are made by dcrud library, see [dcrudShareable_init()](#dcrudShareable_init). 
 
-Todo list
----------
+Todo list (in priority order)
+-----------------------------
 
- * Update C implementation
- * Update C static allocation implementation
+ * Update C samples
  * Update README.md :
    - Samples
    - Add link to doxygen documentation for C language
    - Add link to Javadoc documentation
- * Add TCP/IP support
+ * Add UDP/IP and TCP/IP support
+ * Add streams services for big data
+ * Update C static allocation implementation
 
  WARNING
 ========

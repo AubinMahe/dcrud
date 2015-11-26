@@ -18,7 +18,7 @@ static int addressComparator( const unsigned int * left, const unsigned int * ri
    return (int)(*left - *right);
 }
 
-static collMapVoidPtr groups;
+static collMap groups;
 
 dcrudIParticipant dcrudNetworks_join(
    const char *   address,
@@ -31,25 +31,25 @@ dcrudIParticipant dcrudNetworks_join(
    unsigned int *    key;
    dcrudIParticipant network;
    if( ! groups ) {
-      groups = collMapVoidPtr_new((collComparator)addressComparator );
+      groups = collMap_new((collComparator)addressComparator );
    }
    mcastAddr = (unsigned int)inet_addr( address );
-   network   = collMapVoidPtr_get( groups, &mcastAddr );
+   network   = collMap_get( groups, &mcastAddr );
    if( network ) {
       return network;
    }
-   network = Network_Network( address, intrfc, port, platformId, execId );
+   network = Network_new( address, intrfc, port, platformId, execId );
    key     = (unsigned int *)malloc( sizeof( unsigned int ));
    *key    = mcastAddr;
-   collMapVoidPtr_put( groups, key, network, NULL );
+   collMap_put( groups, key, network, NULL );
    return network;
 }
 
 void dcrudNetworks_leave( dcrudIParticipant participant ) {
    unsigned int       key     = Network_getMCastAddress( participant );
-   collMapVoidPtrPair previousPair;
+   collMapPair previousPair;
 
-   if( collMapVoidPtr_remove( groups, &key, &previousPair )) {
+   if( collMap_remove( groups, &key, &previousPair )) {
       free( previousPair.key );
       Network_delete( previousPair.value );
    }

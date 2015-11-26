@@ -1,7 +1,7 @@
 #include <os/System.h>
 #include <time.h>
 
-uint64_t System_nanotime( void ) {
+uint64_t osSystem_nanotime( void ) {
    struct timespec tp;
    uint64_t        retVal;
    if( clock_gettime( CLOCK_THREAD_CPUTIME_ID, &tp )) {

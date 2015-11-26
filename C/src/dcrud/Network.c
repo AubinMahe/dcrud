@@ -1,5 +1,7 @@
 #include "Network.h"
 #include "Cache.h"
+#include "Dispatcher.h"
+#include "Shareable_private.h"
 
 #include <util/check.h>
 
@@ -9,11 +11,11 @@
 #include <io/ByteBuffer.h>
 #include <io/socket.h>
 
-#include <os/mutex.h>
 #include <os/System.h>
 
 #include <dbg/Performance.h>
 #include <dbg/Dump.h>
+#include <os/Mutex.h>
 
 #include <stdio.h>
 
@@ -38,14 +40,14 @@ typedef struct Network_s {
    osMutex            frameMutex;
    ioByteBuffer       frame;
    osMutex            factoriesMutex;
-   collMapFuncPtr     factories;
-   collMapVoidPtr     callbacks;
+   collMap            factories;
+   collMap            callbacks;
    struct sockaddr_in target;
    SOCKET             channel;
    byte               platformId;
    byte               execId;
-   unsigned           itemCount;
-   unsigned           callId;
+   unsigned int       itemCount;
+   int                callId;
 
 } Network;
 
@@ -55,7 +57,7 @@ static void exitHook( void ) {
 }
 #endif
 
-dcrudIParticipant Network_Network(
+dcrudIParticipant Network_new(
    const char *   address,
    const char *   intrfc,
    unsigned short port,
@@ -118,6 +120,7 @@ dcrudIParticipant Network_Network(
    }
    osMutex_new( &This->factoriesMutex );
    osMutex_new( &This->cachesMutex );
+   This->dispatcher = dcrudDispatcher_new((dcrudIParticipant)This );
    return (dcrudIParticipant)This;
 }
 
@@ -131,41 +134,40 @@ unsigned int Network_getMCastAddress( dcrudIParticipant self ) {
    return This->target.sin_addr.s_addr;
 }
 
-dcrudShareable Network_newInstance(
-   dcrudIParticipant self,
-   dcrudClassID *    classId,
-   ioByteBuffer      frame   )
-{
-   Network *             This    = (Network *)self;
-   dcrudShareable        item    = NULL;
-   dcrudShareableFactory factory = NULL;
-   osMutex_take( This->factoriesMutex );
-   factory = (dcrudShareableFactory)collMapFuncPtr_get( This->factories, classId );
-   if( factory ) {
-      item = factory();
-      if( item ) {
-         if( IO_STATUS_NO_ERROR != dcrudShareable_serialize( item, frame )) {
-#ifndef STATIC_ALLOCATION
-            free( item );
-#endif
-            item = NULL;
-         }
-      }
-   }
-   osMutex_release( This->factoriesMutex );
-   return item;
-}
+typedef struct Factory_s {
+
+   size_t                     size;
+   dcrudShareable_Initialize  initialize;
+   dcrudShareable_Set         set;
+   dcrudShareable_Serialize   serialize;
+   dcrudShareable_Unserialize unserialize;
+
+} Factory;
 
 bool dcrudIParticipant_registerClass(
-   dcrudIParticipant     self,
-   dcrudClassID          id,
-   dcrudShareableFactory factory )
+   dcrudIParticipant          self,
+   dcrudClassID               id,
+   size_t                     size,
+   dcrudShareable_Initialize  initialize,
+   dcrudShareable_Set         set,
+   dcrudShareable_Serialize   serialize,
+   dcrudShareable_Unserialize unserialize )
 {
-   Network * This = (Network *)self;
-   bool      known;
+   Network *   This = (Network *)self;
+   bool        known;
+   Factory *   factory = (Factory *)malloc( sizeof( Factory ));
+   collMapPair previous;
 
+   factory->size        = size;
+   factory->initialize  = initialize;
+   factory->set         = set;
+   factory->serialize   = serialize;
+   factory->unserialize = unserialize;
    osMutex_take( This->factoriesMutex );
-   known = collMapFuncPtr_put( This->factories, id, (collMapFuncPtrValue)factory, NULL );
+   known = collMap_put( This->factories, id, (collMapValue)factory, &previous );
+   if( known ) {
+      free( previous.value );
+   }
    osMutex_release( This->factoriesMutex );
    return known;
 }
@@ -180,9 +182,9 @@ dcrudStatus dcrudIParticipant_createCache( dcrudIParticipant self, dcrudICache *
       status  = DCRUD_TOO_MANY_CACHES;
    }
    else {
-      This->caches[nextCacheID++] = dcrudCache_init( self, This->platformId, This->execId );
+      This->caches[nextCacheID++] = dcrudCache_new( self, This->platformId, This->execId );
    }
-   osMutex_release( This->factoriesMutex );
+   osMutex_release( This->cachesMutex );
    return status;
 }
 
@@ -192,13 +194,55 @@ dcrudICache dcrudIParticipant_getCache( dcrudIParticipant self, byte ID ) {
 
    osMutex_take( This->cachesMutex );
    cache = This->caches[ID];
-   osMutex_release( This->factoriesMutex );
+   osMutex_release( This->cachesMutex );
    return cache;
 }
 
 dcrudIDispatcher dcrudIParticipant_getDispatcher( dcrudIParticipant self ) {
    Network * This  = (Network *)self;
    return This->dispatcher;
+}
+
+dcrudShareable dcrudIParticipant_createShareable( dcrudIParticipant self, dcrudClassID classID ) {
+   Network *            This    = (Network *)self;
+   dcrudShareableImpl * item    = NULL;
+   Factory *            factory = NULL;
+
+   osMutex_take( This->factoriesMutex );
+   factory = (Factory *)collMap_get( This->factories, classID );
+   osMutex_release( This->factoriesMutex );
+   if( factory ) {
+      item = (dcrudShareableImpl *)malloc( sizeof( dcrudShareableImpl ) + factory->size );
+      item->classID = classID;
+      if( !factory->initialize((dcrudShareable)item )) {
+         free( item );
+         item = NULL;
+      }
+   }
+   return (dcrudShareable)item;
+}
+
+dcrudShareable Network_newInstance( dcrudIParticipant self, ioByteBuffer frame ) {
+   Network *            This    = (Network *)self;
+   dcrudShareableImpl * item    = NULL;
+   Factory *            factory = NULL;
+   dcrudClassID         classID;
+
+   dcrudClassID_unserialize( frame, &classID );
+   osMutex_take( This->factoriesMutex );
+   factory = (Factory *)collMap_get( This->factories, classID );
+   osMutex_release( This->factoriesMutex );
+   if( factory ) {
+      item = (dcrudShareableImpl *)malloc( sizeof( dcrudShareableImpl ) + factory->size );
+      item->classID     = classID;
+      item->serialize   = factory->serialize;
+      item->unserialize = factory->unserialize;
+      if( IO_STATUS_NO_ERROR != factory->unserialize((dcrudShareable)item, frame )) {
+         free( item );
+         item = NULL;
+      }
+   }
+   return (dcrudShareable)item;
 }
 
 static void initFrame( Network * This, byte cacheId ) {
@@ -224,7 +268,7 @@ static void LOW_LEVEL_IO_PRINT_SENT( ioByteBuffer frame, struct sockaddr_in targ
 #  define LOW_LEVEL_IO_PRINT_SENT(f,t)
 #endif
 
-      static void sendFrame( Network * This ) {
+static void sendFrame( Network * This ) {
    if( This->itemCount > 0 ) {
       size_t position  = ioByteBuffer_getPosition( This->frame );
       ioByteBuffer_reset ( This->frame );
@@ -248,9 +292,10 @@ static void sendFrameIfNeeded( Network * This, byte cacheId ) {
 }
 
 static void pushCreateOrUpdateItem( Network * This, byte cacheId, dcrudShareable item ) {
+   dcrudShareableImpl * concrete = (dcrudShareableImpl *)item;
    size_t size;
-   ioByteBuffer_clear   ( This->payload );
-   dcrudShareable_serialize( item, This->payload );
+   ioByteBuffer_clear    ( This->payload );
+   concrete->serialize( item, This->payload );
    ioByteBuffer_flip     ( This->payload );
    size = ioByteBuffer_remaining( This->payload );
    ioByteBuffer_clear    ( This->header );
@@ -310,32 +355,33 @@ void Network_publish( dcrudIParticipant self, byte cacheId, collSet updated, col
    osMutex_release( This->frameMutex );
 }
 
-static bool serializeArgument( collMapVoidPtrForeach * context ) {
-   const char * name    = (const char *)context->key;
-   Network *    network = (Network *   )context->user;
+static bool serializeArgument( collForeach * context ) {
+   Network *            network = (Network *           )context->user;
+   collMapPair * pair    = (collMapPair *)context->item;
+   const char *         name    = (const char *        )pair->key;
    ioByteBuffer_putString( network->frame, name );
    if( 0 == strcmp( name, "@queue" )) {
-      byte * value = (byte *)context->value;
+      byte * value = (byte *)pair->value;
       ioByteBuffer_putByte( network->frame, *value );
    }
    else if( 0 == strcmp( name, "@mode" )) {
-      byte * value = (byte *)context->value;
+      byte * value = (byte *)pair->value;
       ioByteBuffer_putByte( network->frame, *value );
    }
    else {
-      dcrudShareable item = (dcrudShareable)context->value;
-      dcrudClassID_serialize( dcrudShareable_getClassID( item ), network->frame );
-      dcrudShareable_serialize( item, network->frame );
+      dcrudShareableImpl * item = (dcrudShareableImpl *)pair->value;
+      dcrudClassID_serialize( item->classID, network->frame );
+      item->serialize((dcrudShareable)item, network->frame );
    }
    return true;
 }
 
 static void sendCall(
-   Network *      This,
-   const char *   intrfcName,
-   const char *   opName,
-   collMapVoidPtr in,
-   unsigned       callId )
+   Network *    This,
+   const char * intrfcName,
+   const char * opName,
+   collMap      in,
+   int          callId )
 {
    osMutex_take( This->frameMutex );
    ioByteBuffer_clear    ( This->frame );
@@ -343,28 +389,28 @@ static void sendCall(
    ioByteBuffer_putByte  ( This->frame, This->platformId );
    ioByteBuffer_putByte  ( This->frame, This->execId );
    ioByteBuffer_putByte  ( This->frame, 0 ); /* cache 0 doesn't exists, it's a flag for operation */
-   ioByteBuffer_putInt   ( This->frame, collMapVoidPtr_size( in ));
+   ioByteBuffer_putInt   ( This->frame, collMap_size( in ));
    ioByteBuffer_putString( This->frame, intrfcName );
    ioByteBuffer_putString( This->frame, opName );
-   ioByteBuffer_putInt   ( This->frame, callId );
-   collMapVoidPtr_foreach( in, serializeArgument, This );
+   ioByteBuffer_putInt   ( This->frame, (unsigned int)callId );
+   collMap_foreach( in, serializeArgument, This );
    ioByteBuffer_flip     ( This->frame );
    ioByteBuffer_send     ( This->frame, This->channel, &This->target );
    LOW_LEVEL_IO_PRINT_SENT( This->frame, This->target );
    osMutex_release( This->frameMutex );
 }
 
-unsigned int call(
+int Network_call(
    dcrudIParticipant self,
    const char *      intrfcName,
    const char *      opName,
-   collMapVoidPtr    in,
+   collMap           in,
    dcrudICallback    callback )
 {
    Network * This = (Network *)self;
    sendCall( This, intrfcName, opName, in, This->callId );
    if( callback ) {
-      collMapVoidPtr_put( This->callbacks, &This->callId, callback, NULL );
+      collMap_put( This->callbacks, &This->callId, callback, NULL );
       return This->callId++;
    }
    return 0;
@@ -377,12 +423,119 @@ void dcrudIParticipant_run( dcrudIParticipant self ) {
    for( atStart = 0;;) {
       ioByteBuffer frame = ioByteBuffer_new( 64*1024 );
       if( atStart > 0 ) {
-         Performance_record( "network", System_nanotime() - atStart );
+         dbgPerformance_record( "network", osSystem_nanotime() - atStart );
       }
       ioByteBuffer_receive( frame, This->channel );
-      atStart = System_nanotime();
+      atStart = osSystem_nanotime();
       ioByteBuffer_flip( frame );
       dump( stderr, ioByteBuffer_getBytes( frame ), ioByteBuffer_getPosition( frame ));
       ioByteBuffer_get( frame, signa, 0, sizeof( signa ));
+      if( 0 == strcmp((const char *)signa, (const char *)SIGNATURE )) {
+         byte         platformId = 0;
+         byte         execId     = 0;
+         byte         cacheId    = 0;
+         unsigned int count      = 0;
+         collMap      arguments  = collMap_new((collComparator)strcmp );
+
+         ioByteBuffer_getByte( frame, &platformId );
+         ioByteBuffer_getByte( frame, &execId     );
+         ioByteBuffer_getByte( frame, &cacheId    );
+         ioByteBuffer_getInt ( frame, &count      );
+         if( cacheId == 0 ) { /* cache 0 doesn't exists, it's a flag for operation */
+            char          intrfcName[1000];
+            char          opName[1000];
+            int           callId;
+            unsigned int  i;
+            byte          queueNdx = DCRUD_DEFAULT_QUEUE;
+            dcrudCallMode callMode = DCRUD_ASYNCHRONOUS_DEFERRED;
+
+            ioByteBuffer_getString( frame, intrfcName, sizeof( intrfcName ));
+            ioByteBuffer_getString( frame, opName    , sizeof( opName     ));
+            ioByteBuffer_getInt   ( frame, (unsigned int *)&callId );
+            for( i = 0; i < count; ++i ) {
+               char argName[1000];
+               ioByteBuffer_getString( frame, argName, sizeof( argName ));
+               if( 0 == strcmp( argName, "@queue" )) {
+                  ioByteBuffer_getByte( frame, &queueNdx );
+               }
+               else if( 0 == strcmp( argName, "@mode" )) {
+                  ioByteBuffer_getByte( frame, (byte *)&callMode );
+               }
+               else {
+                  dcrudShareable item = Network_newInstance( self, frame );
+                  collMap_put( arguments, argName, item, NULL );
+               }
+            }
+            if( callId > 0 ) {
+               collMap out = collMap_new((collComparator)strcmp );
+               dcrudIDispatcher_execute(
+                  This->dispatcher, intrfcName, opName, arguments, out, queueNdx, callMode );
+               if( collMap_size( out ) > 0 ) {
+                  sendCall( This, intrfcName, opName, out, -callId );
+               }
+            }
+            else if( callId < 0 ) {
+               int            key      = -callId;
+               dcrudICallback callback = collMap_get( This->callbacks, &key );
+               if( callback == NULL ) {
+                  fprintf( stderr, "Unknown Callback received: %s.%s, id: %d\n",
+                     intrfcName, opName, -callId );
+               }
+               else {
+                  dcrudICallback_callback( callback, intrfcName, opName, arguments );
+               }
+            }
+         }
+         else {
+            unsigned int  i;
+            for( i = 0; i < count; ++i ) {
+               unsigned size;
+               int      c;
+
+               ioByteBuffer_getInt( frame, &size );
+               if( size == 0 ) {
+                  dcrudGUID id;
+                  osMutex_take( This->cachesMutex );
+                  dcrudGUID_unserialize( frame, &id );
+                  for( c = 0; c < 256; ++c ) {
+                     if( This->caches[c] ) {
+                        dcrudCache_deleteFromNetwork( This->caches[c], &id );
+                     }
+                     else {
+                        break;
+                     }
+                  }
+                  osMutex_release( This->cachesMutex );
+               }
+               else {
+                  osMutex_take( This->cachesMutex );
+                  for( c = 0; c < 256; ++c ) {
+                     if( This->caches[c] ) {
+                        if( ! dcrudCache_matches((dcrudICache)This->caches[c], platformId, execId, cacheId )) {
+                           dcrudCache_updateFromNetwork(
+                              This->caches[c],
+                              ioByteBuffer_copy( frame, GUID_SIZE + CLASS_ID_SIZE + size ));
+                        }
+                     }
+                     else {
+                        break;
+                     }
+                  }
+                  osMutex_release( This->cachesMutex );
+                  ioByteBuffer_setPosition( frame,
+                     ioByteBuffer_getPosition( frame ) + GUID_SIZE + CLASS_ID_SIZE + size );
+               }
+            }
+         }
+         if( ioByteBuffer_remaining( frame )) {
+            fprintf( stderr, "Frame decoding failed, %lu bytes remaining!\n",
+               ioByteBuffer_remaining( frame ));
+         }
+      }
+      else {
+         fprintf( stderr, "Garbage received, %lu bytes discarded!\n",
+            ioByteBuffer_getLimit( frame ));
+      }
+
    }
 }

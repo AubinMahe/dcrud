@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct collPrivateList_s {
+typedef struct List_s {
 
    unsigned       count;
 #ifdef STATIC_ALLOCATION
@@ -14,10 +14,10 @@ typedef struct collPrivateList_s {
    collListItem * items;
 #endif
 
-} collPrivateList;
+} List;
 
 #ifdef STATIC_ALLOCATION
-static collPrivateList Lists[COLL_LIST_MAX_COUNT];
+static List Lists[COLL_LIST_MAX_COUNT];
 static unsigned int    NextList = 0;
 unsigned int collLimitsListCountMax     = 0;
 unsigned int collLimitsListItemCountMax = 0;
@@ -29,9 +29,9 @@ collList collList_new() {
       fprintf( stderr, "%s:%d:collList_reserve: out of memory!\n", __FILE__, __LINE__ );
       return NULL;
    }
-   collPrivateList * This = &Lists[NextList++];
+   List * This = &Lists[NextList++];
 #else
-   collPrivateList * This = (collPrivateList *)malloc( sizeof( collPrivateList ));
+   List * This = (List *)malloc( sizeof( List ));
 #endif
    This->count = 0;
 #ifndef STATIC_ALLOCATION
@@ -42,7 +42,7 @@ collList collList_new() {
 }
 
 void collList_delete( collList * self ) {
-   collPrivateList * This = (collPrivateList *)*self;
+   List * This = (List *)*self;
    This->count = 0;
 #ifndef STATIC_ALLOCATION
    free( This->items );
@@ -54,7 +54,7 @@ void collList_delete( collList * self ) {
 }
 
 void collList_clear( collList self ) {
-   collPrivateList * This = (collPrivateList *)self;
+   List * This = (List *)self;
    This->count = 0;
 #ifndef STATIC_ALLOCATION
    This->limit = 100;
@@ -63,7 +63,7 @@ void collList_clear( collList self ) {
 }
 
 void collList_add( collList self, collListItem item ) {
-   collPrivateList * This = (collPrivateList *)self;
+   List * This = (List *)self;
 #ifdef STATIC_ALLOCATION
    if( This->count == COLL_LIST_ITEM_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collList_add: out of memory!\n", __FILE__, __LINE__ );
@@ -79,7 +79,7 @@ void collList_add( collList self, collListItem item ) {
 }
 
 bool collList_remove( collList self, collListItem item ) {
-   collPrivateList * This = (collPrivateList *)self;
+   List * This = (List *)self;
    unsigned i;
    for( i = 0; i < This->count; ++i ) {
       if( This->items[i] == item ) {
@@ -95,16 +95,16 @@ bool collList_remove( collList self, collListItem item ) {
 }
 
 collListItem collList_get( collList self, unsigned int index ) {
-   collPrivateList * This = (collPrivateList *)self;
+   List * This = (List *)self;
    return index < This->count ? This->items[index] : NULL;
 }
 
 unsigned int collList_size( collList self ) {
-   return ((collPrivateList *)self )->count;
+   return ((List *)self )->count;
 }
 
 collForeachResult collList_foreach( collList self, collForeachFunction fn, void * userData ) {
-   collPrivateList * This = (collPrivateList *)self;
+   List * This = (List *)self;
    collForeach context;
    context.user = userData;
    for( context.index = 0; context.index < This->count; ++context.index ) {
@@ -114,4 +114,9 @@ collForeachResult collList_foreach( collList self, collForeachFunction fn, void 
       }
    }
    return context.retVal;
+}
+
+collListValues collList_values( collList self ) {
+   List * This = (List *)self;
+   return This->items;
 }

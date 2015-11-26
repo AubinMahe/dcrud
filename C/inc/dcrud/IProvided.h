@@ -1,6 +1,11 @@
 #pragma once
-#include <dcrud/IOperation.h>
 
 UTIL_ADT( dcrudIProvided );
 
-bool dcrudIProvided_addOperation( const char * operationName, dcrudIOperation executor );
+typedef void (* dcrudIOperation)( void * context, collMap in, collMap out );
+
+bool dcrudIProvided_addOperation(
+   dcrudIProvided  provided,
+   const char *    name,
+   void *          context,
+   dcrudIOperation operation );

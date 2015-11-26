@@ -2,7 +2,7 @@
 
 #include <util/types.h>
 
-#define COLL_MAP_TYPE collMapVoidPtr
+#define COLL_MAP_TYPE collMap
 typedef void * UTIL_CONCAT(COLL_MAP_TYPE,Value);
 
 #include <coll/Map.template>

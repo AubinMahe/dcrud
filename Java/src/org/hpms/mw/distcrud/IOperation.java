@@ -4,5 +4,5 @@ import java.util.Map;
 
 public interface IOperation {
 
-   boolean execute( Map<String, Object> in, Map<String, Object> out );
+   void execute( Map<String, Object> in, Map<String, Object> out );
 }

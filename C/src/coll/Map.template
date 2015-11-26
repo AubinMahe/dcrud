@@ -112,26 +112,6 @@ bool COLL_MAP_NAME(_put)(
    return retVal;
 }
 
-COLL_MAP_NAME(Value) COLL_MAP_NAME(_get)( COLL_MAP_TYPE self, COLL_MAP_NAME(Key) key ) {
-   COLL_MAP_NAME(Private) * This = (COLL_MAP_NAME(Private)*)self;
-   COLL_MAP_NAME(Pair) *    pair;
-   COLL_MAP_NAME(Pair)      keyPair;
-
-   keyPair.key   = key;
-   keyPair.value = NULL;
-   pair =
-      bsearch(
-         &keyPair,
-         This->pairs,
-         This->count,
-         sizeof( COLL_MAP_NAME(Pair)),
-         (PVoidComparator)This->cmp );
-   if( pair ) {
-      return pair->value;
-   }
-   return 0;
-}
-
 bool COLL_MAP_NAME(_remove)(
    COLL_MAP_TYPE         self,
    COLL_MAP_NAME(Key )   key,
@@ -163,20 +143,48 @@ unsigned int COLL_MAP_NAME(_size)( COLL_MAP_TYPE self ) {
    return ((COLL_MAP_NAME(Private)*)self)->count;
 }
 
-COLL_MAP_NAME(ForeachResult) COLL_MAP_NAME(_foreach)(
-   COLL_MAP_TYPE                  self,
-   COLL_MAP_NAME(ForeachFunction) fn,
-   void *                         userData )
+COLL_MAP_NAME(Value) COLL_MAP_NAME(_get)( COLL_MAP_TYPE self, COLL_MAP_NAME(Key) key ) {
+   COLL_MAP_NAME(Private) * This = (COLL_MAP_NAME(Private)*)self;
+   COLL_MAP_NAME(Pair) *    pair;
+   COLL_MAP_NAME(Pair)      keyPair;
+
+   keyPair.key   = key;
+   keyPair.value = NULL;
+   pair =
+      bsearch(
+         &keyPair,
+         This->pairs,
+         This->count,
+         sizeof( COLL_MAP_NAME(Pair)),
+         (PVoidComparator)This->cmp );
+   if( pair ) {
+      return pair->value;
+   }
+   return 0;
+}
+
+bool COLL_MAP_NAME(_hasKey)( COLL_MAP_TYPE self, COLL_MAP_NAME(Key) key ) {
+   return COLL_MAP_NAME(_get)( self, key ) != NULL;
+}
+
+collForeachResult COLL_MAP_NAME(_foreach)(
+   COLL_MAP_TYPE       self,
+   collForeachFunction fn,
+   void *              userData )
 {
    COLL_MAP_NAME(Private) * This = (COLL_MAP_NAME(Private)*)self;
-   COLL_MAP_NAME(Foreach)   context;
+   collForeach              context;
    context.user = userData;
    for( context.index = 0; context.index < This->count; ++context.index ) {
-      context.key   = This->pairs[context.index].key;
-      context.value = This->pairs[context.index].value;
+      context.item  = This->pairs + context.index;
       if( !fn( &context ) ) {
          break;
       }
    }
    return context.retVal;
+}
+
+COLL_MAP_NAME(Pairs) COLL_MAP_NAME(_values)( COLL_MAP_TYPE self ) {
+   COLL_MAP_NAME(Private) * This = (COLL_MAP_NAME(Private)*)self;
+   return This->pairs;
 }

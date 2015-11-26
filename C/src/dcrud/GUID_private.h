@@ -12,3 +12,4 @@ typedef struct dcrudGUIDImpl_s {
 
 dcrudGUIDImpl * dcrudGUID_init    ( void );
 bool            dcrudGUID_isShared( const dcrudGUIDImpl * This );
+void            dcrudGUID_set     ( dcrudGUID This, const dcrudGUID right );

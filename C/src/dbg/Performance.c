@@ -1,32 +1,32 @@
 #include <dbg/Performance.h>
 
-#include <coll/MapVoidPtr.h>
 #include <coll/List.h>
+#include <coll/Map.h>
 
 #include <stdio.h>
 #include <string.h>
 
-static collMapVoidPtr s_samplesByAttribute;
-static bool           s_enabled = false;
+static collMap s_samplesByAttribute;
+static bool    s_enabled = false;
 
-void Performance_enable( bool enabled ) {
+void dbgPerformance_enable( bool enabled ) {
    s_enabled = enabled;
 }
 
-void Performance_record( const char * attribute, uint64_t elapsed ) {
+void dbgPerformance_record( const char * attribute, uint64_t elapsed ) {
    collList          samples;
    uint64_t *        sample;
-   collMapVoidPtrKey key;
+   collMapKey key;
 
    if( ! s_enabled ) {
       return;
    }
    key     = strdup( attribute );
-   samples = (collList)collMapVoidPtr_get( s_samplesByAttribute, key );
+   samples = (collList)collMap_get( s_samplesByAttribute, key );
    sample  = (uint64_t *)malloc( sizeof( uint64_t ));
    *sample = elapsed;
    if( samples == NULL ) {
-      collMapVoidPtr_put( s_samplesByAttribute, key, samples = collList_new(), NULL );
+      collMap_put( s_samplesByAttribute, key, samples = collList_new(), NULL );
    }
    collList_add( samples, sample );
 }
@@ -40,8 +40,8 @@ typedef struct MinMaxAvg_s {
 } MinMaxAvg;
 
 static bool computeSample( collForeach * context ) {
-   uint64_t *  sample = (uint64_t *)context->item;
    MinMaxAvg * minMaxAvg = (MinMaxAvg *)context->user;
+   uint64_t *  sample    = (uint64_t * )context->item;
 
    if( *sample < minMaxAvg->min ) {
       minMaxAvg->min = (double)*sample;
@@ -53,12 +53,13 @@ static bool computeSample( collForeach * context ) {
    return true;
 }
 
-static bool saveSamplesToText( collMapVoidPtrForeach * context ) {
-   const char * attribute = (const char *)context->key;
-   collList     samples   = (collList    )context->value;
-   FILE *       out       = (FILE *      )context->user;
-   MinMaxAvg    minMaxAvg = { 1.0E30, 0.0, 0.0 };
-   double       avg       = 0.0;
+static bool saveSamplesToText( collForeach * context ) {
+   FILE *               out       = (FILE *              )context->user;
+   collMapPair * pair      = (collMapPair *)context->item;
+   const char *         attribute = (const char *        )pair->key;
+   collList             samples   = (collList            )pair->value;
+   MinMaxAvg            minMaxAvg = { 1.0E30, 0.0, 0.0 };
+   double               avg       = 0.0;
 
    collList_foreach( samples, computeSample, &minMaxAvg );
    avg = minMaxAvg.sum / collList_size( samples );
@@ -67,13 +68,14 @@ static bool saveSamplesToText( collMapVoidPtrForeach * context ) {
    return true;
 }
 
-static bool saveSamplesToGnuPlot( collMapVoidPtrForeach * context ) {
-   const char * attribute      = (const char *)context->key;
-   collList     samples        = (collList    )context->value;
-   char         filename[1024] = "";
-   FILE *       out;
-   unsigned int count;
-   unsigned int index;
+static bool saveSamplesToGnuPlot( collForeach * context ) {
+   collMapPair * pair           = (collMapPair *)context->item;
+   const char *         attribute      = (const char *        )pair->key;
+   collList             samples        = (collList            )pair->value;
+   char                 filename[1024] = "";
+   FILE *               out;
+   unsigned int         count;
+   unsigned int         index;
 
    strcat( filename, attribute );
    strcat( filename, ".dat" );
@@ -87,7 +89,7 @@ static bool saveSamplesToGnuPlot( collMapVoidPtrForeach * context ) {
    return true;
 }
 
-void Performance_saveToDisk( void ) {
+void dbgPerformance_saveToDisk( void ) {
    FILE * out;
    if( ! s_enabled ) {
       return;
@@ -97,8 +99,8 @@ void Performance_saveToDisk( void ) {
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
    fprintf( out, "| Attribute  |    Min µs |    Max µs |    Avg µs |\n" );
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
-   collMapVoidPtr_foreach( s_samplesByAttribute, saveSamplesToText, out );
+   collMap_foreach( s_samplesByAttribute, saveSamplesToText, out );
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
    fclose( out );
-   collMapVoidPtr_foreach( s_samplesByAttribute, saveSamplesToGnuPlot, out );
+   collMap_foreach( s_samplesByAttribute, saveSamplesToGnuPlot, out );
 }

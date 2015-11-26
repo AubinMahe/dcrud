@@ -24,6 +24,6 @@ UTIL_ADT( dcrudIRequired );
 dcrudStatus dcrudIRequired_call(
    dcrudIRequired This,
    const char *   opName,
-   collMapVoidPtr arguments,
+   collMap        arguments,
    dcrudICallback callback,
    int *          callId    );

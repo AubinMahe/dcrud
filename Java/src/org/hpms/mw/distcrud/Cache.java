@@ -37,11 +37,6 @@ final class Cache implements ICache {
       _cacheId    = _NextCacheId++;
    }
 
-   @Override
-   public byte getId() {
-      return _cacheId;
-   }
-
    boolean matches( byte platformId, byte execId, byte cacheId ) {
       return( platformId == _platformId )
          && ( execId     == _execId     )
@@ -53,18 +48,9 @@ final class Cache implements ICache {
       return matches( id._platform, id._exec, id._cache );
    }
 
-   Collection<Shareable> getContents() {
-      return _local.values();
-   }
-
    @Override
    public void setOwnership( boolean enabled ) {
       _ownershipCheck = enabled;
-   }
-
-   @Override
-   public void subscribe( ClassID id ) {
-      _classes.add( id );
    }
 
    @Override
@@ -89,14 +75,6 @@ final class Cache implements ICache {
    @Override
    public <T extends Shareable> T read( GUID id ) {
       return (T)_local.get( id );
-   }
-
-   @Override
-   public Set<Shareable> select( Predicate<Shareable> query ) {
-      return _local.values()
-         .parallelStream()
-         .filter( query )
-         .collect( Collectors.toSet());
    }
 
    @Override
@@ -133,6 +111,19 @@ final class Cache implements ICache {
    }
 
    @Override
+   public Collection<Shareable> values() {
+      return _local.values();
+   }
+
+   @Override
+   public Set<Shareable> select( Predicate<Shareable> query ) {
+      return _local.values()
+         .parallelStream()
+         .filter( query )
+         .collect( Collectors.toSet());
+   }
+
+   @Override
    public void publish() throws IOException {
       final long atStart = System.nanoTime();
       synchronized( _updated ) {
@@ -146,16 +137,21 @@ final class Cache implements ICache {
    }
 
    @Override
+   public void subscribe( ClassID id ) {
+      _classes.add( id );
+   }
+
+   @Override
    public void refresh() {
       final long atStart = System.nanoTime();
       synchronized( _local ) {
          synchronized( _toUpdate ) {
             for( final ByteBuffer update : _toUpdate ) {
-               final GUID      id = GUID.unserialize( update );
-               final Shareable t  = _local.get( id );
+               final GUID      id      = GUID.unserialize( update );
+               final ClassID   classId = ClassID.unserialize( update );
+               final Shareable t       = _local.get( id );
                if( t == null ) {
-                  final ClassID   classId = ClassID.unserialize( update );
-                  final Shareable item    = _network.newInstance( classId, update );
+                  final Shareable item = _network.newInstance( classId, update );
                   if( item != null ) {
                      item._id.set( id );
                      _local.put( id, item );
@@ -165,16 +161,13 @@ final class Cache implements ICache {
                   }
                }
                else if( ! _ownershipCheck || ! owns( id )) {
-                  update.position( update.position() + Network.CLASS_ID_SIZE );
                   t.unserialize( update );
                }
             }
             _toUpdate.clear();
          }
          synchronized( _toDelete ) {
-            for( final GUID id : _toDelete ) {
-               _local.remove( id );
-            }
+            _local.keySet().removeAll( _toDelete );
             _toDelete.clear();
          }
       }

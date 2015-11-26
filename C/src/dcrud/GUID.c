@@ -60,6 +60,15 @@ bool dcrudGUID_isShared( const dcrudGUIDImpl * This ) {
    return This->instance > 0;
 }
 
+void dcrudGUID_set( dcrudGUID self, const dcrudGUID id ) {
+   dcrudGUIDImpl * This  = (dcrudGUIDImpl *)self;
+   dcrudGUIDImpl * right = (dcrudGUIDImpl *)id;
+   This->platform = right->platform;
+   This->exec     = right->exec;
+   This->cache    = right->cache;
+   This->instance = right->instance;
+}
+
 bool dcrudGUID_toString( const dcrudGUID self, char * target, size_t targetSize ) {
    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
    int             ret  =

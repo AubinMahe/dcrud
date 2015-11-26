@@ -1,5 +1,5 @@
 #pragma once
-#include <coll/MapVoidPtr.h>
+#include <coll/Map.h>
 #include <dcrud/Shareable.h>
 #include <dcrud/Status.h>
 #include <dcrud/IProvided.h>
@@ -7,6 +7,6 @@
 
 UTIL_ADT( dcrudIDispatcher );
 
-dcrudIProvided dcrudDispatcher_provide       ( dcrudIDispatcher This, const char * name );
-dcrudIRequired dcrudDispatcher_require       ( dcrudIDispatcher This, const char * name );
-void           dcrudDispatcher_handleRequests( dcrudIDispatcher This );
+dcrudIProvided   dcrudDispatcher_provide       ( dcrudIDispatcher This, const char * name );
+dcrudIRequired   dcrudDispatcher_require       ( dcrudIDispatcher This, const char * name );
+void             dcrudDispatcher_handleRequests( dcrudIDispatcher This );

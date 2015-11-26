@@ -32,18 +32,16 @@ public class Sample implements Settings {
    private static final Map<String, Object> _arguments = new HashMap<>();
    private static /* */ IRequired           _iPerson;
 
-   private static boolean create( ICache repository, Map<String, Object> arguments ) {
+   private static void create( ICache repository, Map<String, Object> arguments ) {
       try {
          final Item item = (Item)arguments.get( "newPerson" );
          repository.create( item );
          System.err.printf( "producer|%s\n", item );
          repository.publish();
-         return true;
       }
       catch( final Throwable t ) {
          t.printStackTrace();
       }
-      return false;
    }
 
    private static void producer( IParticipant participant ) {
@@ -52,7 +50,7 @@ public class Sample implements Settings {
          final IDispatcher dispatcher = participant.getDispatcher();
          final IProvided   iPerson    = dispatcher.provide( "IPerson" );
          iPerson.addOperation( "create", ( in, out ) -> create( repository, in ));
-         iPerson.addOperation( "exit"  , ( in, out ) -> { System.exit(0); return true; });
+         iPerson.addOperation( "exit"  , ( in, out ) -> System.exit(0));
          for( int i = 0; i < 100; ++i ) {
             Thread.sleep( 100 );
             dispatcher.handleRequests();

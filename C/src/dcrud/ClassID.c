@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-dcrudClassID dcrudClassID_init( byte package1, byte package2, byte package3, byte clazz ) {
+dcrudClassID dcrudClassID_new( byte package1, byte package2, byte package3, byte clazz ) {
    dcrudClassIDImpl * This = (dcrudClassIDImpl *)malloc( sizeof( dcrudClassIDImpl ));
    memset( This, 0, sizeof( dcrudClassIDImpl ));
    This->package_1 = package1;
@@ -12,9 +12,22 @@ dcrudClassID dcrudClassID_init( byte package1, byte package2, byte package3, byt
    return (dcrudClassID)This;
 }
 
+void dcrudClassID_delete( dcrudClassID * target ) {
+   free( *target );
+   *target = NULL;
+}
+
+void dcrudClassID_get( const dcrudClassID self, byte * pckg1, byte * pckg2, byte * pckg3, byte * clazz ) {
+   dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
+   *pckg1 = This->package_1;
+   *pckg2 = This->package_2;
+   *pckg3 = This->package_3;
+   *clazz = This->clazz;
+}
+
 ioStatus dcrudClassID_unserialize( ioByteBuffer source, dcrudClassID * target ) {
    ioStatus           ioStatus = IO_STATUS_NO_ERROR;
-   dcrudClassIDImpl * This     = (dcrudClassIDImpl *)dcrudClassID_init(0,0,0,0);
+   dcrudClassIDImpl * This     = (dcrudClassIDImpl *)dcrudClassID_new( 0, 0, 0, 0 );
    if( IO_STATUS_NO_ERROR == ioStatus ) {
       ioStatus = ioByteBuffer_getByte( source, &This->package_1 );
    }

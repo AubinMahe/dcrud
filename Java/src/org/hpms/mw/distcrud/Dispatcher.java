@@ -10,24 +10,23 @@ import org.hpms.mw.distcrud.IRequired.CallMode;
 
 class Dispatcher implements IDispatcher {
 
-   private final Network              _repositories;
+   private final Network                   _network;
    private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
    @SuppressWarnings("unchecked")
    private final List<Runnable>[]          _operationQueues = new List[256];
 
-   private class Operation implements Runnable {
+   private static class Operation implements Runnable {
 
-      private final IOperation     _operation;
+      private final IOperation          _operation;
       private final Map<String, Object> _arguments;
       private final Map<String, Object> _results;
 
       public Operation(
-         String              intrfcName,
-         String              opName,
+         IOperation          operation,
          Map<String, Object> arguments,
          Map<String, Object> results    )
       {
-         _operation = _provided.get( intrfcName )._opsInOut.get( opName );
+         _operation = operation;
          _arguments = arguments;
          _results   = results;
       }
@@ -38,7 +37,7 @@ class Dispatcher implements IDispatcher {
       }
    }
 
-   final class ProvidedImpl implements IProvided {
+   final static class ProvidedImpl implements IProvided {
 
       private final Map<String, IOperation> _opsInOut = new HashMap<>();
 
@@ -49,7 +48,7 @@ class Dispatcher implements IDispatcher {
    }
 
    public Dispatcher( Network repositories ) {
-      _repositories = repositories;
+      _network = repositories;
       for( int i = 0; i < _operationQueues.length; ++i ) {
          _operationQueues[i] = new LinkedList<>();
       }
@@ -70,13 +69,15 @@ class Dispatcher implements IDispatcher {
       int                 queueNdx,
       CallMode            callMode )
    {
+      final ProvidedImpl provided  = _provided.get( intrfcName );
+      final IOperation   operation = provided._opsInOut.get( opName );
       if( callMode == CallMode.SYNCHRONOUS ) {
-         _provided.get( intrfcName )._opsInOut.get( opName ).execute( arguments, results );
+         operation.execute( arguments, results );
       }
       else {
          synchronized( _operationQueues ) {
             _operationQueues[queueNdx].add(
-               new Operation( intrfcName, opName, arguments, results ));
+               new Operation( operation, arguments, results ));
          }
          if( callMode == CallMode.ASYNCHRONOUS_IMMEDIATE ) {
             handleRequests();
@@ -108,7 +109,7 @@ class Dispatcher implements IDispatcher {
             if( ! arguments.containsKey( "@queue" )) {
                arguments.put( "@mode", IRequired.DEFAULT_QUEUE );
             }
-            return _repositories.call( name, opName, arguments, callback );
+            return _network.call( name, opName, arguments, callback );
          }
       };
    }

@@ -248,11 +248,11 @@ final class Network implements IParticipant {
                final int  count      = frame.getInt();
                final Map<String, Object> arguments = new HashMap<>();
                if( cacheId == 0 ) { // cache 0 doesn't exists, it's a flag for operation
-                  final String intrfcName = SerializerHelper.getString( frame );
-                  final String opName     = SerializerHelper.getString( frame );
-                  final int    callId     = frame.getInt();
-                  int      queueNdx    = IRequired.DEFAULT_QUEUE;
-                  CallMode callMode    = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
+                  final String   intrfcName = SerializerHelper.getString( frame );
+                  final String   opName     = SerializerHelper.getString( frame );
+                  final int      callId     = frame.getInt();
+                  /* */ int      queueNdx   = IRequired.DEFAULT_QUEUE;
+                  /* */ CallMode callMode   = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
                   for( int i = 0; i < count; ++i ) {
                      final String argName = SerializerHelper.getString( frame );
                      if( argName.equals("@queue")) {
@@ -293,19 +293,27 @@ final class Network implements IParticipant {
                      final int size = frame.getInt();
                      if( size == 0 ) {
                         final GUID id = GUID.unserialize( frame );
-                        for( final Cache cache: _caches ) {
-                           cache.deleteFromNetwork( id );
+                        synchronized( _caches ) {
+                           for( final Cache cache : _caches ) {
+                              if( cache == null ) {
+                                 break;
+                              }
+                              cache.deleteFromNetwork( id );
+                           }
                         }
                      }
                      else {
                         synchronized( _caches ) {
-                           for( int j = 1; j < _caches.length; ++j ) {
-                              final Cache cache = _caches[j];
+                           for( final Cache cache : _caches ) {
                               if( cache == null ) {
                                  break;
                               }
                               if( ! cache.matches( platformId, execId, cacheId )) {
-                                 cache.updateFromNetwork( frame.duplicate());
+                                 final int    payloadSize = GUID_SIZE + CLASS_ID_SIZE + size;
+                                 final byte[] copy        = new byte[payloadSize];
+                                 System.arraycopy(
+                                    frame.array(), frame.position(), copy, 0, payloadSize );
+                                 cache.updateFromNetwork( ByteBuffer.wrap( copy ));
                               }
                            }
                         }

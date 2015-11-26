@@ -1,3 +1,3 @@
-#include <coll/MapVoidPtr.h>
-#define COLL_MAP_TYPE collMapVoidPtr
+#include <coll/Map.h>
+#define COLL_MAP_TYPE collMap
 #include "Map.template"

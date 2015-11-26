@@ -17,8 +17,8 @@ static const char *         MC_GROUP  = "224.0.0.3";
 static const unsigned short MC_PORT   = 2416;
 static const char *         MC_INTRFC = "192.168.1.6";
 
-static const byte RECTANGLE_CLASS_ID = 1;
-static const byte ELLIPSE_CLASS_ID   = 2;
+dcrudClassID rectangleClassID;
+dcrudClassID ellipseClassID;
 
 typedef struct FxColor_s {
 
@@ -104,18 +104,19 @@ static double nextDouble( double max, double min ) {
 
 static unsigned int g_rank;
 
-static ShareableShape * createShapeOfClass( byte classId ) {
-   ShareableShape * shape = (ShareableShape *)malloc( sizeof( ShareableShape ));
-   memset( shape, 0, sizeof( ShareableShape ));
-   dcrudShareable_init(
-      shape,
-      &shape->base,
-      (dcrudShareable_setF        )ShareableShape_set,
-      (dcrudShareable_serializeF  )ShareableShape_serialize,
-      (dcrudShareable_unserializeF)ShareableShape_unserialize );
-   sprintf( shape->name, "%s %03u",
-      ( classId == RECTANGLE_CLASS_ID ) ? "Rectangle" : "Ellipse",
-      ++g_rank );
+static bool ShareableShape_init( dcrudShareable shareable ) {
+   dcrudClassID     classID = dcrudShareable_getClassID( shareable );
+   ShareableShape * shape   = (ShareableShape *)dcrudShareable_getUserData( shareable );
+
+   if( classID == rectangleClassID ) {
+      sprintf( shape->name, "%s %03u", "Rectangle", ++g_rank );
+   }
+   else if( classID == ellipseClassID ) {
+      sprintf( shape->name, "%s %03u", "Ellipse", ++g_rank );
+   }
+   else {
+      return false;
+   }
    shape->x              = nextDouble( 540.0,  0.0 );
    shape->y              = nextDouble( 400.0,  0.0 );
    shape->w              = nextDouble( 100.0, 40.0 );
@@ -130,23 +131,16 @@ static ShareableShape * createShapeOfClass( byte classId ) {
    shape->stroke.opacity = nextDouble(   1.0,  0.0 );
    shape->dx             = 1.0;
    shape->dy             = 1.0;
-   return shape;
-}
-
-static dcrudShareable rectangleFactory() {
-   return createShapeOfClass( RECTANGLE_CLASS_ID )->base;
-}
-
-static dcrudShareable ellipseFactory() {
-   return createShapeOfClass( ELLIPSE_CLASS_ID )->base;
+   return true;
 }
 
 static double areaMaxX = 640.0;
 static double areaMaxY = 480.0;
 #define MOVE 2.0
 
-static void move( dcrudICache shapes, ShareableShape * shape ) {
-   bool outOfBounds;
+static void move( dcrudICache shapes, dcrudShareable shareable ) {
+   bool             outOfBounds;
+   ShareableShape * shape = (ShareableShape *)dcrudShareable_getUserData( shareable );
    do {
       outOfBounds = false;
       shape->x += nextDouble( 1.0, 0.0 )*shape->dx;
@@ -210,24 +204,39 @@ int shapesPublisherTests( int argc, char * argv[] ) {
    }
    participant = dcrudNetworks_join( address, intrfc, port, platformId, execId );
    if( participant ) {
-      dcrudClassID     rectangleClass = dcrudClassID_init( 1, 1, 1, RECTANGLE_CLASS_ID );
-      dcrudClassID     ellipseClass   = dcrudClassID_init( 1, 1, 1, ELLIPSE_CLASS_ID );
-      dcrudICache      shapes;
-      ShareableShape * rect1;
-      ShareableShape * elli1;
-      ShareableShape * rect2;
-      ShareableShape * elli2;
-      dcrudIParticipant_registerClass( participant, rectangleClass, rectangleFactory );
-      dcrudIParticipant_registerClass( participant, ellipseClass  , ellipseFactory );
+      dcrudICache    shapes;
+      dcrudShareable rect1;
+      dcrudShareable elli1;
+      dcrudShareable rect2;
+      dcrudShareable elli2;
+
+      rectangleClassID = dcrudClassID_new( 1, 1, 1, 1 );
+      ellipseClassID   = dcrudClassID_new( 1, 1, 1, 2 );
+      dcrudIParticipant_registerClass(
+         participant,
+         rectangleClassID,
+         sizeof( ShareableShape ),
+         (dcrudShareable_Initialize )ShareableShape_init,
+         (dcrudShareable_Set        )ShareableShape_set,
+         (dcrudShareable_Serialize  )ShareableShape_serialize,
+         (dcrudShareable_Unserialize)ShareableShape_unserialize );
+      dcrudIParticipant_registerClass(
+         participant,
+         ellipseClassID,
+         sizeof( ShareableShape ),
+         (dcrudShareable_Initialize )ShareableShape_init,
+         (dcrudShareable_Set        )ShareableShape_set,
+         (dcrudShareable_Serialize  )ShareableShape_serialize,
+         (dcrudShareable_Unserialize)ShareableShape_unserialize );
       dcrudIParticipant_createCache( participant, &shapes );
-      rect1  = createShapeOfClass( RECTANGLE_CLASS_ID );
-      elli1  = createShapeOfClass( ELLIPSE_CLASS_ID );
-      rect2  = createShapeOfClass( RECTANGLE_CLASS_ID );
-      elli2  = createShapeOfClass( ELLIPSE_CLASS_ID );
-      dcrudICache_create( shapes, rect1->base );
-      dcrudICache_create( shapes, elli1->base );
-      dcrudICache_create( shapes, rect2->base );
-      dcrudICache_create( shapes, elli2->base );
+      rect1 = dcrudIParticipant_createShareable( participant, rectangleClassID );
+      elli1 = dcrudIParticipant_createShareable( participant, ellipseClassID );
+      rect2 = dcrudIParticipant_createShareable( participant, rectangleClassID );
+      elli2 = dcrudIParticipant_createShareable( participant, ellipseClassID );
+      dcrudICache_create( shapes, rect1 );
+      dcrudICache_create( shapes, elli1 );
+      dcrudICache_create( shapes, rect2 );
+      dcrudICache_create( shapes, elli2 );
       for( i = 0; i < 1000; ++i ) {
          struct timespec req = { 0, 40*1000*1000 };
          dcrudICache_publish( shapes );
