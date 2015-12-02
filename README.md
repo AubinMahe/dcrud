@@ -29,7 +29,7 @@ Overview
 
 *Interface and utility classes needed to use DCRUD*
 
-- `Networks` offers a single method to obtain a `IParticipant` instance for a particular ring or cloud, identified by its multicast address.
+- `Network` offers a single method to obtain a `IParticipant` instance for a particular ring or cloud, identified by its multicast address.
 - `IParticipant` registers data factories, give the `IDispatcher` singleton and offers methods to create and get `ICache` instances which act as items caches.
 - `ICache` provides **CRUD** interface plus `select`, `publish`, `refresh` to deal with several classes of `Shareable` item. It manages a local cache and tracks local and remote create, update, delete events to synchronize locals and remote caches using `refresh` and `publish` operations. `read` operation is always local. It's an applicative decision to use one or several caches.
 - `Shareable` is an abstract class which owns a GUID (**G**lobal **U**nique **ID**entifier) and a `ClassID`.
@@ -47,7 +47,6 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list (in priority order)
 -----------------------------
 
- * Update C samples
  * Update README.md :
    - Samples
    - Add link to doxygen documentation for C language

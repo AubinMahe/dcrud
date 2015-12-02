@@ -47,16 +47,18 @@ collSet collSet_new( collComparator cmp ) {
 
 void collSet_delete( collSet * self ) {
    collPrivateSet * This = (collPrivateSet *)*self;
+   if( This ) {
 #ifndef STATIC_ALLOCATION
-   free( This->items );
+      free( This->items );
 #endif
-   This->count = 0;
+      This->count = 0;
 #ifndef STATIC_ALLOCATION
-   This->limit = 0;
-   This->items = NULL;
-   free( This );
+      This->limit = 0;
+      This->items = NULL;
+      free( This );
 #endif
-   *self = NULL;
+      *self = NULL;
+   }
 }
 
 void collSet_clear( collSet self ) {

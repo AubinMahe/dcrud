@@ -1,15 +1,14 @@
 #include <io/ByteBuffer.h>
-#include <util/check.h>
-
 #include <stdio.h>
+#include <util/CheckSysCall.h>
 
 typedef struct ioByteBufferImpl_s {
 
    ioByteOrder order;
-   size_t      position;
-   size_t      limit;
-   size_t      capacity;
-   size_t      mark;
+   unsigned int      position;
+   unsigned int      limit;
+   unsigned int      capacity;
+   unsigned int      mark;
    byte *      bytes;
 
 } ioByteBufferImpl;
@@ -17,7 +16,7 @@ typedef struct ioByteBufferImpl_s {
 static bool init            = true;
 static bool hostIsBigEndian = false;
 
-ioByteBuffer ioByteBuffer_new( size_t capacity ) {
+ioByteBuffer ioByteBuffer_new( unsigned int capacity ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)malloc( sizeof( ioByteBufferImpl ));
    if( init ) {
       init = false;
@@ -32,9 +31,13 @@ ioByteBuffer ioByteBuffer_new( size_t capacity ) {
    return (ioByteBuffer)This;
 }
 
-void ioByteBuffer_delete( ioByteBuffer * target ) {
-   free( *target );
-   *target = NULL;
+void ioByteBuffer_delete( ioByteBuffer * self ) {
+   ioByteBufferImpl * This = (ioByteBufferImpl *)*self;
+   if( This ) {
+      free( This->bytes );
+      free( This );
+      *self = NULL;
+   }
 }
 
 void ioByteBuffer_clear( ioByteBuffer self ) {
@@ -67,12 +70,12 @@ void ioByteBuffer_flip( ioByteBuffer self ) {
    This->position = 0;
 }
 
-size_t ioByteBuffer_getPosition( ioByteBuffer self ) {
+unsigned int ioByteBuffer_getPosition( ioByteBuffer self ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
    return This->position;
 }
 
-ioStatus ioByteBuffer_setPosition( ioByteBuffer self, size_t position ) {
+ioStatus ioByteBuffer_setPosition( ioByteBuffer self, unsigned int position ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioStatus           status = IO_STATUS_NO_ERROR;
    if( position < This->limit ) {
@@ -84,19 +87,19 @@ ioStatus ioByteBuffer_setPosition( ioByteBuffer self, size_t position ) {
    return status;
 }
 
-size_t ioByteBuffer_getLimit( ioByteBuffer self ) {
+unsigned int ioByteBuffer_getLimit( ioByteBuffer self ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
    return This->limit;
 }
 
-size_t ioByteBuffer_remaining( ioByteBuffer self ) {
+unsigned int ioByteBuffer_remaining( ioByteBuffer self ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
    return This->limit - This->position;
 }
 
-ioStatus ioByteBuffer_put( ioByteBuffer self, const byte * src, size_t from, size_t to ) {
+ioStatus ioByteBuffer_put( ioByteBuffer self, const byte * src, unsigned int from, unsigned int to ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   const size_t count = to - from;
+   const unsigned int count = to - from;
    if( This->position + count > This->limit ) {
       return IO_STATUS_OVERFLOW;
    }
@@ -105,9 +108,9 @@ ioStatus ioByteBuffer_put( ioByteBuffer self, const byte * src, size_t from, siz
    return IO_STATUS_NO_ERROR;
 }
 
-ioStatus ioByteBuffer_get( ioByteBuffer self, byte * target, size_t from, size_t to ) {
+ioStatus ioByteBuffer_get( ioByteBuffer self, byte * target, unsigned int from, unsigned int to ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   const size_t count = to - from;
+   const unsigned int count = to - from;
    if( This->position + count > This->limit ) {
       return IO_STATUS_UNDERFLOW;
    }
@@ -148,10 +151,10 @@ ioStatus ioByteBuffer_putShort( ioByteBuffer self, unsigned short value ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0x00FF ) >> 8 )|(unsigned short)( value & 0xFF00 << 8 );
+      value = (unsigned short)((( value & 0xFF00 ) >> 8 )|(( value & 0x00FF ) << 8 ));
    }
    memcpy( This->bytes + This->position, &value, sizeof( short ));
-   This->position += sizeof( short );
+   This->position += (unsigned int)sizeof( short );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -165,10 +168,10 @@ ioStatus ioByteBuffer_getShort( ioByteBuffer self, unsigned short * target ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0x00FF ) >> 8 )|(unsigned short)( value & 0xFF00 << 8 );
+      value = (unsigned short)((( value & 0x00FF ) >> 8 )|(( value & 0xFF00 ) << 8 ));
    }
    *target = value;
-   This->position += sizeof( short );
+   This->position += (unsigned int)sizeof( short );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -180,13 +183,13 @@ ioStatus ioByteBuffer_putInt( ioByteBuffer self, unsigned int value ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0xFF000000) >> 24 )
-             |(( value & 0x00FF0000) >>  8 )
-             |(( value & 0x0000FF00) <<  8 )
-             |(  value               << 24 );
+      value = (( value & 0xFF000000 ) >> 24 )
+             |(( value & 0x00FF0000 ) >>  8 )
+             |(( value & 0x0000FF00 ) <<  8 )
+             |(  value                << 24 );
    }
    memcpy( This->bytes + This->position, &value, sizeof( int ));
-   This->position += sizeof( int );
+   This->position += (unsigned int)sizeof( int );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -198,10 +201,10 @@ ioStatus ioByteBuffer_putIntAt ( ioByteBuffer self, unsigned int value, unsigned
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0xFF000000) >> 24 )
-             |(( value & 0x00FF0000) >>  8 )
-             |(( value & 0x0000FF00) <<  8 )
-             |(  value               << 24 );
+      value = (( value & 0xFF000000 ) >> 24 )
+             |(( value & 0x00FF0000 ) >>  8 )
+             |(( value & 0x0000FF00 ) <<  8 )
+             |(  value                << 24 );
    }
    memcpy( This->bytes + index, &value, sizeof( int ));
    return IO_STATUS_NO_ERROR;
@@ -217,13 +220,13 @@ ioStatus ioByteBuffer_getInt( ioByteBuffer self, unsigned int * target ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0xFF000000) >> 24 )
-             |(( value & 0x00FF0000) >>  8 )
-             |(( value & 0x0000FF00) <<  8 )
-             |(  value               << 24 );
+      value = (( value & 0xFF000000 ) >> 24 )
+             |(( value & 0x00FF0000 ) >>  8 )
+             |(( value & 0x0000FF00 ) <<  8 )
+             |(  value                << 24 );
    }
    *target = value;
-   This->position += sizeof( int );
+   This->position += (unsigned int)sizeof( int );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -235,17 +238,17 @@ ioStatus ioByteBuffer_putLong( ioByteBuffer self, uint64_t value ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0xFF00000000000000LL) >> 56 )
-             |(( value & 0x00FF000000000000LL) >> 40 )
-             |(( value & 0x0000FF0000000000LL) >> 24 )
-             |(( value & 0x000000FF00000000LL) >>  8 )
-             |(( value & 0x00000000FF000000LL) <<  8 )
-             |(( value & 0x0000000000FF0000LL) << 24 )
-             |(( value & 0x000000000000FF00LL) << 40 )
-             |(  value                         << 56 );
+      value = (( value & 0xFF00000000000000LL ) >> 56 )
+             |(( value & 0x00FF000000000000LL ) >> 40 )
+             |(( value & 0x0000FF0000000000LL ) >> 24 )
+             |(( value & 0x000000FF00000000LL ) >>  8 )
+             |(( value & 0x00000000FF000000LL ) <<  8 )
+             |(( value & 0x0000000000FF0000LL ) << 24 )
+             |(( value & 0x000000000000FF00LL ) << 40 )
+             |(  value                          << 56 );
    }
    memcpy( This->bytes + This->position, &value, sizeof( uint64_t ));
-   This->position += sizeof( uint64_t );
+   This->position += (unsigned int)sizeof( uint64_t );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -259,17 +262,17 @@ ioStatus ioByteBuffer_getLong( ioByteBuffer self, uint64_t * target ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (( value & 0xFF00000000000000LL) >> 56 )
-             |(( value & 0x00FF000000000000LL) >> 40 )
-             |(( value & 0x0000FF0000000000LL) >> 24 )
-             |(( value & 0x000000FF00000000LL) >>  8 )
-             |(( value & 0x00000000FF000000LL) <<  8 )
-             |(( value & 0x0000000000FF0000LL) << 24 )
-             |(( value & 0x000000000000FF00LL) << 40 )
-             |(  value                         << 56 );
+      value = (( value & 0xFF00000000000000LL ) >> 56 )
+             |(( value & 0x00FF000000000000LL ) >> 40 )
+             |(( value & 0x0000FF0000000000LL ) >> 24 )
+             |(( value & 0x000000FF00000000LL ) >>  8 )
+             |(( value & 0x00000000FF000000LL ) <<  8 )
+             |(( value & 0x0000000000FF0000LL ) << 24 )
+             |(( value & 0x000000000000FF00LL ) << 40 )
+             |(  value                          << 56 );
    }
    *target = value;
-   This->position += sizeof( uint64_t );
+   This->position += (unsigned int)sizeof( uint64_t );
    return IO_STATUS_NO_ERROR;
 }
 
@@ -290,7 +293,7 @@ ioStatus ioByteBuffer_putString( ioByteBuffer This, const char * source ) {
    return status;
 }
 
-ioStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, size_t size ) {
+ioStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, unsigned int size ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    unsigned int       len    = 0U;
    ioStatus            status = ioByteBuffer_getInt( self, &len );
@@ -312,7 +315,7 @@ ioStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, size_t size ) {
 ioStatus ioByteBuffer_putBuffer( ioByteBuffer self, ioByteBuffer other ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioByteBufferImpl * source = (ioByteBufferImpl *)other;
-   size_t             count  = source->limit - source->position;
+   unsigned int             count  = source->limit - source->position;
    if( This->position + count > This->limit ) {
       return IO_STATUS_OVERFLOW;
    }
@@ -325,7 +328,7 @@ ioStatus ioByteBuffer_putBuffer( ioByteBuffer self, ioByteBuffer other ) {
 ioStatus ioByteBuffer_send( ioByteBuffer self, SOCKET sckt, struct sockaddr_in * trgt ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioStatus           retVal = IO_STATUS_NO_ERROR;
-   size_t             len    = This->limit - This->position;
+   unsigned int             len    = This->limit - This->position;
    const char *       buffer = (const char *)( This->bytes + This->position );
    ssize_t            count  =
       sendto( sckt, buffer, len, 0, (struct sockaddr *)trgt, sizeof( struct sockaddr_in ));
@@ -341,7 +344,7 @@ ioStatus ioByteBuffer_send( ioByteBuffer self, SOCKET sckt, struct sockaddr_in *
 ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioStatus           retVal = IO_STATUS_NO_ERROR;
-   size_t             max    = This->limit-This->position;
+   unsigned int       max    = This->limit-This->position;
    void *             buffer = This->bytes+This->position;
    ssize_t            count  = recv( sckt, buffer, max, 0 );
    if( count < 0 ) {
@@ -358,7 +361,7 @@ byte * ioByteBuffer_getBytes( ioByteBuffer self ) {
    return This->bytes;
 }
 
-ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, size_t length ) {
+ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, unsigned int length ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
    ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
    memcpy( copy->bytes, This->bytes + This->position, length );

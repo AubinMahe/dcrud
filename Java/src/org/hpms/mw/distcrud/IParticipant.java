@@ -11,6 +11,4 @@ public interface IParticipant {
    ICache getCache( byte ID );
 
    IDispatcher getDispatcher();
-
-   void run();
 }

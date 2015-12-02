@@ -10,7 +10,7 @@ import org.hpms.mw.distcrud.IRequired.CallMode;
 
 class Dispatcher implements IDispatcher {
 
-   private final Network                   _network;
+   private final ParticipantImpl           _participant;
    private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
    @SuppressWarnings("unchecked")
    private final List<Runnable>[]          _operationQueues = new List[256];
@@ -47,8 +47,8 @@ class Dispatcher implements IDispatcher {
       }
    }
 
-   public Dispatcher( Network repositories ) {
-      _network = repositories;
+   public Dispatcher( ParticipantImpl participant ) {
+      _participant = participant;
       for( int i = 0; i < _operationQueues.length; ++i ) {
          _operationQueues[i] = new LinkedList<>();
       }
@@ -107,9 +107,9 @@ class Dispatcher implements IDispatcher {
                arguments.put( "@mode", CallMode.ASYNCHRONOUS_DEFERRED );
             }
             if( ! arguments.containsKey( "@queue" )) {
-               arguments.put( "@mode", IRequired.DEFAULT_QUEUE );
+               arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
             }
-            return _network.call( name, opName, arguments, callback );
+            return _participant.call( name, opName, arguments, callback );
          }
       };
    }

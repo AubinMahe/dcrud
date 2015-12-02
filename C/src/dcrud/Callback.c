@@ -14,9 +14,12 @@ dcrudICallback dcrudICallback_new( dcrudICallback_function callback, void * user
    return (dcrudICallback)This;
 }
 
-void dcrudICallback_delete( dcrudICallback * This ) {
-   free( *This );
-   *This = NULL;
+void dcrudICallback_delete( dcrudICallback * self ) {
+   dcrudICallbackImpl * This = (dcrudICallbackImpl *)*self;
+   if( This ) {
+      free( This );
+      *self = NULL;
+   }
 }
 
 void dcrudICallback_callback(

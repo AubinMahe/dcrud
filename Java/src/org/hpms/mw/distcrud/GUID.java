@@ -6,63 +6,55 @@ public final class GUID implements Comparable<GUID> {
 
    static GUID unserialize( ByteBuffer buffer ) {
       final GUID id = new GUID();
-      id._platform = buffer.get();
-      id._exec     = buffer.get();
-      id._cache    = buffer.get();
-      id._instance = buffer.getInt();
-      assert id._platform > 0;
-      assert id._exec     > 0;
-      assert id._cache    > 0;
+      id._publisher = buffer.getShort();
+      id._cache     = buffer.get();
+      id._instance  = buffer.getInt();
+      assert id._publisher > 0;
+      assert id._cache     > 0;
+      assert id._instance  > 0;
       return id;
    }
 
-   byte _platform;
-   byte _exec;
-   byte _cache;
-   int  _instance;
+   short _publisher;
+   byte  _cache;
+   int   _instance;
 
    boolean isShared() {
       return _instance > 0;
    }
 
    void set( GUID id ) {
-      _platform = id._platform;
-      _exec     = id._exec;
-      _cache    = id._cache;
-      _instance = id._instance;
-      assert id._platform > 0;
-      assert id._exec     > 0;
-      assert id._cache    > 0;
+      _publisher = id._publisher;
+      _cache     = id._cache;
+      _instance  = id._instance;
+      assert id._publisher > 0;
+      assert id._cache     > 0;
+      assert id._instance  > 0;
    }
 
    @Override
    public String toString() {
-      return String.format( "Instance-%02X-%02X-%02X-%04X",
-         _platform, _exec, _cache, _instance );
+      return String.format( "Instance-%02X-%02X-%04X", _publisher, _cache, _instance );
    }
 
    @Override
    public int compareTo( GUID right ) {
       int delta = 0;
       if( delta == 0 ) {
-         delta = this._platform - right._platform;
+         delta = this._publisher - right._publisher;
       }
       if( delta == 0 ) {
-         delta = this._exec     - right._exec;
+         delta = this._cache     - right._cache;
       }
       if( delta == 0 ) {
-         delta = this._cache    - right._cache;
-      }
-      if( delta == 0 ) {
-         delta = this._instance - right._instance;
+         delta = this._instance  - right._instance;
       }
       return delta;
    }
 
    public void serialize( ByteBuffer buffer ) {
-      buffer.put   ( _platform );
-      buffer.put   ( _exec     );
-      buffer.put   ( _cache    );
-      buffer.putInt( _instance );
+      buffer.putShort( _publisher );
+      buffer.put     ( _cache     );
+      buffer.putInt  ( _instance  );
    }
 }

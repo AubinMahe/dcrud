@@ -1,4 +1,4 @@
-#include <util/check.h>
+#include <util/CheckSysCall.h>
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <winsock2.h>
@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-bool check(
+bool utilCheckSysCall(
    bool         ok,
    const char * file,
    int          line,
@@ -31,7 +31,7 @@ bool check(
       va_list args;
       va_start( args, format );
       vsnprintf( userMsg, sizeof( userMsg ), format, args );
-      fprintf( stderr, "%s:%d:%s:%s", file, line, userMsg, systMsg );
+      fprintf( stderr, "%s:%d:%s:%s\n", file, line, userMsg, systMsg );
    }
    return ok;
 }

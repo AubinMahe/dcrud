@@ -1,13 +1,12 @@
 #include "Dispatcher.h"
-#include "Network.h"
-
 #include <coll/List.h>
 
 #include <os/Mutex.h>
+#include "ParticipantImpl.h"
 
 typedef struct Dispatcher_s {
 
-   dcrudIParticipant network;
+   ParticipantImpl * participant;
    collMap           provided;
    collList          operationQueues[256];
    osMutex           operationQueuesMutex;
@@ -39,7 +38,7 @@ typedef struct Provided_s {
 
 typedef struct Required_s {
 
-   dcrudIParticipant network;
+   ParticipantImpl * participant;
    const char *      name;
 
 } Required;
@@ -63,16 +62,16 @@ static OperationCall * OperationCall_new(
    return This;
 }
 
-static dcrudIRequired Required_new( dcrudIParticipant network, const char * name ) {
+static dcrudIRequired Required_new( ParticipantImpl * participant, const char * name ) {
    Required * This = (Required *)malloc( sizeof( Required ));
-   This->network = network;
-   This->name    = name;
+   This->participant = participant;
+   This->name        = name;
    return (dcrudIRequired)This;
 }
 
 static Provided * Provided_new() {
    Provided * This = (Provided *)malloc( sizeof( Provided ));
-   This->opsInOut = collMap_new((collComparator)strcmp );
+   This->opsInOut = collMap_new((collComparator)collStringComparator );
    return This;
 }
 static dcrudCallMode   AsyncDeferred = DCRUD_ASYNCHRONOUS_DEFERRED;
@@ -109,14 +108,17 @@ dcrudStatus dcrudIRequired_call(
    if( ! collMap_hasKey( arguments, "@queue" )) {
       collMap_put( arguments, "@mode", &DefaultQueue, NULL );
    }
-   *callId = Network_call( This->network, This->name, opName, arguments, callback );
+   *callId = ParticipantImpl_call( This->participant, This->name, opName, arguments, callback );
    return DCRUD_NO_ERROR;
 }
 
-dcrudIDispatcher dcrudDispatcher_new( dcrudIParticipant network ) {
+dcrudIDispatcher dcrudIDispatcher_new( ParticipantImpl * participant ) {
    Dispatcher * This = (Dispatcher *)malloc( sizeof( Dispatcher ));
    unsigned int i;
-   This->network = network;
+
+   memset( This, 0, sizeof( Dispatcher ));
+   This->participant = participant;
+   This->provided    = collMap_new((collComparator)collStringComparator );
    for( i = 0; i < 256; ++i ) {
       This->operationQueues[i] = collList_new();
    }
@@ -126,19 +128,32 @@ dcrudIDispatcher dcrudDispatcher_new( dcrudIParticipant network ) {
    return NULL;
 }
 
-dcrudIProvided dcrudDispatcher_provide( dcrudIDispatcher self, const char * interfaceName ) {
+void dcrudIDispatcher_delete( dcrudIDispatcher * self ) {
+   Dispatcher * This = (Dispatcher *)*self;
+   if( This ) {
+      unsigned int i;
+      for( i = 0; i < 256; ++i ) {
+         collList_delete( &(This->operationQueues[i]));
+      }
+      osMutex_delete( &This->operationQueuesMutex );
+      free( This );
+      *self = NULL;
+   }
+}
+
+dcrudIProvided dcrudIDispatcher_provide( dcrudIDispatcher self, const char * interfaceName ) {
    Dispatcher * This     = (Dispatcher *)self;
    Provided *    provided = Provided_new();
    collMap_put( This->provided, (collMapKey)interfaceName, provided, NULL );
    return (dcrudIProvided)provided;
 }
 
-dcrudIRequired Dispatcher_require( dcrudIDispatcher self, const char * name ) {
+dcrudIRequired dcrudIDispatcher_require( dcrudIDispatcher self, const char * name ) {
    Dispatcher * This = (Dispatcher *)self;
-   return Required_new( This->network, name );
+   return Required_new( This->participant, name );
 }
 
-void dcrudDispatcher_handleRequests( dcrudIDispatcher self ) {
+void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
    Dispatcher * This = (Dispatcher *)self;
    unsigned     queueNdx;
 
@@ -172,7 +187,7 @@ void dcrudIDispatcher_execute(
          OperationCall_new( operation, arguments, results ));
       osMutex_release( This->operationQueuesMutex );
       if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
-         dcrudDispatcher_handleRequests( self );
+         dcrudIDispatcher_handleRequests( self );
       }
    }
 }

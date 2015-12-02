@@ -15,7 +15,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "Network.h"
+
+#include "ParticipantImpl.h"
 
 static byte NextCacheId = 1; /* cache 0 doesn't exists, it's a flag for operation */
 
@@ -35,22 +36,14 @@ typedef struct Cache_s {
    osMutex           localMutex;
    unsigned int      nextInstance;
    bool              ownershipCheck;
-   dcrudIParticipant network;
-   byte              platformId;
-   byte              execId;
+   ParticipantImpl * participant;
    byte              cacheId;
 
 } Cache;
 
-static collList caches = NULL;
-
-dcrudICache dcrudCache_new( dcrudIParticipant network, byte platformId, byte execId ) {
+dcrudICache dcrudCache_new( ParticipantImpl * participant ) {
    Cache * This = (Cache *)malloc( sizeof( Cache ));
    memset( This, 0, sizeof( Cache ));
-   if( caches == NULL ) {
-      caches = collList_new();
-   }
-   collList_add( caches, This );
    This->classes        = collSet_new((collComparator)dcrudClassID_compareTo );
    This->updated        = collSet_new((collComparator)dcrudShareable_compareTo );
    This->deleted        = collSet_new((collComparator)dcrudShareable_compareTo );
@@ -59,9 +52,7 @@ dcrudICache dcrudCache_new( dcrudIParticipant network, byte platformId, byte exe
    This->local          = collMap_new((collComparator)dcrudGUID_compareTo );
    This->nextInstance   = 1;
    This->ownershipCheck = false;
-   This->network        = network;
-   This->platformId     = platformId;
-   This->execId         = execId;
+   This->participant    = participant;
    This->cacheId        = NextCacheId++;
    osMutex_new( &This->classesMutex  );
    osMutex_new( &This->updatedMutex  );
@@ -72,21 +63,35 @@ dcrudICache dcrudCache_new( dcrudIParticipant network, byte platformId, byte exe
    return (dcrudICache)This;
 }
 
-void dcrudCache_delete( dcrudICache * This ) {
-   free( *This );
-   *This = NULL;
+void dcrudCache_delete( dcrudICache * self ) {
+   Cache * This = (Cache *)*self;
+   if( This ) {
+      collSet_delete( &This->classes       );
+      collSet_delete( &This->updated       );
+      collSet_delete( &This->deleted       );
+      collSet_delete( &This->toUpdate      );
+      collSet_delete( &This->toDelete      );
+      collMap_delete( &This->local         );
+      osMutex_delete( &This->classesMutex  );
+      osMutex_delete( &This->updatedMutex  );
+      osMutex_delete( &This->deletedMutex  );
+      osMutex_delete( &This->toUpdateMutex );
+      osMutex_delete( &This->toDeleteMutex );
+      osMutex_delete( &This->localMutex    );
+      free( This );
+      *self = NULL;
+   }
 }
 
-bool dcrudCache_matches( dcrudICache self, byte platformId, byte execId, byte cacheId ) {
+bool dcrudCache_matches( dcrudICache self, unsigned short publisherId, byte cacheId ) {
    Cache * This = (Cache *)self;
-   return( platformId == This->platformId )
-      && ( execId     == This->execId     )
-      && ( cacheId    == This->cacheId    );
+   return( publisherId == This->participant->publisherId )
+      && ( cacheId     == This->cacheId    );
 }
 
 bool dcrudICache_owns( dcrudICache self, dcrudGUID guid ) {
    dcrudGUIDImpl * id = (dcrudGUIDImpl *)guid;
-   return dcrudCache_matches( self, id->platform, id->exec, id->cache );
+   return dcrudCache_matches( self, id->publisher, id->cache );
 }
 
 void dcrudICache_setOwnership( dcrudICache self, bool enabled ) {
@@ -95,8 +100,8 @@ void dcrudICache_setOwnership( dcrudICache self, bool enabled ) {
 }
 
 dcrudStatus dcrudICache_create( dcrudICache self, dcrudShareable item ) {
-   Cache *            This = (Cache*)self;
-   dcrudGUIDImpl *    id   = (dcrudGUIDImpl *)dcrudShareable_getGUID( item );
+   Cache *   This = (Cache*)self;
+   dcrudGUID id   = dcrudShareable_getGUID( item );
 
    if( dcrudGUID_isShared( id )) {
       char buffer[40];
@@ -104,10 +109,11 @@ dcrudStatus dcrudICache_create( dcrudICache self, dcrudShareable item ) {
       fprintf( stderr, "Item already published: %s!\n", buffer );
       return DCRUD_ALREADY_CREATED;
    }
-   id->platform = This->platformId;
-   id->exec     = This->execId;
-   id->cache    = This->cacheId;
-   id->instance = This->nextInstance++;
+   dcrudGUID_init(
+      id,
+      This->participant->publisherId,
+      This->cacheId,
+      This->nextInstance++ );
    osMutex_take( This->localMutex );
    collMap_put( This->local, id, item, NULL );
    osMutex_release( This->localMutex );
@@ -123,8 +129,8 @@ dcrudShareable dcrudICache_read( dcrudICache self, dcrudGUID id ) {
 }
 
 dcrudStatus dcrudICache_update( dcrudICache self, dcrudShareable item ) {
-   Cache *         This = (Cache *)self;
-   dcrudGUIDImpl * id   = (dcrudGUIDImpl *)dcrudShareable_getGUID( item );
+   Cache *   This = (Cache *)self;
+   dcrudGUID id   = dcrudShareable_getGUID( item );
    if( ! dcrudGUID_isShared( id )) {
       fprintf( stderr, "Item must be created first!\n" );
       return DCRUD_NOT_CREATED;
@@ -192,13 +198,17 @@ collSet dcrudICache_select( dcrudICache self, dcrudPredicate query ) {
 
 dcrudStatus dcrudICache_publish( dcrudICache self ) {
    Cache * This = (Cache *)self;
+
    osMutex_take   ( This->updatedMutex );
-   osMutex_take   ( This->deletedMutex );
-   Network_publish( This->network, This->cacheId, This->updated, This->deleted );
+   ParticipantImpl_publishUpdated( This->participant, This->updated );
    collSet_clear  ( This->updated );
+   osMutex_release( This->updatedMutex );
+
+   osMutex_take   ( This->deletedMutex );
+   ParticipantImpl_publishDeleted( This->participant, This->deleted );
    collSet_clear  ( This->deleted );
    osMutex_release( This->deletedMutex );
-   osMutex_release( This->updatedMutex );
+
    return DCRUD_NO_ERROR;
 }
 
@@ -229,7 +239,7 @@ void dcrudICache_refresh( dcrudICache self ) {
       dcrudClassID_unserialize( update, &classId );
       t = collMap_get( This->local, id );
       if( t == NULL ) {
-         dcrudShareable item = Network_newInstance( This->network, update );
+         dcrudShareable item = ParticipantImpl_newInstance( This->participant, update );
          if( item != NULL ) {
             dcrudGUID guid = dcrudShareable_getGUID( item );
             dcrudGUID_set( guid, id );

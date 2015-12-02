@@ -1,7 +1,7 @@
 #pragma once
 #include <util/types.h>
 
-extern bool check(
+extern bool utilCheckSysCall(
    bool         ok,
    const char * file,
    int          line,

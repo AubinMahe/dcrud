@@ -7,7 +7,7 @@ static void dumpLine( FILE * target, char * hexa, const char * ascii ) {
    fprintf( target, "%s - %s", hexa, ascii );
 }
 
-void dump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {
+void dbgDump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {
    size_t addr        = 0;
    char   hexStr[200] = "";
    char   addStr[200] = "";
@@ -41,6 +41,6 @@ void dump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {
    }
 }
 
-void dump( FILE * target, const byte * bytes, size_t length ) {
-   dump_range( target, bytes, 0, length );
+void dbgDump( FILE * target, const byte * bytes, size_t length ) {
+   dbgDump_range( target, bytes, 0, length );
 }

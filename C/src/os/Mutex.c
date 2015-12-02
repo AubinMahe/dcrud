@@ -18,18 +18,18 @@ typedef struct osMutexPrivate_s {
 osStatus osMutex_new( osMutex * target ) {
    osMutexPrivate * This   = (osMutexPrivate *)malloc( sizeof( osMutexPrivate ));
    osStatus         retval = (osStatus)pthread_mutex_init( &This->mutex, NULL );
-   if( retval == OS_STATUS_NO_ERROR ) {
-      *target = (osMutex)This;
-   }
+   *target = (osMutex)This;
    return retval;
 }
 
 osStatus osMutex_delete( osMutex * self ) {
-   osMutexPrivate * * target = (osMutexPrivate * *)self;
-   osMutexPrivate *   This   = *target;
-   osStatus           retval = (osStatus)pthread_mutex_destroy( &This->mutex );
-   free( This );
-   *target = NULL;
+   osMutexPrivate * This = (osMutexPrivate *)*self;
+   osStatus retval = OS_STATUS_NO_ERROR;
+   if( This ) {
+      retval = (osStatus)pthread_mutex_destroy( &This->mutex );
+      free( This );
+      *self = NULL;
+   }
    return retval;
 }
 

@@ -76,7 +76,11 @@ bool COLL_MAP_NAME(_put)(
    COLL_MAP_NAME(Private) * This    = (COLL_MAP_NAME(Private)*)self;
    COLL_MAP_NAME(Pair) *    oldPair = NULL;
    COLL_MAP_NAME(Pair)      newPair;
-   bool                     retVal  = false;
+
+   if( self == NULL ) {
+      fprintf( stderr, "Please call collMap_new before!\n" );
+      return false;
+   }
    newPair.key   = key;
    newPair.value = NULL;
    oldPair =
@@ -89,27 +93,29 @@ bool COLL_MAP_NAME(_put)(
       }
       oldPair->key   = key;
       oldPair->value = value;
-      retVal = true;
+      return true;
    }
-   else {
 #ifdef STATIC_ALLOCATION
-      if( This->count == COLL_MAP_ITEM_MAX_COUNT ) {
-         fprintf( stderr, "%s:%d:%s_put: out of memory!\n", __FILE__, __LINE__, #COL_MAP_TYPE );
-         return NULL;
-      }
-#else
-      if( This->count == This->limit ) {
-         This->limit += 100;
-         This->pairs = (COLL_MAP_NAME(Pair)*)
-            realloc( This->pairs, This->limit * sizeof( COLL_MAP_NAME(Pair)));
-      }
-#endif
-      oldPair = (COLL_MAP_NAME(Pair)*)(This->pairs + This->count++);
-      oldPair->key   = key;
-      oldPair->value = value;
-      qsort( This->pairs, This->count, sizeof( COLL_MAP_NAME(Pair)), (PVoidComparator)This->cmp );
+   if( This->count == COLL_MAP_ITEM_MAX_COUNT ) {
+      fprintf( stderr, "%s:%d:%s_put: out of memory!\n", __FILE__, __LINE__, #COL_MAP_TYPE );
+      return false;
    }
-   return retVal;
+#else
+   if( This->count == This->limit ) {
+      This->limit += 100;
+      This->pairs = (COLL_MAP_NAME(Pair)*)
+         realloc( This->pairs, This->limit * sizeof( COLL_MAP_NAME(Pair)));
+   }
+#endif
+   oldPair = (COLL_MAP_NAME(Pair)*)(This->pairs + This->count++);
+   oldPair->key   = key;
+   oldPair->value = value;
+   qsort( This->pairs, This->count, sizeof( COLL_MAP_NAME(Pair)), (PVoidComparator)This->cmp );
+   if( previousPair ) {
+      previousPair->key   = NULL; 
+      previousPair->value = NULL; 
+   }
+   return false;
 }
 
 bool COLL_MAP_NAME(_remove)(

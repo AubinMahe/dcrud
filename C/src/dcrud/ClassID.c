@@ -12,9 +12,12 @@ dcrudClassID dcrudClassID_new( byte package1, byte package2, byte package3, byte
    return (dcrudClassID)This;
 }
 
-void dcrudClassID_delete( dcrudClassID * target ) {
-   free( *target );
-   *target = NULL;
+void dcrudClassID_delete( dcrudClassID * self ) {
+   dcrudClassIDImpl * This = (dcrudClassIDImpl *)*self;
+   if( This ) {
+      free( This );
+      *self = NULL;
+   }
 }
 
 void dcrudClassID_get( const dcrudClassID self, byte * pckg1, byte * pckg2, byte * pckg3, byte * clazz ) {

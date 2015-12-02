@@ -3,13 +3,13 @@
 
 typedef struct dcrudGUIDImpl_s {
 
-   byte         platform;
-   byte         exec;
-   byte         cache;
-   unsigned int instance;
+   unsigned short publisher;
+   byte           cache;
+   unsigned int   instance;
 
 } dcrudGUIDImpl;
 
-dcrudGUIDImpl * dcrudGUID_init    ( void );
-bool            dcrudGUID_isShared( const dcrudGUIDImpl * This );
-void            dcrudGUID_set     ( dcrudGUID This, const dcrudGUID right );
+dcrudGUID dcrudGUID_new     ( void );
+bool      dcrudGUID_isShared( const dcrudGUID This );
+void      dcrudGUID_set     ( dcrudGUID This, const dcrudGUID right );
+void      dcrudGUID_init    ( dcrudGUID This, unsigned short publisherId, byte cacheId, unsigned int nextInstance );

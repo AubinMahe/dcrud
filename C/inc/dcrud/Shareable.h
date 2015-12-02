@@ -6,12 +6,12 @@
 
 UTIL_ADT( dcrudShareable );
 
-typedef void * dcrudSerializable;
+typedef void * dcrudShareableData;
 
-void              dcrudShareable_delete      ( dcrudShareable * This );
-dcrudGUID         dcrudShareable_getGUID     ( dcrudShareable   This );
-dcrudClassID      dcrudShareable_getClassID  ( dcrudShareable   This );
-void              dcrudShareable_set         ( dcrudShareable   This, dcrudShareable source );
-int               dcrudShareable_compareTo   ( dcrudShareable * left, dcrudShareable * right );
-dcrudSerializable dcrudShareable_getUserData ( dcrudShareable   This );
-dcrudShareable    dcrudShareable_getShareable( dcrudSerializable user );
+void               dcrudShareable_delete      ( dcrudShareable * This );
+dcrudGUID          dcrudShareable_getGUID     ( dcrudShareable   This );
+dcrudClassID       dcrudShareable_getClassID  ( dcrudShareable   This );
+void               dcrudShareable_set         ( dcrudShareable   This, dcrudShareable source );
+int                dcrudShareable_compareTo   ( dcrudShareable * left, dcrudShareable * right );
+dcrudShareableData dcrudShareable_getUserData ( dcrudShareable   This );
+dcrudShareable     dcrudShareable_getShareable( dcrudShareableData user );

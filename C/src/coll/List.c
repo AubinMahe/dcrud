@@ -43,14 +43,16 @@ collList collList_new() {
 
 void collList_delete( collList * self ) {
    List * This = (List *)*self;
-   This->count = 0;
+   if( This ) {
+      This->count = 0;
 #ifndef STATIC_ALLOCATION
-   free( This->items );
-   This->limit = 0;
-   This->items = NULL;
-   free( This );
+      free( This->items );
+      This->limit = 0;
+      This->items = NULL;
+      free( This );
 #endif
-   *self = NULL;
+      *self = NULL;
+   }
 }
 
 void collList_clear( collList self ) {

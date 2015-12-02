@@ -81,10 +81,14 @@ final class ShareableRect extends ShareableShape {
       _name = SerializerHelper.getString( source );
       final Rectangle r = getShape();
       r.setUserData( this );
-      r.setX     ( source.getDouble());
-      r.setY     ( source.getDouble());
-      r.setWidth ( source.getDouble());
-      r.setHeight( source.getDouble());
+      final double x = source.getDouble();
+      final double y = source.getDouble();
+      final double w = source.getDouble();
+      final double h = source.getDouble();
+      r.setX     ( x );
+      r.setY     ( y );
+      r.setWidth ( w );
+      r.setHeight( h );
       r.setFill  ( SerializerHelper.getFxColor( source ));
       r.setStroke( SerializerHelper.getFxColor( source ));
    }
@@ -154,10 +158,14 @@ final class ShareableEllipse extends ShareableShape {
       _name  = SerializerHelper.getString( source );
       final Ellipse e = getShape();
       e.setUserData( this );
-      e.setCenterX( source.getDouble());
-      e.setCenterY( source.getDouble());
-      e.setRadiusX( source.getDouble());
-      e.setRadiusY( source.getDouble());
+      final double x  = source.getDouble();
+      final double y  = source.getDouble();
+      final double rx = source.getDouble();
+      final double ry = source.getDouble();
+      e.setCenterX( x );
+      e.setCenterY( y );
+      e.setRadiusX( rx );
+      e.setRadiusY( ry );
       e.setFill   ( SerializerHelper.getFxColor( source ));
       e.setStroke ( SerializerHelper.getFxColor( source ));
    }

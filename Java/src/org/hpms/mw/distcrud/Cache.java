@@ -15,7 +15,7 @@ import org.hpms.dbg.Performance;
 
 final class Cache implements ICache {
 
-   private static byte _NextCacheId = 1; // cache 0 doesn't exists, it's a flag for operation
+   private static byte _NextCacheId = 1;
 
    private final Set<ClassID>         _classes        = new HashSet<>();
    private final Set<Shareable>       _updated        = new HashSet<>();
@@ -25,27 +25,23 @@ final class Cache implements ICache {
    private final Map<GUID, Shareable> _local          = new TreeMap<>();
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
-   private final Network              _network;
-   private final byte                 _platformId;
-   private final byte                 _execId;
+   private final ParticipantImpl      _participant;
+   private final short                _publisherId;
    /*   */ final byte                 _cacheId;
 
-   Cache( Network network, byte platformId, byte execId ) {
-      _network    = network;
-      _platformId = platformId;
-      _execId     = execId;
-      _cacheId    = _NextCacheId++;
+   Cache( ParticipantImpl participant ) {
+      _participant = participant;
+      _publisherId = participant._publisherId;
+      _cacheId     = _NextCacheId++;
    }
 
-   boolean matches( byte platformId, byte execId, byte cacheId ) {
-      return( platformId == _platformId )
-         && ( execId     == _execId     )
-         && ( cacheId    == _cacheId    );
+   boolean matches( short publisherId, byte cacheId ) {
+      return( publisherId == _publisherId ) && ( cacheId == _cacheId );
    }
 
    @Override
    public boolean owns( GUID id ) {
-      return matches( id._platform, id._exec, id._cache );
+      return matches( id._publisher, id._cache );
    }
 
    @Override
@@ -58,10 +54,9 @@ final class Cache implements ICache {
       if( item._id.isShared()) {
          return Status.ALREADY_CREATED;
       }
-      item._id._platform = _platformId;
-      item._id._exec     = _execId;
-      item._id._cache    = _cacheId;
-      item._id._instance = _nextInstance++;
+      item._id._publisher = _publisherId;
+      item._id._cache     = _cacheId;
+      item._id._instance  = _nextInstance++;
       synchronized( _local ) {
          _local.put( item._id, item );
       }
@@ -127,11 +122,12 @@ final class Cache implements ICache {
    public void publish() throws IOException {
       final long atStart = System.nanoTime();
       synchronized( _updated ) {
-         synchronized( _deleted ) {
-            _network.publish( _cacheId, _updated, _deleted );
-            _deleted.clear();
-         }
+         _participant.publishUpdated( _updated );
          _updated.clear();
+      }
+      synchronized( _deleted ) {
+         _participant.publishDeleted( _deleted );
+         _deleted.clear();
       }
       Performance.record( "publish", System.nanoTime() - atStart );
    }
@@ -151,7 +147,7 @@ final class Cache implements ICache {
                final ClassID   classId = ClassID.unserialize( update );
                final Shareable t       = _local.get( id );
                if( t == null ) {
-                  final Shareable item = _network.newInstance( classId, update );
+                  final Shareable item = _participant.newInstance( classId, update );
                   if( item != null ) {
                      item._id.set( id );
                      _local.put( id, item );

@@ -3,6 +3,7 @@
 typedef enum dcrudStatus_e {
 
    DCRUD_NO_ERROR = 0,
+   DCRUD_INIT_FAILED,
    DCRUD_ALREADY_CREATED,
    DCRUD_NOT_OWNER,
    DCRUD_NOT_CREATED,

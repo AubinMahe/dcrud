@@ -1,6 +1,8 @@
 package org.hpms.mw.distcrud.samples.shapes;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -9,14 +11,16 @@ import java.util.TimerTask;
 import java.util.function.BiFunction;
 
 import org.hpms.dbg.Performance;
+import org.hpms.mw.distcrud.ClassID;
 import org.hpms.mw.distcrud.ICache;
+import org.hpms.mw.distcrud.IDispatcher;
 import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.Networks;
+import org.hpms.mw.distcrud.IRequired;
+import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.App;
 import org.hpms.mw.distcrud.samples.Controller;
 import org.hpms.mw.distcrud.samples.QuadFunction;
-import org.hpms.mw.distcrud.samples.Settings;
 
 import javafx.application.Application.Parameters;
 import javafx.application.Platform;
@@ -38,20 +42,22 @@ import javafx.scene.shape.Shape;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class ShapesUI implements Controller, Settings {
+public class ShapesUI implements Controller {
 
    private final Random _random = new Random();
 
-   private ICache _cache;
-   private int         _rank;
-   private Node        _dragged;
-   private double      _nodeX;
-   private double      _nodeY;
-   private double      _fromX;
-   private double      _fromY;
-   private boolean     _periodic;
-   private boolean     _moveThem;
-   private String      _window;
+   private ICache    _cache;
+   private int       _rank;
+   private Node      _dragged;
+   private double    _nodeX;
+   private double    _nodeY;
+   private double    _fromX;
+   private double    _fromY;
+   private boolean   _periodic;
+   private boolean   _moveThem;
+   private boolean   _readonly;
+   private IRequired _remoteShapesFactory;
+   private String    _window;
 
    @FXML private Menu               _publisherMnu;
    @FXML private CheckMenuItem      _periodicChkMnu;
@@ -60,15 +66,6 @@ public class ShapesUI implements Controller, Settings {
    @FXML private Pane               _shapesArea;
    @FXML private ColorPicker        _strokeColor;
    @FXML private ColorPicker        _fillColor;
-
-   private static byte setArg( Map<String, String> args, String key, byte min, byte max ) {
-      final String value = args.get( key );
-      if( value != null ) {
-         return Byte.parseByte( value );
-      }
-      throw new IllegalArgumentException(
-         "--" + key + "=<value> is mandatory, value in [" + min + ".." + max + "]" );
-   }
 
    @SuppressWarnings("static-method")
    @FXML
@@ -117,34 +114,39 @@ public class ShapesUI implements Controller, Settings {
       stage.getIcons().add( new Image( getClass().getResource( "local.png" ).toExternalForm()));
 
       final Map<String, String> n = args.getNamed();
-      final String  address    =                   n.getOrDefault( "address"    , MC_GROUP );
-      final short   port       = Short.parseShort( n.getOrDefault( "port"       , ""+MC_PORT ));
-      final String  intrfc     =                   n.getOrDefault( "intrfc"     , MC_INTRFC );
-      final byte    platformId = setArg( n, "platform-id", (byte)0, (byte)255 );
-      final byte    execId     = setArg( n, "exec-id"    , (byte)0, (byte)255 );
-      final boolean ownership  = Boolean.parseBoolean( n.getOrDefault( "ownership", "false" ));
-      final boolean periodic   = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false" ));
-      final boolean move       = Boolean.parseBoolean( n.getOrDefault( "move"     , "false" ));
-      final boolean perf       = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false" ));
-      _window                  = n.getOrDefault( "window", "left-top" );
-      final String  fill       = n.get( "fill" );
+      final String name = n.get( "publisher-name" );
+      if( name == null ) {
+         throw new IllegalStateException( "--publisher-name=<string> missing" );
+      }
+      final String intrfc = n.get( "interface" );
+      if( intrfc == null ) {
+         throw new IllegalStateException( "--interface=<string> missing" );
+      }
+      final boolean ownership = Boolean.parseBoolean( n.getOrDefault( "ownership", "false" ));
+      final boolean periodic  = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false" ));
+      final boolean move      = Boolean.parseBoolean( n.getOrDefault( "move"     , "false" ));
+      final boolean perf      = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false" ));
+      final boolean remote    = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false" ));
+      _readonly       = Boolean.parseBoolean( n.getOrDefault( "readonly" , "false" ));
+      _window         = n.getOrDefault( "window", "left-top" );
+      final String fill = n.get( "fill" );
       if( fill != null ) {
-         _fillColor  .setValue( Color.web( fill ));
+         _fillColor.setValue( Color.web( fill ));
       }
       else {
-         _fillColor  .setValue( Color.LIGHTSALMON );
+         _fillColor.setValue( Color.LIGHTSALMON );
       }
-      final String  stroke     = n.get( "stroke" );
+      final String stroke = n.get( "stroke" );
       if( stroke != null ) {
          _strokeColor.setValue( Color.web( stroke ));
       }
       else {
          _strokeColor.setValue( Color.BLACK );
       }
+
       Performance.enable( perf );
 
-      final IParticipant participant =
-         Networks.join( address, intrfc, port, platformId, execId );
+      final IParticipant participant = Network.join( new File( "network.xml"), intrfc, name );
       participant.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       participant.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
 
@@ -153,11 +155,16 @@ public class ShapesUI implements Controller, Settings {
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
 
-      new Timer( "UI-Periodic-Activity", true ).schedule(
-         new TimerTask() { @Override public void run() { uiActivity(); }}, 0, 40L );
+      if( remote ) {
+         final IDispatcher dispatcher = participant.getDispatcher();
+         _remoteShapesFactory = dispatcher.require( "IShapesFactory" );
+      }
 
-      new Timer( "Network-Periodic-Activity", true ).schedule(
-         new TimerTask() { @Override public void run() { networkActivity(); }}, 0, 200L );
+      new Timer( "AnimationActivity", true ).schedule(
+         new TimerTask() { @Override public void run() { animationActivity(); }}, 0, 40L );
+
+      new Timer( "NetworkActivity", true ).schedule(
+         new TimerTask() { @Override public void run() { networkActivity(); }}, 0, 40L );
 
       if( periodic ) {
          _periodicChkMnu.setSelected( periodic );
@@ -178,10 +185,6 @@ public class ShapesUI implements Controller, Settings {
             }
          }
       }
-      final Thread participantThread = new Thread( participant::run );
-      participantThread.setName( "participant" );
-      participantThread.setDaemon( true );
-      participantThread.start();
    }
 
    private double nextDouble( double max, double min ) {
@@ -206,20 +209,45 @@ public class ShapesUI implements Controller, Settings {
       _shapesArea.getChildren().add( shape );
    }
 
+   private void createShapeRemotely( ClassID classId ) {
+      try {
+         final Map<String,Object> arguments = new HashMap<>();
+         arguments.put( "class", classId );
+         arguments.put( "x"    , nextDouble( 540,  0 ));
+         arguments.put( "y"    , nextDouble( 400,  0 ));
+         arguments.put( "w"    , nextDouble( 100, 40 ));
+         arguments.put( "h"    , nextDouble(  80, 20 ));
+         _remoteShapesFactory.call( "create", arguments, null );
+      }
+      catch( final Throwable t ) {
+         t.printStackTrace();
+      }
+   }
+
    @FXML
    private void createRectangle() {
-      createShape(
-         "Rectangle",
-         ( x, y, w, h ) -> new Rectangle( x, y, w, h ),
-         ( name, shape ) -> new ShareableRect( name, shape ));
+      if( _remoteShapesFactory != null ) {
+         createShapeRemotely( ShareableRect.CLASS_ID );
+      }
+      else {
+         createShape(
+            "Rectangle",
+            ( x, y, w, h ) -> new Rectangle( x, y, w, h ),
+            ( name, shape ) -> new ShareableRect( name, shape ));
+      }
    }
 
    @FXML
    private void createEllipse() {
-      createShape(
-         "Ellipse",
-         ( x, y, w, h ) -> new Ellipse( x, y, w, h ),
-         ( name, shape ) -> new ShareableEllipse( name, shape ));
+      if( _remoteShapesFactory != null ) {
+         createShapeRemotely( ShareableEllipse.CLASS_ID );
+      }
+      else {
+         createShape(
+            "Ellipse",
+            ( x, y, w, h ) -> new Ellipse( x, y, w, h ),
+            ( name, shape ) -> new ShareableEllipse( name, shape ));
+      }
    }
 
    @FXML
@@ -268,7 +296,9 @@ public class ShapesUI implements Controller, Settings {
    void networkActivity() {
       try {
          if( _periodic ) {
-            _cache.publish();
+            if( ! _readonly ) {
+               _cache.publish();
+            }
             refresh();
          }
       }
@@ -288,7 +318,7 @@ public class ShapesUI implements Controller, Settings {
       }
    }
 
-   void uiActivity() {
+   void animationActivity() {
       if( _moveThem ) {
          Platform.runLater( this::moveUI );
       }

@@ -7,6 +7,6 @@
 
 UTIL_ADT( dcrudIDispatcher );
 
-dcrudIProvided   dcrudDispatcher_provide       ( dcrudIDispatcher This, const char * name );
-dcrudIRequired   dcrudDispatcher_require       ( dcrudIDispatcher This, const char * name );
-void             dcrudDispatcher_handleRequests( dcrudIDispatcher This );
+dcrudIProvided dcrudIDispatcher_provide       ( dcrudIDispatcher   This, const char * name );
+dcrudIRequired dcrudIDispatcher_require       ( dcrudIDispatcher   This, const char * name );
+void           dcrudIDispatcher_handleRequests( dcrudIDispatcher   This );

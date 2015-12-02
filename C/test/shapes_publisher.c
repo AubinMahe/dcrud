@@ -1,4 +1,7 @@
-#include <dcrud/Networks.h>
+#include <dcrud/Network.h>
+#include <os/System.h>
+#include <util/CheckSysCall.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,17 +9,17 @@
 #  include <sys/socket.h>
 #  include <netdb.h>
 #  include <time.h>
+#  include <inttypes.h>
 #elif _WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <winsock2.h>
 #  include <Ws2tcpip.h>
 #  include <mswsock.h>
 #endif
-
-static const char *         MC_GROUP  = "224.0.0.3";
-static const unsigned short MC_PORT   = 2416;
-static const char *         MC_INTRFC = "192.168.1.6";
-
+/*
+#define PRINT_SERIALIZE
+#define PRINT_TIMING
+*/
 dcrudClassID rectangleClassID;
 dcrudClassID ellipseClassID;
 
@@ -40,7 +43,6 @@ typedef char ShareableShapeName[40];
 
 typedef struct ShareableShape_s {
 
-   dcrudShareable     base;
    ShareableShapeName name;
    double             x;
    double             y;
@@ -77,12 +79,13 @@ static void ShareableShape_serialize( const ShareableShape * This, ioByteBuffer 
    ioByteBuffer_putDouble( target, This->stroke.green );
    ioByteBuffer_putDouble( target, This->stroke.blue );
    ioByteBuffer_putDouble( target, This->stroke.opacity );
+#ifdef PRINT_SERIALIZE
    fprintf( stderr, "-- Serialize --\n" );
-   fprintf( stderr, "name          : %s\n", This->name           );
-   fprintf( stderr, "x             : %f\n", This->x              );
-   fprintf( stderr, "y             : %f\n", This->y              );
-   fprintf( stderr, "w             : %f\n", This->w              );
-   fprintf( stderr, "h             : %f\n", This->h              );
+   fprintf( stderr, "name          : %s\n", This->name );
+   fprintf( stderr, "x             : %f\n", This->x );
+   fprintf( stderr, "y             : %f\n", This->y );
+   fprintf( stderr, "w             : %f\n", This->w );
+   fprintf( stderr, "h             : %f\n", This->h );
    fprintf( stderr, "fill  .red    : %f\n", This->fill  .red     );
    fprintf( stderr, "fill  .green  : %f\n", This->fill  .green   );
    fprintf( stderr, "fill  .blue   : %f\n", This->fill  .blue    );
@@ -91,11 +94,23 @@ static void ShareableShape_serialize( const ShareableShape * This, ioByteBuffer 
    fprintf( stderr, "stroke.green  : %f\n", This->stroke.green   );
    fprintf( stderr, "stroke.blue   : %f\n", This->stroke.blue    );
    fprintf( stderr, "stroke.opacity: %f\n", This->stroke.opacity );
-   fprintf( stderr, "----------------------------------------\n" );
+#endif
 }
 
-static void ShareableShape_unserialize( ioByteBuffer source ) {
-   (void)source;
+static void ShareableShape_unserialize( ShareableShape * This, ioByteBuffer source ) {
+   ioByteBuffer_getString( source, This->name, sizeof( ShareableShapeName ));
+   ioByteBuffer_getDouble( source, &This->x );
+   ioByteBuffer_getDouble( source, &This->y );
+   ioByteBuffer_getDouble( source, &This->w );
+   ioByteBuffer_getDouble( source, &This->h );
+   ioByteBuffer_getDouble( source, &This->fill  .red     );
+   ioByteBuffer_getDouble( source, &This->fill  .green   );
+   ioByteBuffer_getDouble( source, &This->fill  .blue    );
+   ioByteBuffer_getDouble( source, &This->fill  .opacity );
+   ioByteBuffer_getDouble( source, &This->stroke.red     );
+   ioByteBuffer_getDouble( source, &This->stroke.green   );
+   ioByteBuffer_getDouble( source, &This->stroke.blue    );
+   ioByteBuffer_getDouble( source, &This->stroke.opacity );
 }
 
 static double nextDouble( double max, double min ) {
@@ -109,10 +124,10 @@ static bool ShareableShape_init( dcrudShareable shareable ) {
    ShareableShape * shape   = (ShareableShape *)dcrudShareable_getUserData( shareable );
 
    if( classID == rectangleClassID ) {
-      sprintf( shape->name, "%s %03u", "Rectangle", ++g_rank );
+      sprintf( shape->name, "Rectangle %03u", ++g_rank );
    }
    else if( classID == ellipseClassID ) {
-      sprintf( shape->name, "%s %03u", "Ellipse", ++g_rank );
+      sprintf( shape->name, "Ellipse %03u", ++g_rank );
    }
    else {
       return false;
@@ -162,53 +177,50 @@ static void move( dcrudICache shapes, dcrudShareable shareable ) {
          shape->dy = -MOVE;
       }
    } while( outOfBounds );
-   dcrudICache_update( shapes, shape->base );
+   dcrudICache_update( shapes, dcrudShareable_getShareable( shape ));
+}
+
+static void createShapes( dcrudICache shapes, collMap in, collMap out ) {
+   printf( "createShapes remotely called!\n" );
+   (void)shapes;
+   (void)in;
+   (void)out;
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {
-   const char *   address    = MC_GROUP;
-   unsigned short port       = MC_PORT;
-   const char *   intrfc     = MC_INTRFC;
-   byte           platformId = 0;
-   byte           execId     = 0;
+   const char *      pubName     = NULL;
+   const char *      intrfc      = NULL;
+   dcrudIParticipant participant = NULL;
    int               i;
-   dcrudIParticipant participant;
-   for( i = 1; i < argc; ++i ) {
-      if( 0 == strcmp( "--address", argv[i] )) {
-         address = argv[++i];
+
+   for( i = 2; i < argc; ++i ) {
+      if( 0 == strcmp( argv[i], "--pub-name" )) {
+         pubName = argv[++i];
       }
-      else if( 0 == strcmp( "--port", argv[i] )) {
-         port = (unsigned short)atoi( argv[++i] );
-      }
-      else if( 0 == strcmp( "--interface", argv[i] )) {
+      else if( 0 == strcmp( argv[i], "--interface" )) {
          intrfc = argv[++i];
       }
-      else if( 0 == strcmp( "--platform-id", argv[i] )) {
-         platformId = (byte)atoi( argv[++i] );
-      }
-      else if( 0 == strcmp( "--exec-id", argv[i] )) {
-         execId     = (byte)atoi( argv[++i] );
-      }
-      else {
-         fprintf( stderr, "unexpected argument: %s\n", argv[i] );
-         exit(-1);
-      }
    }
-   if( platformId < 1 ) {
-      fprintf( stderr, "--platfom-id <id> must be >= 0\n" );
+   if( !pubName ) {
+      fprintf( stderr, "%s --pub-name <publisher-name> is mandatory\n", argv[0] );
       exit(-1);
    }
-   if( execId < 1 ) {
-      fprintf( stderr, "--exec-id <id> must be >= 0\n" );
+   if( !intrfc ) {
+      fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
       exit(-1);
    }
-   participant = dcrudNetworks_join( address, intrfc, port, platformId, execId );
+   participant = dcrudNetwork_join( "network.xml", intrfc, pubName );
    if( participant ) {
-      dcrudICache    shapes;
-      dcrudShareable rect1;
-      dcrudShareable elli1;
-      dcrudShareable rect2;
-      dcrudShareable elli2;
+#ifdef PRINT_TIMING
+      static uint64_t prev = osSystem_nanotime();
+#endif
+      dcrudICache      shapes        = NULL;
+      dcrudShareable   rect1         = NULL;
+      dcrudShareable   elli1         = NULL;
+      dcrudShareable   rect2         = NULL;
+      dcrudShareable   elli2         = NULL;
+      dcrudIDispatcher dispatcher    = NULL;
+      dcrudIProvided   shapesFactory = NULL;
 
       rectangleClassID = dcrudClassID_new( 1, 1, 1, 1 );
       ellipseClassID   = dcrudClassID_new( 1, 1, 1, 2 );
@@ -233,23 +245,39 @@ int shapesPublisherTests( int argc, char * argv[] ) {
       elli1 = dcrudIParticipant_createShareable( participant, ellipseClassID );
       rect2 = dcrudIParticipant_createShareable( participant, rectangleClassID );
       elli2 = dcrudIParticipant_createShareable( participant, ellipseClassID );
+      dispatcher    = dcrudIParticipant_getDispatcher( participant );
+      shapesFactory = dcrudIDispatcher_provide( dispatcher, "IShapesFactory" );
+      dcrudIProvided_addOperation( shapesFactory, "create", shapes, (dcrudIOperation)createShapes );
       dcrudICache_create( shapes, rect1 );
       dcrudICache_create( shapes, elli1 );
       dcrudICache_create( shapes, rect2 );
       dcrudICache_create( shapes, elli2 );
-      for( i = 0; i < 1000; ++i ) {
-         struct timespec req = { 0, 40*1000*1000 };
+      printf( "Publishing 4 shapes every 40 ms, 10 000 times.\n" );
+      for( i = 0; i < 10000; ++i ) {
+#ifdef PRINT_TIMING
+         uint64_t now = osSystem_nanotime();
+         fprintf( stderr, "-- Publish, delta = %7.2f ------------------------------------------\n",
+            ((double)(now-prev))/1000000.0 );
+         prev = now;
+#endif
          dcrudICache_publish( shapes );
-         nanosleep( &req, NULL );
+         osSystem_sleep( 40U );
          move( shapes, rect1 );
          move( shapes, elli1 );
          move( shapes, rect2 );
          move( shapes, elli2 );
       }
+      dcrudShareable_delete( &rect1 );
+      dcrudShareable_delete( &elli1 );
+      dcrudShareable_delete( &rect2 );
+      dcrudShareable_delete( &elli2 );
+      dcrudClassID_delete( &rectangleClassID );
+      dcrudClassID_delete( &ellipseClassID );
       printf( "Well done.\n" );
+      dcrudNetwork_leave( &participant );
    }
    else {
-      fprintf( stderr, "Error catched." );
+      fprintf( stderr, "Unable to join network.\n" );
    }
    return 0;
 }

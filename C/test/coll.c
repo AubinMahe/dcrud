@@ -29,15 +29,11 @@ static Person * Person_create(
    return person;
 }
 
-static int personMapCompare( const char * * left, const char * * right ) {
-   return strncmp( *left, *right, sizeof( name_t ));
-}
-
-static int unsignedMapCompare( const unsigned * * left, const unsigned * * right ) {
+static int unsignedMapComparator( const unsigned * * left, const unsigned * * right ) {
    return (int)( *left - *right );
 }
 
-static int personCompare( const Person * * left, const Person * * right ) {
+static int personComparator( const Person * * left, const Person * * right ) {
    const char * l = (*left )->forname;
    const char * r = (*right)->forname;
    return strncmp( l, r, sizeof( name_t ));
@@ -110,7 +106,7 @@ int collTests( int argc, char * argv[] ) {
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collSet persons = collSet_new((collComparator)personCompare );
+      collSet persons = collSet_new((collComparator)personComparator );
       collSet_add( persons, muriel );
       collSet_add( persons, aubin );
       collSet_add( persons, eve );
@@ -140,7 +136,7 @@ int collTests( int argc, char * argv[] ) {
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collMap persons = collMap_new((collComparator)personMapCompare );
+      collMap persons = collMap_new((collComparator)collStringComparator );
       alreadyExists = collMap_put( persons, muriel->forname, muriel, &previous );
       if( alreadyExists ) {
          printf( "|Map |FAIL|put: entry already exists in an empty map!\n" );
@@ -212,7 +208,7 @@ int collTests( int argc, char * argv[] ) {
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collMap persons = collMap_new((collComparator)unsignedMapCompare );
+      collMap persons = collMap_new((collComparator)unsignedMapComparator );
       static unsigned keyMuriel = 12;
       static unsigned keyAubin  = 24;
       static unsigned keyEve    = 36;

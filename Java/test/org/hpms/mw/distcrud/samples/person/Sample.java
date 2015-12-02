@@ -1,10 +1,13 @@
 package org.hpms.mw.distcrud.samples.person;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.hpms.mw.distcrud.ICache;
 import org.hpms.mw.distcrud.IDispatcher;
@@ -12,9 +15,9 @@ import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.IProvided;
 import org.hpms.mw.distcrud.IRequired;
 import org.hpms.mw.distcrud.IRequired.CallMode;
-import org.hpms.mw.distcrud.Networks;
+import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
-import org.hpms.mw.distcrud.samples.Settings;
+import org.xml.sax.SAXException;
 
 /**
  * Here is the main loop<ol>
@@ -24,10 +27,7 @@ import org.hpms.mw.distcrud.samples.Settings;
  * <li>The consumer wait 500 ms.
  * </ol>
  */
-public class Sample implements Settings {
-
-   private static final byte PLATFORM_ID = 1;
-   private static final byte EXEC_ID     = 1;
+public class Sample {
 
    private static final Map<String, Object> _arguments = new HashMap<>();
    private static /* */ IRequired           _iPerson;
@@ -95,12 +95,11 @@ public class Sample implements Settings {
       }
    }
 
-   public static void main( String[] args ) throws IOException {
+   public static void main( String[] args ) throws IOException, SAXException, ParserConfigurationException {
       final IParticipant participant =
-         Networks.join( MC_GROUP, MC_INTRFC, MC_PORT, PLATFORM_ID, EXEC_ID );
+         Network.join( new File( "network.xml"), "eth0", "Shapes-1" );
       participant.registerClass( Item.CLASS_ID, Item::new );
       new Thread(() -> consumer( participant )).start();
       new Thread(() -> producer( participant )).start();
-      participant.run();
    }
 }
