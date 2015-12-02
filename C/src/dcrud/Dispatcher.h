@@ -10,5 +10,6 @@ void             dcrudIDispatcher_execute( dcrudIDispatcher   This,
    const char *     opName,
    collMap          arguments,
    collMap          results,
+   int              callId,
    unsigned         queueNdx,
    dcrudCallMode    callMode );

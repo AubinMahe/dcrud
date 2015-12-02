@@ -4,7 +4,7 @@
 static void dumpLine( FILE * target, char * hexa, const char * ascii ) {
    hexa = strcat( hexa, "                                                                          " );
    hexa[6+( 3*8 )+2+( 3*8 )] = '\0';
-   fprintf( target, "%s - %s", hexa, ascii );
+   fprintf( target, "%s - %s\n", hexa, ascii );
 }
 
 void dbgDump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {

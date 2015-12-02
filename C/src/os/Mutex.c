@@ -16,8 +16,13 @@ typedef struct osMutexPrivate_s {
 } osMutexPrivate;
 
 osStatus osMutex_new( osMutex * target ) {
-   osMutexPrivate * This   = (osMutexPrivate *)malloc( sizeof( osMutexPrivate ));
-   osStatus         retval = (osStatus)pthread_mutex_init( &This->mutex, NULL );
+   osMutexPrivate *    This   = (osMutexPrivate *)malloc( sizeof( osMutexPrivate ));
+   pthread_mutexattr_t attr;
+   osStatus            retval;
+
+   pthread_mutexattr_init( &attr);
+   pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+   retval  = (osStatus)pthread_mutex_init( &This->mutex, &attr );
    *target = (osMutex)This;
    return retval;
 }

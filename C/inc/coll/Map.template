@@ -30,4 +30,3 @@ unsigned int         COLL_MAP_NAME(_size   )( COLL_MAP_TYPE   This );
 COLL_MAP_NAME(Value) COLL_MAP_NAME(_get    )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key );
 bool                 COLL_MAP_NAME(_hasKey )( COLL_MAP_TYPE   This, COLL_MAP_NAME(Key) key );
 collForeachResult    COLL_MAP_NAME(_foreach)( COLL_MAP_TYPE   This, collForeachFunction fn, void * userData );
-COLL_MAP_NAME(Pairs) COLL_MAP_NAME(_values )( COLL_MAP_TYPE   This );

@@ -17,16 +17,17 @@ typedef struct Operation_s {
 
    void *          context;
    dcrudIOperation function;
-   collMap         arguments;
-   collMap         results;
 
 } Operation;
 
 typedef struct OperationCall_s {
 
-   Operation * operation;
-   collMap     arguments;
-   collMap     results;
+   Operation *  operation;
+   const char * intrfcName;
+   const char * opName;
+   collMap      arguments;
+   collMap      results;
+   int          callId;
 
 } OperationCall;
 
@@ -51,14 +52,20 @@ static Operation * Operation_new( void * context, dcrudIOperation function ) {
 }
 
 static OperationCall * OperationCall_new(
-   Operation * operation,
-   collMap     arguments,
-   collMap     results   )
+   Operation *  operation,
+   const char * intrfcName,
+   const char * opName,
+   int          callId,
+   collMap      arguments,
+   collMap      results   )
 {
    OperationCall * This = (OperationCall *)malloc( sizeof( OperationCall ));
-   This->operation = operation;
-   This->arguments = arguments;
-   This->results   = results;
+   This->operation  = operation;
+   This->intrfcName = intrfcName;
+   This->opName     = opName;
+   This->callId     = callId;
+   This->arguments  = arguments;
+   This->results    = results;
    return This;
 }
 
@@ -74,12 +81,20 @@ static Provided * Provided_new() {
    This->opsInOut = collMap_new((collComparator)collStringComparator );
    return This;
 }
+
 static dcrudCallMode   AsyncDeferred = DCRUD_ASYNCHRONOUS_DEFERRED;
 static dcrudQueueIndex DefaultQueue  = DCRUD_DEFAULT_QUEUE;
 
 static bool runAllPendingOperations( collForeach * context ) {
-   Operation * op = (Operation *)context->item;
-   op->function( op->context, op->arguments, op->results );
+   OperationCall *   opCall      = (OperationCall *  )context->item;
+   ParticipantImpl * participant = (ParticipantImpl *)context->user;
+   Operation *       op          = opCall->operation;
+
+   op->function( op->context, opCall->arguments, opCall->results );
+   if( collMap_size( opCall->results ) > 0 ) {
+      ParticipantImpl_sendCall(
+         participant, opCall->intrfcName, opCall->opName, opCall->results, -opCall->callId );
+   }
    return true;
 }
 
@@ -159,8 +174,11 @@ void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
 
    osMutex_take( This->operationQueuesMutex );
    for( queueNdx = 0; queueNdx < 256; ++queueNdx ) {
-      collList_foreach( This->operationQueues[queueNdx], runAllPendingOperations, NULL );
-      collList_clear  ( This->operationQueues[queueNdx] );
+      collList_foreach(
+         This->operationQueues[queueNdx],
+         runAllPendingOperations,
+         This->participant );
+      collList_clear( This->operationQueues[queueNdx] );
    }
    osMutex_release( This->operationQueuesMutex );
 }
@@ -171,6 +189,7 @@ void dcrudIDispatcher_execute(
    const char *     opName,
    collMap          arguments,
    collMap          results,
+   int              callId,
    unsigned         queueNdx,
    dcrudCallMode    callMode )
 {
@@ -179,12 +198,21 @@ void dcrudIDispatcher_execute(
    Operation *  operation = collMap_get( provided->opsInOut, (collMapKey)opName );
    if( callMode == DCRUD_SYNCHRONOUS ) {
       operation->function( operation->context, arguments, results );
+      if( collMap_size( results ) > 0 ) {
+         ParticipantImpl_sendCall( This->participant, intrfcName, opName, results, -callId );
+      }
    }
    else {
       osMutex_take( This->operationQueuesMutex );
       collList_add(
          This->operationQueues[queueNdx],
-         OperationCall_new( operation, arguments, results ));
+         OperationCall_new(
+            operation,
+            intrfcName,
+            opName,
+            callId,
+            arguments,
+            results ));
       osMutex_release( This->operationQueuesMutex );
       if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
          dcrudIDispatcher_handleRequests( self );

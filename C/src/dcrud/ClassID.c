@@ -85,20 +85,20 @@ bool dcrudClassID_toString( const dcrudClassID self, char * target, size_t targe
 }
 
 int dcrudClassID_compareTo( const dcrudClassID * l, const dcrudClassID * r ) {
-   dcrudClassIDImpl ** left  = (dcrudClassIDImpl **)l;
-   dcrudClassIDImpl ** right = (dcrudClassIDImpl **)r;
+   dcrudClassIDImpl * left  = (dcrudClassIDImpl *)*l;
+   dcrudClassIDImpl * right = (dcrudClassIDImpl *)*r;
    int diff = 0;
    if( diff == 0 ) {
-      diff = (*left)->package_1 - (*right)->package_1;
+      diff = left->package_1 - right->package_1;
    }
    if( diff == 0 ) {
-      diff = (*left)->package_2 - (*right)->package_2;
+      diff = left->package_2 - right->package_2;
    }
    if( diff == 0 ) {
-      diff = (*left)->package_3 - (*right)->package_3;
+      diff = left->package_3 - right->package_3;
    }
    if( diff == 0 ) {
-      diff = (*left)->clazz     - (*right)->clazz;
+      diff = left->clazz     - right->clazz;
    }
    return diff;
 }

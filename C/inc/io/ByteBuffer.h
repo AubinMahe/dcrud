@@ -3,6 +3,8 @@
 #include <io/socket.h>
 #include <io/Status.h>
 
+#include <stdio.h>
+
 typedef enum ioByteOrder_e {
 
    ioByteOrder_BIG_ENDIAN,
@@ -33,6 +35,8 @@ ioStatus     ioByteBuffer_putIntAt   ( ioByteBuffer   This, unsigned int value, 
 ioStatus     ioByteBuffer_getInt     ( ioByteBuffer   This, unsigned int * target );
 ioStatus     ioByteBuffer_putLong    ( ioByteBuffer   This, uint64_t value );
 ioStatus     ioByteBuffer_getLong    ( ioByteBuffer   This, uint64_t * target );
+ioStatus     ioByteBuffer_putFloat   ( ioByteBuffer   This, float value );
+ioStatus     ioByteBuffer_getFloat   ( ioByteBuffer   This, float * target );
 ioStatus     ioByteBuffer_putDouble  ( ioByteBuffer   This, double value );
 ioStatus     ioByteBuffer_getDouble  ( ioByteBuffer   This, double * target );
 ioStatus     ioByteBuffer_putString  ( ioByteBuffer   This, const char * src );
@@ -43,3 +47,4 @@ ioStatus     ioByteBuffer_send       ( ioByteBuffer   This, SOCKET sckt, struct 
 ioStatus     ioByteBuffer_receive    ( ioByteBuffer   This, SOCKET sckt );
 byte *       ioByteBuffer_getBytes   ( ioByteBuffer   This );
 ioByteBuffer ioByteBuffer_copy       ( ioByteBuffer   This, unsigned int length );
+ioStatus     ioByteBuffer_dump       ( ioByteBuffer   This, FILE * target );

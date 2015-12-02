@@ -8,6 +8,12 @@ dcrudGUID dcrudGUID_new() {
    return (dcrudGUID)This;
 }
 
+void dcrudGUID_delete( dcrudGUID * self ) {
+   dcrudGUIDImpl * This = (dcrudGUIDImpl *)*self;
+   free( This );
+   *self = NULL;
+}
+
 ioStatus dcrudGUID_unserialize( ioByteBuffer source, dcrudGUID * target ) {
    dcrudGUIDImpl * This     = (dcrudGUIDImpl *)dcrudGUID_new();
    ioStatus        ioStatus = IO_STATUS_NO_ERROR;

@@ -57,6 +57,7 @@ final class ParticipantImpl implements IParticipant {
 //         .bind     ( group )
          .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc )
       ;
+      System.out.printf( "Sending to %s via interface %s\n", group, intrfc );
    }
 
    Shareable newInstance( ClassID classId, ByteBuffer frame ) {
@@ -149,7 +150,7 @@ final class ParticipantImpl implements IParticipant {
          _header.clear();
          _header.put( SIGNATURE );
          _header.put((byte)FrameType.OPERATION.ordinal());
-         _header.putInt( in.size());
+         _header.put((byte)in.size());
          _header.flip();
          _message.put( _header );
          SerializerHelper.putString( intrfcName, _message );

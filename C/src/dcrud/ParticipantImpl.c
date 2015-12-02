@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <util/CheckSysCall.h>
 
-const byte SIGNATURE[4] = { 'H','P','M','S' };
+const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE] = { 'H','P','M','S' };
 
 static unsigned int nextCacheID = 0;
 
@@ -96,6 +96,7 @@ dcrudStatus ParticipantImpl_new(
    {
       return DCRUD_INIT_FAILED;
    }
+   printf( "sending to %s:%d via interface %s\n", address, port, intrfc );
    This->dispatcher = dcrudIDispatcher_new( This );
    return DCRUD_NO_ERROR;
 }
@@ -246,7 +247,7 @@ static bool pushCreateOrUpdateItem( collForeach * context ) {
    ioByteBuffer_flip     ( This->payload );
    size = ioByteBuffer_remaining( This->payload );
    ioByteBuffer_clear    ( This->header );
-   ioByteBuffer_put      ( This->header, SIGNATURE, 0, sizeof( SIGNATURE ));
+   ioByteBuffer_put      ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    ioByteBuffer_putByte  ( This->header, FRAMETYPE_DATA_CREATE_OR_UPDATE );
    ioByteBuffer_putInt   ( This->header, size );
    dcrudGUID_serialize   ( item->id     , This->header );
@@ -275,7 +276,7 @@ static bool pushDeleteItem( collForeach * context ) {
    ParticipantImpl *    This = (ParticipantImpl *   )context->user;
 
    ioByteBuffer_clear  ( This->header );
-   ioByteBuffer_put    ( This->header, SIGNATURE, 0, sizeof( SIGNATURE ));
+   ioByteBuffer_put    ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    ioByteBuffer_putByte( This->header, FRAMETYPE_DATA_DELETE );
    dcrudGUID_serialize( dcrudShareable_getGUID((dcrudShareable)item ), This->header );
    ioByteBuffer_flip   ( This->header );
@@ -325,7 +326,7 @@ void ParticipantImpl_sendCall(
    osMutex_take( This->outMutex );
    ioByteBuffer_clear    ( This->message );
    ioByteBuffer_clear    ( This->header );
-   ioByteBuffer_put      ( This->header, SIGNATURE, 0, sizeof( SIGNATURE ));
+   ioByteBuffer_put      ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    ioByteBuffer_putByte  ( This->header, FRAMETYPE_OPERATION );
    ioByteBuffer_putInt   ( This->header, collMap_size( in ));
    ioByteBuffer_flip     ( This->header );

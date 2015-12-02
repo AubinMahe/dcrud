@@ -1,6 +1,6 @@
 #include <io/ByteBuffer.h>
-#include <stdio.h>
 #include <util/CheckSysCall.h>
+#include <dbg/Dump.h>
 
 typedef struct ioByteBufferImpl_s {
 
@@ -276,6 +276,14 @@ ioStatus ioByteBuffer_getLong( ioByteBuffer self, uint64_t * target ) {
    return IO_STATUS_NO_ERROR;
 }
 
+ioStatus ioByteBuffer_putFloat( ioByteBuffer self, float value ) {
+   return ioByteBuffer_putInt( self, *(unsigned int*)(void*)&value );
+}
+
+ioStatus ioByteBuffer_getFloat( ioByteBuffer self, float * target ) {
+   return ioByteBuffer_getInt( self, (unsigned int *)target );
+}
+
 ioStatus ioByteBuffer_putDouble( ioByteBuffer self, double value ) {
    return ioByteBuffer_putLong( self, *(uint64_t*)(void*)&value );
 }
@@ -294,19 +302,15 @@ ioStatus ioByteBuffer_putString( ioByteBuffer This, const char * source ) {
 }
 
 ioStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, unsigned int size ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   unsigned int       len    = 0U;
-   ioStatus            status = ioByteBuffer_getInt( self, &len );
+   unsigned int len    = 0U;
+   ioStatus     status = ioByteBuffer_getInt( self, &len );
    if( status == IO_STATUS_NO_ERROR ) {
-      if( len > size ) {
-         status = ioByteBuffer_get( self, (byte *)dest, 0, size );
-         This->position += len-size;
-      }
-      else if( size > len ) {
-         status = IO_STATUS_UNDERFLOW;
-      }
-      else {
+      if( len < size ) {
          status = ioByteBuffer_get( self, (byte *)dest, 0, len );
+         dest[len] = '\0';
+      }
+      else if( size >= len ) {
+         status = IO_STATUS_UNDERFLOW;
       }
    }
    return status;
@@ -328,7 +332,7 @@ ioStatus ioByteBuffer_putBuffer( ioByteBuffer self, ioByteBuffer other ) {
 ioStatus ioByteBuffer_send( ioByteBuffer self, SOCKET sckt, struct sockaddr_in * trgt ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioStatus           retVal = IO_STATUS_NO_ERROR;
-   unsigned int             len    = This->limit - This->position;
+   unsigned int       len    = This->limit - This->position;
    const char *       buffer = (const char *)( This->bytes + This->position );
    ssize_t            count  =
       sendto( sckt, buffer, len, 0, (struct sockaddr *)trgt, sizeof( struct sockaddr_in ));
@@ -346,7 +350,16 @@ ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
    ioStatus           retVal = IO_STATUS_NO_ERROR;
    unsigned int       max    = This->limit-This->position;
    void *             buffer = This->bytes+This->position;
-   ssize_t            count  = recv( sckt, buffer, max, 0 );
+   int                type;
+   unsigned int       length = sizeof( type );
+   ssize_t            count;
+   getsockopt( sckt, SOL_SOCKET, SO_TYPE, &type, &length );
+   if( type == SOCK_STREAM ) {
+      count = recv( sckt, buffer, max, 0 );
+   }
+   else {
+      count = recvfrom( sckt, buffer, max, 0, NULL, NULL );
+   }
    if( count < 0 ) {
       retVal = IO_STATUS_RECV_FAILED;
    }
@@ -366,4 +379,10 @@ ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, unsigned int length ) {
    ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
    memcpy( copy->bytes, This->bytes + This->position, length );
    return (ioByteBuffer)copy;
+}
+
+ioStatus ioByteBuffer_dump( ioByteBuffer self, FILE * target ) {
+   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+   dbgDump_range( target, This->bytes, 0, This->limit );
+   return IO_STATUS_NO_ERROR;
 }

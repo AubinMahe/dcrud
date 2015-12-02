@@ -16,6 +16,9 @@
 #  include <Ws2tcpip.h>
 #  include <mswsock.h>
 #endif
+
+#define LOOP_COUNT 3
+
 /*
 #define PRINT_SERIALIZE
 #define PRINT_TIMING
@@ -123,10 +126,10 @@ static bool ShareableShape_init( dcrudShareable shareable ) {
    dcrudClassID     classID = dcrudShareable_getClassID( shareable );
    ShareableShape * shape   = (ShareableShape *)dcrudShareable_getUserData( shareable );
 
-   if( classID == rectangleClassID ) {
+   if( 0 == dcrudClassID_compareTo( &classID, &rectangleClassID )) {
       sprintf( shape->name, "Rectangle %03u", ++g_rank );
    }
-   else if( classID == ellipseClassID ) {
+   else if( 0 == dcrudClassID_compareTo( &classID, &ellipseClassID )) {
       sprintf( shape->name, "Ellipse %03u", ++g_rank );
    }
    else {
@@ -153,9 +156,13 @@ static double areaMaxX = 640.0;
 static double areaMaxY = 480.0;
 #define MOVE 2.0
 
-static void move( dcrudICache shapes, dcrudShareable shareable ) {
+static bool moveShape( collForeach * context ) {
+   collMapPair *    pair      = (collMapPair *   )context->item;
+   dcrudICache      cache     = (dcrudICache     )context->user;
+   dcrudShareable   shareable = (dcrudShareable  )pair->value;
+   ShareableShape * shape     = (ShareableShape *)dcrudShareable_getUserData( shareable );
    bool             outOfBounds;
-   ShareableShape * shape = (ShareableShape *)dcrudShareable_getUserData( shareable );
+
    do {
       outOfBounds = false;
       shape->x += nextDouble( 1.0, 0.0 )*shape->dx;
@@ -177,14 +184,44 @@ static void move( dcrudICache shapes, dcrudShareable shareable ) {
          shape->dy = -MOVE;
       }
    } while( outOfBounds );
-   dcrudICache_update( shapes, dcrudShareable_getShareable( shape ));
+   dcrudICache_update( cache, dcrudShareable_getShareable( shape ));
+   return true;
 }
 
-static void createShapes( dcrudICache shapes, collMap in, collMap out ) {
-   printf( "createShapes remotely called!\n" );
-   (void)shapes;
-   (void)in;
-   (void)out;
+static bool removeFromCache( collForeach * context ) {
+   collMapPair *  pair      = (collMapPair *   )context->item;
+   dcrudICache    cache     = (dcrudICache     )context->user;
+   dcrudShareable shareable = (dcrudShareable  )pair->value;
+   dcrudICache_delete( cache, shareable );
+   return true;
+}
+
+static bool deleteShape( collForeach * context ) {
+   collMapPair *  pair      = (collMapPair *   )context->item;
+   dcrudShareable shareable = (dcrudShareable  )pair->value;
+   dcrudShareable_delete( &shareable );
+   return true;
+}
+
+static void createShapes(
+   dcrudIParticipant participant,
+   collMap           in,
+   collMap           out )
+{
+   dcrudClassID     clazz     = collMap_get( in, "class" );
+   double *         x         = collMap_get( in, "x" );
+   double *         y         = collMap_get( in, "y" );
+   double *         w         = collMap_get( in, "w" );
+   double *         h         = collMap_get( in, "h" );
+   dcrudShareable   shareable = dcrudIParticipant_createShareable( participant, clazz );
+   ShareableShape * shape     = (ShareableShape *)dcrudShareable_getUserData( shareable );
+   dcrudICache      cache    = dcrudIParticipant_getCache( participant, 0 );
+   shape->x = *x;
+   shape->y = *y;
+   shape->w = *w;
+   shape->h = *h;
+   dcrudICache_create( cache, shareable );
+   collMap_clear( out ); /* No out parameter */
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {
@@ -214,11 +251,7 @@ int shapesPublisherTests( int argc, char * argv[] ) {
 #ifdef PRINT_TIMING
       static uint64_t prev = osSystem_nanotime();
 #endif
-      dcrudICache      shapes        = NULL;
-      dcrudShareable   rect1         = NULL;
-      dcrudShareable   elli1         = NULL;
-      dcrudShareable   rect2         = NULL;
-      dcrudShareable   elli2         = NULL;
+      dcrudICache      cache         = NULL;
       dcrudIDispatcher dispatcher    = NULL;
       dcrudIProvided   shapesFactory = NULL;
 
@@ -240,41 +273,35 @@ int shapesPublisherTests( int argc, char * argv[] ) {
          (dcrudShareable_Set        )ShareableShape_set,
          (dcrudShareable_Serialize  )ShareableShape_serialize,
          (dcrudShareable_Unserialize)ShareableShape_unserialize );
-      dcrudIParticipant_createCache( participant, &shapes );
-      rect1 = dcrudIParticipant_createShareable( participant, rectangleClassID );
-      elli1 = dcrudIParticipant_createShareable( participant, ellipseClassID );
-      rect2 = dcrudIParticipant_createShareable( participant, rectangleClassID );
-      elli2 = dcrudIParticipant_createShareable( participant, ellipseClassID );
+      dcrudIParticipant_createCache( participant, &cache );
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleClassID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseClassID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleClassID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseClassID ));
       dispatcher    = dcrudIParticipant_getDispatcher( participant );
       shapesFactory = dcrudIDispatcher_provide( dispatcher, "IShapesFactory" );
-      dcrudIProvided_addOperation( shapesFactory, "create", shapes, (dcrudIOperation)createShapes );
-      dcrudICache_create( shapes, rect1 );
-      dcrudICache_create( shapes, elli1 );
-      dcrudICache_create( shapes, rect2 );
-      dcrudICache_create( shapes, elli2 );
-      printf( "Publishing 4 shapes every 40 ms, 10 000 times.\n" );
-      for( i = 0; i < 10000; ++i ) {
+      dcrudIProvided_addOperation(
+         shapesFactory, "create", participant, (dcrudIOperation)createShapes );
+      printf( "Publish every 40 ms, %d times.\n", LOOP_COUNT );
+      for( i = 0; i < LOOP_COUNT; ++i ) {
 #ifdef PRINT_TIMING
          uint64_t now = osSystem_nanotime();
          fprintf( stderr, "-- Publish, delta = %7.2f ------------------------------------------\n",
             ((double)(now-prev))/1000000.0 );
          prev = now;
 #endif
-         dcrudICache_publish( shapes );
+         dcrudICache_publish( cache );
          osSystem_sleep( 40U );
-         move( shapes, rect1 );
-         move( shapes, elli1 );
-         move( shapes, rect2 );
-         move( shapes, elli2 );
+         dcrudICache_foreach( cache, moveShape, cache );
+         dcrudIDispatcher_handleRequests( dispatcher );
       }
-      dcrudShareable_delete( &rect1 );
-      dcrudShareable_delete( &elli1 );
-      dcrudShareable_delete( &rect2 );
-      dcrudShareable_delete( &elli2 );
+      dcrudICache_foreach( cache, removeFromCache, cache );
+      dcrudICache_publish( cache );
+      dcrudICache_foreach( cache, deleteShape, NULL );
       dcrudClassID_delete( &rectangleClassID );
       dcrudClassID_delete( &ellipseClassID );
-      printf( "Well done.\n" );
       dcrudNetwork_leave( &participant );
+      printf( "Well done.\n" );
    }
    else {
       fprintf( stderr, "Unable to join network.\n" );

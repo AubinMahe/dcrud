@@ -39,6 +39,7 @@ final class NetworkReceiver extends Thread {
       _in.join( source.getAddress(), intrfc );
       setName( "Receiver-" + source.toString());
       setDaemon( true );
+      System.out.printf( "receiving from %s, bound to %s\n", source, intrfc );
       start();
    }
 

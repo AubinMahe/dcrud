@@ -189,8 +189,3 @@ collForeachResult COLL_MAP_NAME(_foreach)(
    }
    return context.retVal;
 }
-
-COLL_MAP_NAME(Pairs) COLL_MAP_NAME(_values)( COLL_MAP_TYPE self ) {
-   COLL_MAP_NAME(Private) * This = (COLL_MAP_NAME(Private)*)self;
-   return This->pairs;
-}

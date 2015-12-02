@@ -15,7 +15,7 @@ dcrudShareable dcrudShareable_new( dcrudShareableClass * meta, dcrudClassID clas
 void dcrudShareable_delete( dcrudShareable * self ) {
    dcrudShareableImpl * This = UTIL_CAST( dcrudShareableImpl *, *self );
    if( This ) {
-      free( This->id );
+      dcrudGUID_delete( &This->id );
       free( This );
       *self = NULL;
    }

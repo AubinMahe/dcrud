@@ -166,34 +166,44 @@ dcrudStatus dcrudICache_delete( dcrudICache self, dcrudShareable item ) {
    return DCRUD_NO_ERROR;
 }
 
-collMapPairs dcrudICache_values( dcrudICache self ) {
-   Cache * This = (Cache *)self;
-   collMapPairs pairs;
+collForeachResult dcrudICache_foreach( dcrudICache self, collForeachFunction fn, void * uData ) {
+   Cache *           This = (Cache *)self;
+   collForeachResult result;
 
    osMutex_take( This->localMutex );
-   pairs = collMap_values( This->local );
+   result = collMap_foreach( This->local, fn, uData );
    osMutex_release( This->localMutex );
-   return pairs;
+   return result;
+}
+
+typedef struct selectionCtxt_s {
+
+   dcrudPredicate query;
+   collSet        selection;
+
+} selectionCtxt;
+
+static bool selectItem( collForeach * context ) {
+   collMapPair *   pair = (collMapPair *  )context->item;
+   selectionCtxt * ctxt = (selectionCtxt *)context->user;
+   dcrudShareable  item = (dcrudShareable )pair->value;
+
+   if( ctxt->query == NULL || ctxt->query( item )) {
+      collSet_add( ctxt->selection, item );
+   }
+   return true;
 }
 
 collSet dcrudICache_select( dcrudICache self, dcrudPredicate query ) {
-   Cache *      This      = (Cache *)self;
-   collSet      selection = collSet_new((collComparator)dcrudShareable_compareTo );
-   unsigned int size;
-   collMapPairs values;
-   unsigned int i;
+   Cache *       This = (Cache *)self;
+   selectionCtxt ctxt;
 
-   osMutex_take( This->localMutex );
-   size   = collMap_size  ( This->local );
-   values = collMap_values( This->local );
-   for( i = 0; i < size; ++i ) {
-      dcrudShareable item = (dcrudShareable)values[i].value;
-      if( query == NULL || query( item )) {
-         collSet_add( selection, item );
-      }
-   }
+   ctxt.query     = query;
+   ctxt.selection = collSet_new((collComparator)dcrudShareable_compareTo );
+   osMutex_take   ( This->localMutex );
+   collMap_foreach( This->local, selectItem, &ctxt );
    osMutex_release( This->localMutex );
-   return selection;
+   return ctxt.selection;
 }
 
 dcrudStatus dcrudICache_publish( dcrudICache self ) {
