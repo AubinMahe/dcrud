@@ -277,7 +277,8 @@ ioStatus ioByteBuffer_getLong( ioByteBuffer self, uint64_t * target ) {
 }
 
 ioStatus ioByteBuffer_putFloat( ioByteBuffer self, float value ) {
-   return ioByteBuffer_putInt( self, *(unsigned int*)(void*)&value );
+   void * ptr = &value;
+   return ioByteBuffer_putInt( self, *(unsigned int*)ptr );
 }
 
 ioStatus ioByteBuffer_getFloat( ioByteBuffer self, float * target ) {
@@ -285,7 +286,8 @@ ioStatus ioByteBuffer_getFloat( ioByteBuffer self, float * target ) {
 }
 
 ioStatus ioByteBuffer_putDouble( ioByteBuffer self, double value ) {
-   return ioByteBuffer_putLong( self, *(uint64_t*)(void*)&value );
+   void * ptr = &value;
+   return ioByteBuffer_putLong( self, *(uint64_t*)ptr );
 }
 
 ioStatus ioByteBuffer_getDouble( ioByteBuffer self, double * target ) {
@@ -353,7 +355,11 @@ ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
    int                type;
    unsigned int       length = sizeof( type );
    ssize_t            count;
+#ifdef WIN32
+   getsockopt( sckt, SOL_SOCKET, SO_TYPE, (void *)&type, (int *)&length );
+#else
    getsockopt( sckt, SOL_SOCKET, SO_TYPE, &type, &length );
+#endif
    if( type == SOCK_STREAM ) {
       count = recv( sckt, buffer, max, 0 );
    }

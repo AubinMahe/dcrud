@@ -4,6 +4,7 @@
 #include "ParticipantImpl.h"
 
 #include <io/ByteBuffer.h>
+#include <io/socket.h>
 
 #include <os/System.h>
 

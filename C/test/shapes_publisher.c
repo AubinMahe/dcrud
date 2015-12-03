@@ -13,7 +13,7 @@
 #elif _WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <winsock2.h>
-#  include <Ws2tcpip.h>
+/*#  include <Ws2tcpip.h>*/
 #  include <mswsock.h>
 #endif
 
@@ -225,28 +225,28 @@ static void createShapes(
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {
-   const char *      pubName     = NULL;
+   unsigned short    pubId       = (unsigned short)-1;
    const char *      intrfc      = NULL;
    dcrudIParticipant participant = NULL;
    int               i;
 
    for( i = 2; i < argc; ++i ) {
-      if( 0 == strcmp( argv[i], "--pub-name" )) {
-         pubName = argv[++i];
+      if( 0 == strcmp( argv[i], "--pub-id" )) {
+         pubId = (unsigned short)atoi( argv[++i] );
       }
       else if( 0 == strcmp( argv[i], "--interface" )) {
          intrfc = argv[++i];
       }
    }
-   if( !pubName ) {
-      fprintf( stderr, "%s --pub-name <publisher-name> is mandatory\n", argv[0] );
+   if( pubId == (unsigned short)-1 ) {
+      fprintf( stderr, "%s --pub-id <publisher-id> is mandatory\n", argv[0] );
       exit(-1);
    }
    if( !intrfc ) {
       fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
       exit(-1);
    }
-   participant = dcrudNetwork_join( "network.xml", intrfc, pubName );
+   participant = dcrudNetwork_join( "network.xml", intrfc, pubId );
    if( participant ) {
 #ifdef PRINT_TIMING
       static uint64_t prev = osSystem_nanotime();

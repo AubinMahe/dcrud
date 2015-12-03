@@ -127,7 +127,11 @@ void ParticipantImpl_delete( ParticipantImpl * * self ) {
       collMap_delete         ( &This->classes      );
       collMap_delete         ( &This->callbacks    );
       osMutex_delete         ( &This->outMutex     );
+#ifdef WIN32
+      closesocket            (  This->out          );
+#else
       close                  (  This->out          );
+#endif
       dcrudIDispatcher_delete( &This->dispatcher   );
       free( This );
       *self = NULL;
