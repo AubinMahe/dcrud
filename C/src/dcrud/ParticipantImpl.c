@@ -57,18 +57,18 @@ dcrudStatus ParticipantImpl_new(
    memset( This, 0, sizeof( ParticipantImpl ));
    *target = This;
    memset( &lIntrfc, 0, sizeof( lIntrfc ));
-   if( OS_STATUS_NO_ERROR != osMutex_new( &This->cachesMutex )) {
+   if( osMutex_new( &This->cachesMutex )) {
       perror( "Unable to create mutex\n" );
       return DCRUD_INIT_FAILED;
    }
    This->header  = ioByteBuffer_new( HEADER_SIZE );
    This->payload = ioByteBuffer_new( PAYLOAD_SIZE );
    This->message = ioByteBuffer_new( 64*1024 );/* UDP MAX packet size */
-   if( OS_STATUS_NO_ERROR != osMutex_new( &This->classesMutex )) {
+   if( osMutex_new( &This->classesMutex )) {
       perror( "Unable to create mutex\n" );
       return DCRUD_INIT_FAILED;
    }
-   if( OS_STATUS_NO_ERROR != osMutex_new( &This->outMutex )) {
+   if( osMutex_new( &This->outMutex )) {
       perror( "Unable to create mutex\n" );
       return DCRUD_INIT_FAILED;
    }

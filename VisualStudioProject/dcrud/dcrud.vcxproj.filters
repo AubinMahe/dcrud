@@ -31,6 +31,18 @@
     <Filter Include="src\util">
       <UniqueIdentifier>{70de9c24-64c9-4d4c-a651-773729afe98a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inc\dbg">
+      <UniqueIdentifier>{34403003-2500-408a-a106-0aa3a78123de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\os">
+      <UniqueIdentifier>{e03ecbc3-8fc0-4bc9-9aab-10092a9707d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dbg">
+      <UniqueIdentifier>{36a1c1a8-27e8-4b1d-a9d9-38a94a81d371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\os">
+      <UniqueIdentifier>{4bff20a6-279b-4d5f-8d85-76c5d177c83c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\C\inc\coll\Comparator.h">
@@ -51,23 +63,11 @@
     <ClInclude Include="..\..\C\inc\dcrud\GUID.h">
       <Filter>inc\dcrud</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\C\inc\dcrud\Shareable.h">
       <Filter>inc\dcrud</Filter>
     </ClInclude>
     <ClInclude Include="..\..\C\inc\io\ByteBuffer.h">
       <Filter>inc\io</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\util\check.h">
-      <Filter>inc\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\C\inc\util\types.h">
       <Filter>inc\util</Filter>
@@ -75,18 +75,84 @@
     <ClInclude Include="..\..\C\src\dcrud\Cache.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\C\src\dcrud\Repositories.h">
-      <Filter>src\dcrud</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\C\inc\coll\limits.h">
       <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\MapFuncPtr.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICache.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Network.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Status.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dbg\Dump.h">
+      <Filter>inc\dbg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dbg\Performance.h">
+      <Filter>inc\dbg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\socket.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\Status.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\CheckSysCall.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\Perf.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\os\Mutex.h">
+      <Filter>inc\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\os\System.h">
+      <Filter>inc\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\ClassID_private.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Dispatcher.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\GUID_private.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h">
+      <Filter>src\dcrud</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\C\src\coll\List.c">
-      <Filter>src\coll</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C\src\coll\Map.c">
       <Filter>src\coll</Filter>
     </ClCompile>
     <ClCompile Include="..\..\C\src\coll\Set.c">
@@ -98,17 +164,59 @@
     <ClCompile Include="..\..\C\src\dcrud\GUID.c">
       <Filter>src\dcrud</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\src\dcrud\Repositories.c">
-      <Filter>src\dcrud</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C\src\dcrud\RepositoryFactoryBuilder.c">
-      <Filter>src\dcrud</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\C\src\io\ByteBuffer.c">
       <Filter>src\io</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\src\util\check.c">
+    <ClCompile Include="..\..\C\src\coll\Comparator.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\MapFuncPtr.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\MapVoidPtr.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dbg\Dump.c">
+      <Filter>src\dbg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dbg\Performance.c">
+      <Filter>src\dbg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Callback.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\ClassID.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Dispatcher.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Network.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiverImpl.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\ParticipantImpl.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Shareable.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Status.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\io\Errors.c">
+      <Filter>src\io</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\util\CheckSysCall.c">
       <Filter>src\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\os\Mutex.c">
+      <Filter>src\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\os\System.c">
+      <Filter>src\os</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

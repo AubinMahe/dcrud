@@ -8,7 +8,7 @@ typedef struct List_s {
 
    unsigned       count;
 #ifdef STATIC_ALLOCATION
-   collListItem   items[COLL_LIST_ITEM_MAX_COUNT];
+   collListItem   items[collLIST_ITEM_MAX_COUNT];
 #else
    unsigned       limit;
    collListItem * items;
@@ -17,7 +17,7 @@ typedef struct List_s {
 } List;
 
 #ifdef STATIC_ALLOCATION
-static List Lists[COLL_LIST_MAX_COUNT];
+static List Lists[collLIST_MAX_COUNT];
 static unsigned int    NextList = 0;
 unsigned int collLimitsListCountMax     = 0;
 unsigned int collLimitsListItemCountMax = 0;
@@ -25,7 +25,7 @@ unsigned int collLimitsListItemCountMax = 0;
 
 collList collList_new() {
 #ifdef STATIC_ALLOCATION
-   if( NextList == COLL_LIST_MAX_COUNT ) {
+   if( NextList == collLIST_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collList_reserve: out of memory!\n", __FILE__, __LINE__ );
       return NULL;
    }
@@ -67,7 +67,7 @@ void collList_clear( collList self ) {
 void collList_add( collList self, collListItem item ) {
    List * This = (List *)self;
 #ifdef STATIC_ALLOCATION
-   if( This->count == COLL_LIST_ITEM_MAX_COUNT ) {
+   if( This->count == collLIST_ITEM_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collList_add: out of memory!\n", __FILE__, __LINE__ );
       return;
    }

@@ -21,13 +21,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C\test\TU.c">
-      <Filter>test</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\C\test\TF.c">
-      <Filter>test</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\C\test\main.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\coll.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\io.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\shapes_publisher.c">
       <Filter>test</Filter>
     </ClCompile>
   </ItemGroup>

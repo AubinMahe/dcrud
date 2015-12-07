@@ -19,9 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\C\test\coll.c" />
+    <ClCompile Include="..\..\C\test\io.c" />
     <ClCompile Include="..\..\C\test\main.c" />
-    <ClCompile Include="..\..\C\test\TF.c" />
-    <ClCompile Include="..\..\C\test\TU.c" />
+    <ClCompile Include="..\..\C\test\shapes_publisher.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\C\inc\coll\Comparator.h" />

@@ -2,14 +2,18 @@
 #include <util/CheckSysCall.h>
 #include <dbg/Dump.h>
 
+#ifdef _MSC_VER
+#  define ssize_t int
+#endif
+
 typedef struct ioByteBufferImpl_s {
 
-   ioByteOrder order;
-   unsigned int      position;
-   unsigned int      limit;
-   unsigned int      capacity;
-   unsigned int      mark;
-   byte *      bytes;
+   ioByteOrder  order;
+   unsigned int position;
+   unsigned int limit;
+   unsigned int capacity;
+   unsigned int mark;
+   byte *       bytes;
 
 } ioByteBufferImpl;
 

@@ -10,7 +10,7 @@ typedef struct COLL_MAP_NAME(Private_s) {
    collComparator        cmp;
    unsigned              count;
 #ifdef STATIC_ALLOCATION
-   COLL_MAP_NAME(Pair)   pairs[COLL_MAP_ITEM_MAX_COUNT];
+   COLL_MAP_NAME(Pair)   pairs[collMap_ITEM_MAX_COUNT];
 #else
    unsigned              limit;
    COLL_MAP_NAME(Pair) * pairs;
@@ -19,7 +19,7 @@ typedef struct COLL_MAP_NAME(Private_s) {
 } COLL_MAP_NAME(Private);
 
 #ifdef STATIC_ALLOCATION
-static COLL_MAP_NAME(Private) COLL_MAP_NAME(Maps)[COLL_MAP_NAME(MAX_COUNT)];
+static COLL_MAP_NAME(Private) COLL_MAP_NAME(Maps)[COLL_MAP_NAME(_MAX_COUNT)];
 static unsigned int COLL_MAP_NAME(Next) = 0;
 unsigned int COLL_MAP_NAME(LimitsCountMax)     = 0;
 unsigned int COLL_MAP_NAME(LimitsPairCountMax) = 0;
@@ -29,8 +29,9 @@ typedef int ( * PVoidComparator )( const void *, const void * );
 
 COLL_MAP_TYPE COLL_MAP_NAME(_new)( collComparator cmp ) {
 #ifdef STATIC_ALLOCATION
-   if( COLL_MAP_NAME(Next) == COLL_MAP_NAME(MAX_COUNT)) {
-      fprintf( stderr, "%s:%d:%s_reserve: out of memory!\n", #COLL_MAP_TYPE, __FILE__, __LINE__ );
+   if( COLL_MAP_NAME(Next) == COLL_MAP_NAME(_MAX_COUNT)) {
+      const char * s = ""#COLL_MAP_TYPE;
+      fprintf( stderr, "%s:%d:%s_reserve: out of memory!\n", s, __FILE__, __LINE__ );
       return NULL;
    }
    COLL_MAP_NAME(Private) * This = &Maps[NextMap++];
@@ -96,7 +97,7 @@ bool COLL_MAP_NAME(_put)(
       return true;
    }
 #ifdef STATIC_ALLOCATION
-   if( This->count == COLL_MAP_ITEM_MAX_COUNT ) {
+   if( This->count == collMap_ITEM_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:%s_put: out of memory!\n", __FILE__, __LINE__, #COL_MAP_TYPE );
       return false;
    }

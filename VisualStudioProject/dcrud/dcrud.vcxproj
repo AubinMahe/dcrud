@@ -24,28 +24,60 @@
     <ClInclude Include="..\..\C\inc\coll\limits.h" />
     <ClInclude Include="..\..\C\inc\coll\List.h" />
     <ClInclude Include="..\..\C\inc\coll\Map.h" />
+    <ClInclude Include="..\..\C\inc\coll\MapFuncPtr.h" />
     <ClInclude Include="..\..\C\inc\coll\Set.h" />
+    <ClInclude Include="..\..\C\inc\dbg\Dump.h" />
+    <ClInclude Include="..\..\C\inc\dbg\Performance.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h" />
     <ClInclude Include="..\..\C\inc\dcrud\GUID.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICache.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Network.h" />
     <ClInclude Include="..\..\C\inc\dcrud\Shareable.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Status.h" />
     <ClInclude Include="..\..\C\inc\io\ByteBuffer.h" />
-    <ClInclude Include="..\..\C\inc\util\check.h" />
+    <ClInclude Include="..\..\C\inc\io\socket.h" />
+    <ClInclude Include="..\..\C\inc\io\Status.h" />
+    <ClInclude Include="..\..\C\inc\os\Mutex.h" />
+    <ClInclude Include="..\..\C\inc\os\System.h" />
+    <ClInclude Include="..\..\C\inc\util\CheckSysCall.h" />
+    <ClInclude Include="..\..\C\inc\util\Perf.h" />
     <ClInclude Include="..\..\C\inc\util\types.h" />
     <ClInclude Include="..\..\C\src\dcrud\Cache.h" />
-    <ClInclude Include="..\..\C\src\dcrud\Repositories.h" />
+    <ClInclude Include="..\..\C\src\dcrud\ClassID_private.h" />
+    <ClInclude Include="..\..\C\src\dcrud\Dispatcher.h" />
+    <ClInclude Include="..\..\C\src\dcrud\GUID_private.h" />
+    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h" />
+    <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h" />
+    <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\C\src\coll\Comparator.c" />
     <ClCompile Include="..\..\C\src\coll\List.c" />
-    <ClCompile Include="..\..\C\src\coll\Map.c" />
+    <ClCompile Include="..\..\C\src\coll\MapFuncPtr.c" />
+    <ClCompile Include="..\..\C\src\coll\MapVoidPtr.c" />
     <ClCompile Include="..\..\C\src\coll\Set.c" />
+    <ClCompile Include="..\..\C\src\dbg\Dump.c" />
+    <ClCompile Include="..\..\C\src\dbg\Performance.c" />
     <ClCompile Include="..\..\C\src\dcrud\Cache.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Callback.c" />
+    <ClCompile Include="..\..\C\src\dcrud\ClassID.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Dispatcher.c" />
     <ClCompile Include="..\..\C\src\dcrud\GUID.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Repositories.c" />
-    <ClCompile Include="..\..\C\src\dcrud\RepositoryFactoryBuilder.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Network.c" />
+    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiverImpl.c" />
+    <ClCompile Include="..\..\C\src\dcrud\ParticipantImpl.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Shareable.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Status.c" />
     <ClCompile Include="..\..\C\src\io\ByteBuffer.c" />
-    <ClCompile Include="..\..\C\src\util\check.c" />
+    <ClCompile Include="..\..\C\src\io\Errors.c" />
+    <ClCompile Include="..\..\C\src\os\Mutex.c" />
+    <ClCompile Include="..\..\C\src\os\System.c" />
+    <ClCompile Include="..\..\C\src\util\CheckSysCall.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{530ABE8A-91AC-4B44-969F-80899726E450}</ProjectGuid>
@@ -105,7 +137,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>STATIC_ALLOCATION;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -119,7 +151,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>STATIC_ALLOCATION;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -135,7 +167,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>STATIC_ALLOCATION;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -153,7 +185,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>STATIC_ALLOCATION;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

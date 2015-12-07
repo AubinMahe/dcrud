@@ -13,17 +13,25 @@
 #include <dbg/Performance.h>
 #include <dbg/Dump.h>
 
-#include <pthread.h>
+#if defined( WIN32 ) || defined( _WIN32 )
+#  include <windows.h>
+#  pragma warning(disable : 4996)
+#else
+#  include <pthread.h>
+#  include <unistd.h>
+#endif
 #include <stdio.h>
-#include <unistd.h>
 
 typedef struct NetworkReceiverImpl_s {
 
    ParticipantImpl * participant;
    SOCKET            in;
    ioByteBuffer      inBuf;
+#ifdef WIN32
+   HANDLE            thread;
+#else
    pthread_t         thread;
-
+#endif
 } NetworkReceiverImpl;
 
 static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
@@ -279,9 +287,15 @@ INetworkReceiver INetworkReceiver_new(
       return (INetworkReceiver)This;
    }
    printf( "receiving from %s, bound to %s:%d\n", address, intrfc, port );
+#ifdef WIN32
+   DWORD tid;
+   This->thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, This, 0, &tid );
+   if( ! utilCheckSysCall( This->thread != NULL, __FILE__, __LINE__, "CreateThread" ))
+#else
    if( ! utilCheckSysCall( 0 ==
       pthread_create( &This->thread, NULL, (pthread_routine_t)run, This ),
       __FILE__, __LINE__, "pthread_create" ))
+#endif
    {
       return (INetworkReceiver)This;
    }
@@ -292,9 +306,15 @@ void INetworkReceiver_delete( INetworkReceiver * self ) {
    NetworkReceiverImpl * This   = (NetworkReceiverImpl *)*self;
    void *                retVal = NULL;
 
+#ifdef WIN32
+   WSACancelBlockingCall();
+   WaitForSingleObject( This->thread, INFINITE );
+   closesocket( This->in );
+#else
    pthread_cancel( This->thread ); /* break ioByteBuffer_receive and cause the thread to exit */
    pthread_join( This->thread, &retVal );
    close( This->in );
+#endif
    ioByteBuffer_delete( &This->inBuf );
    free( This );
    *self = NULL;

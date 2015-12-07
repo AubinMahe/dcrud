@@ -8,7 +8,7 @@ typedef struct collPrivateSet_s {
 
    unsigned       count;
 #ifdef STATIC_ALLOCATION
-   collSetItem    items[COLL_SET_ITEM_MAX_COUNT];
+   collSetItem    items[collSet_ITEM_MAX_COUNT];
 #else
    unsigned       limit;
    collSetItem *  items;
@@ -18,7 +18,7 @@ typedef struct collPrivateSet_s {
 } collPrivateSet;
 
 #ifdef STATIC_ALLOCATION
-static collPrivateSet Sets[COLL_SET_MAX_COUNT];
+static collPrivateSet Sets[collSet_MAX_COUNT];
 static unsigned int   NextSet = 0;
 unsigned int collLimitsSetCountMax     = 0;
 unsigned int collLimitsSetItemCountMax = 0;
@@ -28,7 +28,7 @@ typedef int ( * PVoidComparator )( const void *, const void * );
 
 collSet collSet_new( collComparator cmp ) {
 #ifdef STATIC_ALLOCATION
-   if( NextSet == COLL_SET_MAX_COUNT ) {
+   if( NextSet == collSet_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collSet_reserve: out of memory!\n", __FILE__, __LINE__ );
       return NULL;
    }
@@ -78,7 +78,7 @@ bool collSet_add( collSet self, collSetItem item ) {
       return false;
    }
 #ifdef STATIC_ALLOCATION
-   if( This->count == COLL_SET_ITEM_MAX_COUNT ) {
+   if( This->count == collSet_ITEM_MAX_COUNT ) {
       fprintf( stderr, "%s:%d:collSet_add: out of memory!\n", __FILE__, __LINE__ );
       return false;
    }

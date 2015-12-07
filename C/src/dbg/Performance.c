@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#  pragma warning(disable : 4996)
+#endif
+
 static collMap s_samplesByAttribute;
 static bool    s_enabled = false;
 

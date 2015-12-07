@@ -137,7 +137,7 @@ dcrudIDispatcher dcrudIDispatcher_new( ParticipantImpl * participant ) {
    for( i = 0; i < 256; ++i ) {
       This->operationQueues[i] = collList_new();
    }
-   if( OS_STATUS_NO_ERROR == osMutex_new( &This->operationQueuesMutex )) {
+   if( osMutex_new( &This->operationQueuesMutex )) {
       return (dcrudIDispatcher)This;
    }
    return NULL;
