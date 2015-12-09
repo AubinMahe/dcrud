@@ -17,7 +17,7 @@
 #  include <mswsock.h>
 #endif
 
-#define LOOP_COUNT 3
+#define LOOP_COUNT 10000
 
 /*
 #define PRINT_SERIALIZE
@@ -225,7 +225,7 @@ static void createShapes(
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {
-   unsigned short    pubId       = (unsigned short)-1;
+   int               pubId       = 0;
    const char *      intrfc      = NULL;
    dcrudIParticipant participant = NULL;
    int               i;
@@ -238,7 +238,7 @@ int shapesPublisherTests( int argc, char * argv[] ) {
          intrfc = argv[++i];
       }
    }
-   if( pubId == (unsigned short)-1 ) {
+   if( pubId < 1 ) {
       fprintf( stderr, "%s --pub-id <publisher-id> is mandatory\n", argv[0] );
       exit(-1);
    }
@@ -246,7 +246,7 @@ int shapesPublisherTests( int argc, char * argv[] ) {
       fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
       exit(-1);
    }
-   participant = dcrudNetwork_join( "network.xml", intrfc, pubId );
+   participant = dcrudNetwork_join( "network.cfg", intrfc, (unsigned short)pubId );
    if( participant ) {
 #ifdef PRINT_TIMING
       static uint64_t prev = osSystem_nanotime();

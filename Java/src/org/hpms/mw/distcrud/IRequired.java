@@ -16,5 +16,9 @@ public interface IRequired {
       ASYNCHRONOUS_IMMEDIATE,
    }
 
+   int call( String opName ) throws IOException;
+
+   int call( String opName, Map<String, Object> arguments ) throws IOException;
+
    int call( String opName, Map<String, Object> arguments, ICallback callback ) throws IOException;
 }

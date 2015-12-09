@@ -10,6 +10,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.ClassID;
 import org.hpms.mw.distcrud.ICache;
@@ -21,6 +23,7 @@ import org.hpms.mw.distcrud.Shareable;
 import org.hpms.mw.distcrud.samples.App;
 import org.hpms.mw.distcrud.samples.Controller;
 import org.hpms.mw.distcrud.samples.QuadFunction;
+import org.xml.sax.SAXException;
 
 import javafx.application.Application.Parameters;
 import javafx.application.Platform;
@@ -106,66 +109,38 @@ public class ShapesUI implements Controller {
       });
    }
 
-   @Override
-   public void initialize( Stage stage, Parameters args ) throws Exception {
-      stage.setTitle( "Editeur de formes" );
-      stage.setOnShown       ( e -> onShown( stage ));
-      stage.setOnCloseRequest( e -> onQuit());
-      stage.getIcons().add( new Image( getClass().getResource( "local.png" ).toExternalForm()));
-
-      final Map<String, String> n = args.getNamed();
-      final String name = n.get( "publisher-name" );
-      if( name == null ) {
-         throw new IllegalStateException( "--publisher-name=<string> missing" );
-      }
-      final String intrfc = n.get( "interface" );
-      if( intrfc == null ) {
-         throw new IllegalStateException( "--interface=<string> missing" );
-      }
+   private void dcrudInitialize( Map<String, String> n ) throws IOException, SAXException, ParserConfigurationException {
+      _window   =                                     n.getOrDefault( "window"   , "left-top" );
+      _readonly =               Boolean.parseBoolean( n.getOrDefault( "readonly" , "false" ));
       final boolean ownership = Boolean.parseBoolean( n.getOrDefault( "ownership", "false" ));
       final boolean periodic  = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false" ));
       final boolean move      = Boolean.parseBoolean( n.getOrDefault( "move"     , "false" ));
       final boolean perf      = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false" ));
       final boolean remote    = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false" ));
-      _readonly       = Boolean.parseBoolean( n.getOrDefault( "readonly" , "false" ));
-      _window         = n.getOrDefault( "window", "left-top" );
-      final String fill = n.get( "fill" );
-      if( fill != null ) {
-         _fillColor.setValue( Color.web( fill ));
+      final String  name      =                       n.get         ( "publisher-name" );
+      final String  intrfc    =                       n.get         ( "interface" );
+      if( name == null ) {
+         throw new IllegalStateException( "--publisher-name=<string> missing" );
       }
-      else {
-         _fillColor.setValue( Color.LIGHTSALMON );
+      if( intrfc == null ) {
+         throw new IllegalStateException( "--interface=<string> missing" );
       }
-      final String stroke = n.get( "stroke" );
-      if( stroke != null ) {
-         _strokeColor.setValue( Color.web( stroke ));
-      }
-      else {
-         _strokeColor.setValue( Color.BLACK );
-      }
-
       Performance.enable( perf );
-
       final IParticipant participant = Network.join( new File( "network.xml"), intrfc, name );
       participant.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       participant.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
-
       _cache = participant.createCache();
       _cache.setOwnership( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
-
       if( remote ) {
          final IDispatcher dispatcher = participant.getDispatcher();
          _remoteShapesFactory = dispatcher.require( "IShapesFactory" );
       }
-
       new Timer( "AnimationActivity", true ).schedule(
          new TimerTask() { @Override public void run() { animationActivity(); }}, 0, 40L );
-
       new Timer( "NetworkActivity", true ).schedule(
          new TimerTask() { @Override public void run() { networkActivity(); }}, 0, 40L );
-
       if( periodic ) {
          _periodicChkMnu.setSelected( periodic );
          _periodic = periodic;
@@ -187,7 +162,32 @@ public class ShapesUI implements Controller {
       }
    }
 
-   private double nextDouble( double max, double min ) {
+   @Override
+   public void initialize( Stage stage, Parameters args ) throws Exception {
+      stage.setTitle( "Editeur de formes" );
+      stage.setOnShown       ( e -> onShown( stage ));
+      stage.setOnCloseRequest( e -> onQuit());
+      stage.getIcons().add( new Image( getClass().getResource( "local.png" ).toExternalForm()));
+
+      final Map<String, String> n = args.getNamed();
+      final String fill = n.get( "fill" );
+      if( fill != null ) {
+         _fillColor.setValue( Color.web( fill ));
+      }
+      else {
+         _fillColor.setValue( Color.LIGHTSALMON );
+      }
+      final String stroke = n.get( "stroke" );
+      if( stroke != null ) {
+         _strokeColor.setValue( Color.web( stroke ));
+      }
+      else {
+         _strokeColor.setValue( Color.BLACK );
+      }
+      dcrudInitialize( n );
+   }
+
+   private double nextDouble( double min, double max ) {
       return min + ( _random.nextDouble()*(max-min) );
    }
 
@@ -197,10 +197,10 @@ public class ShapesUI implements Controller {
       QuadFunction<Double,Double,Double,Double,S> sf,
       BiFunction<String, S, SS>                   ssf )
    {
-      final double x = nextDouble( 540,  0 );
-      final double y = nextDouble( 400,  0 );
-      final double w = nextDouble( 100, 40 );
-      final double h = nextDouble(  80, 20 );
+      final double x = nextDouble(  0, 540 );
+      final double y = nextDouble(  0, 400 );
+      final double w = nextDouble( 40, 100 );
+      final double h = nextDouble( 20,  80 );
       final S  shape  = sf.apply( x, y, w, h );
       final SS sshape = ssf.apply( String.format( name + " %03d", ++_rank ), shape );
       shape.setStroke( _strokeColor.getValue());
@@ -211,13 +211,13 @@ public class ShapesUI implements Controller {
 
    private void createShapeRemotely( ClassID classId ) {
       try {
-         final Map<String,Object> arguments = new HashMap<>();
+         final Map<String, Object> arguments = new HashMap<>();
          arguments.put( "class", classId );
-         arguments.put( "x"    , nextDouble( 540,  0 ));
-         arguments.put( "y"    , nextDouble( 400,  0 ));
-         arguments.put( "w"    , nextDouble( 100, 40 ));
-         arguments.put( "h"    , nextDouble(  80, 20 ));
-         _remoteShapesFactory.call( "create", arguments, null );
+         arguments.put( "x"    , nextDouble(  0, 540 ));
+         arguments.put( "y"    , nextDouble(  0, 400 ));
+         arguments.put( "w"    , nextDouble( 40, 100 ));
+         arguments.put( "h"    , nextDouble( 20,  80 ));
+         _remoteShapesFactory.call( "create", arguments );
       }
       catch( final Throwable t ) {
          t.printStackTrace();
@@ -269,8 +269,7 @@ public class ShapesUI implements Controller {
 
    private void refreshUI() {
       _shapesArea.getChildren().clear();
-      final Set<Shareable> shareables = _cache.select( s -> true );
-      for( final Shareable shareable : shareables ) {
+      for( final Shareable shareable : _cache.values()) {
          final ShareableShape shape = (ShareableShape)shareable;
          assert shape != null;
          assert shape.getShape() != null;

@@ -1,6 +1,8 @@
 /Default/
 /dcrud-ui.jar
-/BUILD/
+/dcrud.jar
+/BUILD-LIB/
+/BUILD-TEST/
 /network.dat
 /network.png
 /publish.dat

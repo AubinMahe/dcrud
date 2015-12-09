@@ -102,6 +102,25 @@ class Dispatcher implements IDispatcher {
       return new IRequired() {
 
          @Override
+         public int call( String opName ) throws IOException {
+            final Map<String, Object> arguments = new HashMap<>();
+            arguments.put( "@mode" , CallMode.ASYNCHRONOUS_DEFERRED );
+            arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
+            return _participant.call( name, opName, arguments, null );
+         }
+
+         @Override
+         public int call( String opName, Map<String, Object> arguments ) throws IOException {
+            if( ! arguments.containsKey( "@mode" )) {
+               arguments.put( "@mode", CallMode.ASYNCHRONOUS_DEFERRED );
+            }
+            if( ! arguments.containsKey( "@queue" )) {
+               arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
+            }
+            return _participant.call( name, opName, arguments, null );
+         }
+
+         @Override
          public int call( String opName, Map<String, Object> arguments, ICallback callback ) throws IOException {
             if( ! arguments.containsKey( "@mode" )) {
                arguments.put( "@mode", CallMode.ASYNCHRONOUS_DEFERRED );

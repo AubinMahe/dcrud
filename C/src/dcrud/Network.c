@@ -45,9 +45,9 @@ dcrudIParticipant dcrudNetwork_join(
       fprintf( stderr, "Network interface name can't be null\n" );
    }
    else {
-      FILE * file = fopen( "network.xml", "rt" );
+      FILE * file = fopen( networkConfFile, "rt" );
       if( ! file ) {
-         perror( "network.xml" );
+         perror( networkConfFile );
       }
       else {
          char          line[8*1024];
@@ -56,6 +56,9 @@ dcrudIParticipant dcrudNetwork_join(
          Participant * publisher = NULL;
          while( fgets( line, sizeof( line ), file )) {
             char * s = strtok( line, " \t" );
+            if( !s || *s == '#' ) {
+               continue;
+            }
             conf[count].id = (unsigned short)atoi( s );
             s = strtok( NULL, " \t" );
             strncpy( conf[count].address, s, 16 );

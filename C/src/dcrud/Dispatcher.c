@@ -2,6 +2,8 @@
 #include <coll/List.h>
 
 #include <os/Mutex.h>
+#include <util/CheckSysCall.h>
+
 #include "ParticipantImpl.h"
 
 typedef struct Dispatcher_s {
@@ -137,7 +139,10 @@ dcrudIDispatcher dcrudIDispatcher_new( ParticipantImpl * participant ) {
    for( i = 0; i < 256; ++i ) {
       This->operationQueues[i] = collList_new();
    }
-   if( osMutex_new( &This->operationQueuesMutex )) {
+   if( utilCheckSysCall( 0 ==
+         osMutex_new( &This->operationQueuesMutex ),
+         __FILE__, __LINE__, "osMutex_new" ))
+   {
       return (dcrudIDispatcher)This;
    }
    return NULL;
