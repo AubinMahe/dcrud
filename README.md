@@ -116,6 +116,7 @@ dcrudIRepository_update( shapes, ellipse->base );
 API references
 --------------
 
-[Java API](javadoc/index.html)
+[Java API](http://aubinmahe.github.io/javadoc/)
 
-[C API](doxygen/html/index.html)
+[C API](http://aubinmahe.github.io/doxygen/html)
+

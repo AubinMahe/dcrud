@@ -17,10 +17,10 @@
    </target>
 
    <target name="api-docs" description="">
-      <mkdir dir="../javadoc" />
+      <mkdir dir="../../AubinMahe.github.io/javadoc" />
       <javadoc
          author    ="Aubin Mahé"
-         destdir   ="../javadoc"
+         destdir   ="../../AubinMahe.github.io/javadoc"
          doctitle  ="DCRUD v0.0.0"
          linksource="true"
          sourcepath="../Java/src"
