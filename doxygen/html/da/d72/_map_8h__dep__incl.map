@@ -1,8 +1,0 @@
-<map id="inc/coll/Map.h" name="inc/coll/Map.h">
-<area shape="rect" id="node2" href="$d8/d01/_i_cache_8h.html" title="inc/dcrud/ICache.h" alt="" coords="5,155,136,181"/>
-<area shape="rect" id="node5" href="$d0/d79/_i_callback_8h.html" title="inc/dcrud/ICallback.h" alt="" coords="162,80,307,107"/>
-<area shape="rect" id="node7" href="$d0/d61/_i_dispatcher_8h.html" title="inc/dcrud/IDispatcher.h" alt="" coords="156,229,313,256"/>
-<area shape="rect" id="node3" href="$de/dfa/_i_participant_8h.html" title="inc/dcrud/IParticipant.h" alt="" coords="86,304,241,331"/>
-<area shape="rect" id="node4" href="$db/d9e/_network_8h.html" title="inc/dcrud/Network.h" alt="" coords="95,379,233,405"/>
-<area shape="rect" id="node6" href="$da/d81/_i_required_8h.html" title="inc/dcrud/IRequired.h" alt="" coords="161,155,308,181"/>
-</map>

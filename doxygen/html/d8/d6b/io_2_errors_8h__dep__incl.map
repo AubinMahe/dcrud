@@ -1,8 +1,0 @@
-<map id="inc/io/Errors.h" name="inc/io/Errors.h">
-<area shape="rect" id="node2" href="$d6/d6c/_byte_buffer_8h.html" title="inc/io/ByteBuffer.h" alt="" coords="76,80,205,107"/>
-<area shape="rect" id="node3" href="$da/db8/_g_u_i_d_8h.html" title="inc/dcrud/GUID.h" alt="" coords="30,155,153,181"/>
-<area shape="rect" id="node4" href="$dd/dfb/_shareable_8h.html" title="inc/dcrud/Shareable.h" alt="" coords="67,229,215,256"/>
-<area shape="rect" id="node5" href="$df/d14/_i_repository_8h.html" title="inc/dcrud/IRepository.h" alt="" coords="5,304,163,331"/>
-<area shape="rect" id="node6" href="$d4/d54/_i_repository_factory_8h.html" title="inc/dcrud/IRepositoryFactory.h" alt="" coords="41,379,241,405"/>
-<area shape="rect" id="node7" href="$d1/d82/_repository_factory_builder_8h.html" title="inc/dcrud/RepositoryFactory\lBuilder.h" alt="" coords="48,454,235,495"/>
-</map>
