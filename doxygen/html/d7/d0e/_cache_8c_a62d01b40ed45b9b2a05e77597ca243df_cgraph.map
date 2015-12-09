@@ -1,7 +1,0 @@
-<map id="dcrudCache_init" name="dcrudCache_init">
-<area shape="rect" id="node2" href="$db/d04/_list_8c.html#a229c6500fb9b2d5097d268d2dd038743" title="collList_reserve" alt="" coords="194,5,307,32"/>
-<area shape="rect" id="node3" href="$db/d04/_list_8c.html#a6f80621c8c9ea07315cd81b58e649fe4" title="collList_add" alt="" coords="205,56,296,83"/>
-<area shape="rect" id="node4" href="$d2/da2/_set_8c.html#af7b40ac61cf8de50cfaf6613045ca8c4" title="collSet_reserve" alt="" coords="195,107,307,133"/>
-<area shape="rect" id="node5" href="$d2/da1/_g_u_i_d_8c.html#a86ad528270a00d60d250a76d9e01dad4" title="dcrudGUID_compareTo" alt="" coords="171,157,331,184"/>
-<area shape="rect" id="node6" href="$d0/dec/_map_8c.html#a47863e17733d81c9205d77917c8c7e07" title="collMap_reserve" alt="" coords="192,208,309,235"/>
-</map>
