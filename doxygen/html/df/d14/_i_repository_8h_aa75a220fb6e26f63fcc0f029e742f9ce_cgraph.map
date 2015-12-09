@@ -1,0 +1,8 @@
+<map id="dcrudIRepository_create" name="dcrudIRepository_create">
+<area shape="rect" id="node2" href="$d4/d06/_shareable_8c.html#a10e2d7e2d051a5e20deffe3f1328d81c" title="dcrudShareable_getId" alt="" coords="226,5,374,32"/>
+<area shape="rect" id="node3" href="$d2/da1/_g_u_i_d_8c.html#a7fb930fa1d9ef6c13fda07150885cb30" title="dcrudGUID_isShared" alt="" coords="227,56,373,83"/>
+<area shape="rect" id="node4" href="$d2/da1/_g_u_i_d_8c.html#a35063d9ee408828ec572fce7637dff25" title="dcrudGUID_toString" alt="" coords="230,107,370,133"/>
+<area shape="rect" id="node5" href="$d7/d0e/_cache_8c.html#a6ca4c877e20b2627f108ffd6bfed7a0a" title="dcrudGUID_setInstance" alt="" coords="219,157,381,184"/>
+<area shape="rect" id="node6" href="$d0/dec/_map_8c.html#abec77642b91303bd902d7705e97e6a56" title="collMap_put" alt="" coords="254,208,346,235"/>
+<area shape="rect" id="node7" href="$d2/da2/_set_8c.html#a55992c37a473aeb38406c3e39e7c564e" title="collSet_add" alt="" coords="255,259,345,285"/>
+</map>

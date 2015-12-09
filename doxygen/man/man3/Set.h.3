@@ -1,0 +1,89 @@
+.TH "inc/coll/Set.h" 3 "Wed Dec 9 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/coll/Set.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <util/types\&.h>\fP
+.br
+\fC#include <coll/Comparator\&.h>\fP
+.br
+\fC#include 'ForeachFunction\&.h'\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void * \fBcollSetItem\fP"
+.br
+.ti -1c
+.RI "typedef \fBcollSetItem\fP * \fBcollSetValues\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBUTIL_ADT\fP (collSet)"
+.br
+.ti -1c
+.RI "collSet \fBcollSet_new\fP (\fBcollComparator\fP cmp)"
+.br
+.ti -1c
+.RI "void \fBcollSet_delete\fP (collSet *This)"
+.br
+.ti -1c
+.RI "void \fBcollSet_clear\fP (collSet This)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBcollSet_add\fP (collSet This, \fBcollSetItem\fP item)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBcollSet_remove\fP (collSet This, \fBcollSetItem\fP item)"
+.br
+.ti -1c
+.RI "unsigned int \fBcollSet_size\fP (collSet This)"
+.br
+.ti -1c
+.RI "\fBcollForeachResult\fP \fBcollSet_foreach\fP (collSet This, \fBcollForeachFunction\fP fn, void *userData)"
+.br
+.ti -1c
+.RI "\fBcollSetValues\fP \fBcollSet_values\fP (collSet This)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void* \fBcollSetItem\fP"
+
+.PP
+Definition at line 8 of file Set\&.h\&.
+.SS "typedef \fBcollSetItem\fP* \fBcollSetValues\fP"
+
+.PP
+Definition at line 9 of file Set\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "\fBbool\fP collSet_add (collSetThis, \fBcollSetItem\fPitem)"
+
+.SS "void collSet_clear (collSetThis)"
+
+.SS "void collSet_delete (collSet *This)"
+
+.SS "\fBcollForeachResult\fP collSet_foreach (collSetThis, \fBcollForeachFunction\fPfn, void *userData)"
+
+.SS "collSet collSet_new (\fBcollComparator\fPcmp)"
+
+.SS "\fBbool\fP collSet_remove (collSetThis, \fBcollSetItem\fPitem)"
+
+.SS "unsigned int collSet_size (collSetThis)"
+
+.SS "\fBcollSetValues\fP collSet_values (collSetThis)"
+
+.SS "UTIL_ADT (collSet)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

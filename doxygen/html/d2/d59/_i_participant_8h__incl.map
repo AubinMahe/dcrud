@@ -1,0 +1,19 @@
+<map id="inc/dcrud/IParticipant.h" name="inc/dcrud/IParticipant.h">
+<area shape="rect" id="node2" href="$d8/d01/_i_cache_8h.html" title="dcrud/ICache.h" alt="" coords="657,80,767,107"/>
+<area shape="rect" id="node19" href="$d0/d61/_i_dispatcher_8h.html" title="dcrud/IDispatcher.h" alt="" coords="819,80,953,107"/>
+<area shape="rect" id="node3" href="$d3/d63/_map_8h.html" title="coll/Map.h" alt="" coords="827,304,908,331"/>
+<area shape="rect" id="node8" href="$dd/dfb/_shareable_8h.html" title="dcrud/Shareable.h" alt="" coords="525,155,651,181"/>
+<area shape="rect" id="node15" href="$d5/dd8/dcrud_2_status_8h.html" title="dcrud/Status.h" alt="" coords="749,229,856,256"/>
+<area shape="rect" id="node16" href="$dc/d09/_set_8h.html" title="coll/Set.h" alt="" coords="127,155,203,181"/>
+<area shape="rect" id="node4" href="$d9/d49/types_8h.html" title="util/types.h" alt="" coords="302,379,388,405"/>
+<area shape="rect" id="node9" href="$d6/d6c/_byte_buffer_8h.html" title="io/ByteBuffer.h" alt="" coords="507,304,616,331"/>
+<area shape="rect" id="node13" href="$da/db8/_g_u_i_d_8h.html" title="dcrud/GUID.h" alt="" coords="379,229,481,256"/>
+<area shape="rect" id="node14" href="$dc/d14/_class_i_d_8h.html" title="dcrud/ClassID.h" alt="" coords="507,229,623,256"/>
+<area shape="rect" id="node10" href="$da/ddd/socket_8h.html" title="io/socket.h" alt="" coords="617,379,703,405"/>
+<area shape="rect" id="node11" href="$d4/d85/io_2_status_8h.html" title="io/Status.h" alt="" coords="421,379,507,405"/>
+<area shape="rect" id="node17" href="$d7/d0c/_comparator_8h.html" title="coll/Comparator.h" alt="" coords="179,229,304,256"/>
+<area shape="rect" id="node18" href="$d2/d8e/_foreach_function_8h.html" title="ForeachFunction.h" alt="" coords="24,229,153,256"/>
+<area shape="rect" id="node20" href="$d3/d0c/_i_provided_8h.html" title="dcrud/IProvided.h" alt="" coords="1081,155,1204,181"/>
+<area shape="rect" id="node21" href="$da/d81/_i_required_8h.html" title="dcrud/IRequired.h" alt="" coords="851,155,976,181"/>
+<area shape="rect" id="node22" href="$d0/d79/_i_callback_8h.html" title="dcrud/ICallback.h" alt="" coords="881,229,1004,256"/>
+</map>

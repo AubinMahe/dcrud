@@ -1,0 +1,492 @@
+.TH "src/io/ByteBuffer.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/io/ByteBuffer.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <io/ByteBuffer\&.h>\fP
+.br
+\fC#include <util/check\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBioByteBufferImpl_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBioByteBufferImpl_s\fP \fBioByteBufferImpl\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "ioByteBuffer \fBioByteBuffer_allocate\fP (size_t capacity)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_clear\fP (ioByteBuffer self)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_flip\fP (ioByteBuffer self)"
+.br
+.ti -1c
+.RI "size_t \fBioByteBuffer_position\fP (ioByteBuffer self)"
+.br
+.ti -1c
+.RI "size_t \fBioByteBuffer_limit\fP (ioByteBuffer self)"
+.br
+.ti -1c
+.RI "size_t \fBioByteBuffer_remaining\fP (ioByteBuffer self)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_put\fP (ioByteBuffer self, const \fBbyte\fP *src, size_t from, size_t to)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_get\fP (ioByteBuffer self, \fBbyte\fP *target, size_t from, size_t to)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putShort\fP (ioByteBuffer self, unsigned short value)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_getShort\fP (ioByteBuffer self, unsigned short *target)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putInt\fP (ioByteBuffer self, unsigned int value)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putIntAt\fP (ioByteBuffer self, unsigned int value, unsigned int index)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_getInt\fP (ioByteBuffer self, unsigned int *target)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putLong\fP (ioByteBuffer self, uint64_t value)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_getLong\fP (ioByteBuffer self, uint64_t *target)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putDouble\fP (ioByteBuffer self, double value)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_getDouble\fP (ioByteBuffer self, double *target)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putString\fP (ioByteBuffer This, const char *source)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_getString\fP (ioByteBuffer self, char *dest, size_t size)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_putBuffer\fP (ioByteBuffer self, ioByteBuffer other)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBioByteBuffer_sendTo\fP (ioByteBuffer self, SOCKET sckt, struct sockaddr_in *trgt, int *count)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBioByteBufferImpl_s\fP  \fBioByteBufferImpl\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "ioByteBuffer ioByteBuffer_allocate (size_tcapacity)"
+
+.PP
+Definition at line 19 of file ByteBuffer\&.c\&.
+.PP
+.nf
+19                                                       {
+20    ioByteBufferImpl * This = (ioByteBufferImpl *)malloc( sizeof( ioByteBufferImpl ));
+21    if( init ) {
+22       init = false;
+23       hostIsBigEndian = ( htonl(1) == 1 );
+24    }
+25    This->order    = ioByteOrder_BIG_ENDIAN;
+26    This->position = 0;
+27    This->limit    = capacity;
+28    This->capacity = capacity;
+29    This->bytes    = (byte*)malloc( capacity );
+30    return (ioByteBuffer)This;
+31 }
+.fi
+.SS "void ioByteBuffer_clear (ioByteBufferself)"
+
+.PP
+Definition at line 33 of file ByteBuffer\&.c\&.
+.PP
+.nf
+33                                              {
+34    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+35    This->position = 0;
+36    This->limit    = This->capacity;
+37 }
+.fi
+.SS "void ioByteBuffer_flip (ioByteBufferself)"
+
+.PP
+Definition at line 39 of file ByteBuffer\&.c\&.
+.PP
+.nf
+39                                             {
+40    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+41    This->limit    = This->position;
+42    This->position = 0;
+43 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_get (ioByteBufferself, \fBbyte\fP *target, size_tfrom, size_tto)"
+
+.PP
+Definition at line 71 of file ByteBuffer\&.c\&.
+.PP
+.nf
+71                                                                                      {
+72    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+73    const size_t count = to - from;
+74    if( This->position + count > This->limit ) {
+75       return ioError_UNDERFLOW;
+76    }
+77    memcpy( target+from, This->bytes + This->position, count );
+78    This->position += count;
+79    return ioError_NO_ERROR;
+80 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_getDouble (ioByteBufferself, double *target)"
+
+.PP
+Definition at line 223 of file ByteBuffer\&.c\&.
+.PP
+.nf
+223                                                                      {
+224    return ioByteBuffer_getLong( self, (uint64_t *)target );
+225 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_getInt (ioByteBufferself, unsigned int *target)"
+
+.PP
+Definition at line 153 of file ByteBuffer\&.c\&.
+.PP
+.nf
+153                                                                         {
+154    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+155    unsigned int       value;
+156    if( This->position + sizeof( int ) > This->limit ) {
+157       return ioError_UNDERFLOW;
+158    }
+159    memcpy( &value, This->bytes + This->position, sizeof( int ));
+160    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+161      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+162    {
+163       value = (( value & 0xFF000000) >> 24 )
+164              |(( value & 0x00FF0000) >>  8 )
+165              |(( value & 0x0000FF00) <<  8 )
+166              |(  value               << 24 );
+167    }
+168    *target = value;
+169    This->position += sizeof( int );
+170    return ioError_NO_ERROR;
+171 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_getLong (ioByteBufferself, uint64_t *target)"
+
+.PP
+Definition at line 195 of file ByteBuffer\&.c\&.
+.PP
+.nf
+195                                                                      {
+196    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+197    uint64_t           value;
+198    if( This->position + sizeof( uint64_t ) > This->limit ) {
+199       return ioError_UNDERFLOW;
+200    }
+201    memcpy( &value, This->bytes + This->position, sizeof( int64_t ));
+202    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+203      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+204    {
+205       value = (( value & 0xFF00000000000000LL) >> 56 )
+206              |(( value & 0x00FF000000000000LL) >> 40 )
+207              |(( value & 0x0000FF0000000000LL) >> 24 )
+208              |(( value & 0x000000FF00000000LL) >>  8 )
+209              |(( value & 0x00000000FF000000LL) <<  8 )
+210              |(( value & 0x0000000000FF0000LL) << 24 )
+211              |(( value & 0x000000000000FF00LL) << 40 )
+212              |(  value                         << 56 );
+213    }
+214    *target = value;
+215    This->position += sizeof( uint64_t );
+216    return ioError_NO_ERROR;
+217 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_getShort (ioByteBufferself, unsigned short *target)"
+
+.PP
+Definition at line 101 of file ByteBuffer\&.c\&.
+.PP
+.nf
+101                                                                             {
+102    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+103    unsigned short     value;
+104    if( This->position + sizeof( short ) > This->limit ) {
+105       return ioError_UNDERFLOW;
+106    }
+107    memcpy( &value, This->bytes + This->position, sizeof( short ));
+108    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+109      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+110    {
+111       value = (( value & 0x00FF ) >> 8 )|(unsigned short)( value & 0xFF00 << 8 );
+112    }
+113    *target = value;
+114    This->position += sizeof( short );
+115    return ioError_NO_ERROR;
+116 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_getString (ioByteBufferself, char *dest, size_tsize)"
+
+.PP
+Definition at line 236 of file ByteBuffer\&.c\&.
+.PP
+.nf
+236                                                                               {
+237    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
+238    unsigned int       len    = 0U;
+239    ioError            status = ioByteBuffer_getInt( self, &len );
+240    if( status == ioError_NO_ERROR ) {
+241       if( len > size ) {
+242          status = ioByteBuffer_get( self, (byte *)dest, 0, size );
+243          This->position += len-size;
+244       }
+245       else if( size > len ) {
+246          status = ioError_UNDERFLOW;
+247       }
+248       else {
+249          status = ioByteBuffer_get( self, (byte *)dest, 0, len );
+250       }
+251    }
+252    return status;
+253 }
+.fi
+.SS "size_t ioByteBuffer_limit (ioByteBufferself)"
+
+.PP
+Definition at line 50 of file ByteBuffer\&.c\&.
+.PP
+.nf
+50                                                {
+51    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+52    return This->limit;
+53 }
+.fi
+.SS "size_t ioByteBuffer_position (ioByteBufferself)"
+
+.PP
+Definition at line 45 of file ByteBuffer\&.c\&.
+.PP
+.nf
+45                                                   {
+46    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+47    return This->position;
+48 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_put (ioByteBufferself, const \fBbyte\fP *src, size_tfrom, size_tto)"
+
+.PP
+Definition at line 60 of file ByteBuffer\&.c\&.
+.PP
+.nf
+60                                                                                         {
+61    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+62    const size_t count = to - from;
+63    if( This->position + count > This->limit ) {
+64       return ioError_OVERFLOW;
+65    }
+66    memcpy( This->bytes + This->position, src + from, count );
+67    This->position += count;
+68    return ioError_NO_ERROR;
+69 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putBuffer (ioByteBufferself, ioByteBufferother)"
+
+.PP
+Definition at line 255 of file ByteBuffer\&.c\&.
+.PP
+.nf
+255                                                                         {
+256    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
+257    ioByteBufferImpl * source = (ioByteBufferImpl *)other;
+258    size_t             count  = source->limit - source->position;
+259    if( This->position + count > This->limit ) {
+260       return ioError_OVERFLOW;
+261    }
+262    memcpy( This->bytes + This->position, source->bytes + source->position, count );
+263    source->position += count;
+264    This  ->position += count;
+265    return ioError_NO_ERROR;
+266 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putDouble (ioByteBufferself, doublevalue)"
+
+.PP
+Definition at line 219 of file ByteBuffer\&.c\&.
+.PP
+.nf
+219                                                                   {
+220    return ioByteBuffer_putLong( self, *(uint64_t*)(void*)&value );
+221 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putInt (ioByteBufferself, unsigned intvalue)"
+
+.PP
+Definition at line 118 of file ByteBuffer\&.c\&.
+.PP
+.nf
+118                                                                      {
+119    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+120    if( This->position + sizeof( int ) > This->limit ) {
+121       return ioError_OVERFLOW;
+122    }
+123    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+124      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+125    {
+126       value = (( value & 0xFF000000) >> 24 )
+127              |(( value & 0x00FF0000) >>  8 )
+128              |(( value & 0x0000FF00) <<  8 )
+129              |(  value               << 24 );
+130    }
+131    memcpy( This->bytes + This->position, &value, sizeof( int ));
+132    This->position += sizeof( int );
+133    return ioError_NO_ERROR;
+134 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putIntAt (ioByteBufferself, unsigned intvalue, unsigned intindex)"
+
+.PP
+Definition at line 136 of file ByteBuffer\&.c\&.
+.PP
+.nf
+136                                                                                             {
+137    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+138    if( index + sizeof( int ) > This->limit ) {
+139       return ioError_OVERFLOW;
+140    }
+141    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+142      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+143    {
+144       value = (( value & 0xFF000000) >> 24 )
+145              |(( value & 0x00FF0000) >>  8 )
+146              |(( value & 0x0000FF00) <<  8 )
+147              |(  value               << 24 );
+148    }
+149    memcpy( This->bytes + index, &value, sizeof( int ));
+150    return ioError_NO_ERROR;
+151 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putLong (ioByteBufferself, uint64_tvalue)"
+
+.PP
+Definition at line 173 of file ByteBuffer\&.c\&.
+.PP
+.nf
+173                                                                   {
+174    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+175    if( This->position + sizeof( uint64_t ) > This->limit ) {
+176       return ioError_OVERFLOW;
+177    }
+178    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+179      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+180    {
+181       value = (( value & 0xFF00000000000000LL) >> 56 )
+182              |(( value & 0x00FF000000000000LL) >> 40 )
+183              |(( value & 0x0000FF0000000000LL) >> 24 )
+184              |(( value & 0x000000FF00000000LL) >>  8 )
+185              |(( value & 0x00000000FF000000LL) <<  8 )
+186              |(( value & 0x0000000000FF0000LL) << 24 )
+187              |(( value & 0x000000000000FF00LL) << 40 )
+188              |(  value                         << 56 );
+189    }
+190    memcpy( This->bytes + This->position, &value, sizeof( uint64_t ));
+191    This->position += sizeof( uint64_t );
+192    return ioError_NO_ERROR;
+193 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putShort (ioByteBufferself, unsigned shortvalue)"
+
+.PP
+Definition at line 86 of file ByteBuffer\&.c\&.
+.PP
+.nf
+86                                                                          {
+87    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+88    if( This->position + sizeof( short ) > This->limit ) {
+89       return ioError_OVERFLOW;
+90    }
+91    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+92      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+93    {
+94       value = (( value & 0x00FF ) >> 8 )|(unsigned short)( value & 0xFF00 << 8 );
+95    }
+96    memcpy( This->bytes + This->position, &value, sizeof( short ));
+97    This->position += sizeof( short );
+98    return ioError_NO_ERROR;
+99 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_putString (ioByteBufferThis, const char *source)"
+
+.PP
+Definition at line 227 of file ByteBuffer\&.c\&.
+.PP
+.nf
+227                                                                          {
+228    unsigned int len    = (unsigned int)strlen( source );
+229    ioError      status = ioByteBuffer_putInt( This, len );
+230    if( status == ioError_NO_ERROR ) {
+231       status = ioByteBuffer_put( This, (const byte *)source, 0U, len );
+232    }
+233    return status;
+234 }
+.fi
+.SS "size_t ioByteBuffer_remaining (ioByteBufferself)"
+
+.PP
+Definition at line 55 of file ByteBuffer\&.c\&.
+.PP
+.nf
+55                                                    {
+56    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+57    return This->limit - This->position;
+58 }
+.fi
+.SS "\fBioError\fP ioByteBuffer_sendTo (ioByteBufferself, SOCKETsckt, struct sockaddr_in *trgt, int *count)"
+
+.PP
+Definition at line 268 of file ByteBuffer\&.c\&.
+.PP
+.nf
+273 {
+274    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+275    size_t             len  = This->limit;
+276    *count = (int)
+277       sendto(
+278          sckt,
+279          (const char *)This->bytes,
+280          len,
+281          0,
+282          (struct sockaddr *)trgt,
+283          sizeof( struct sockaddr_in ));
+284    check(((int)len) == *count, __FILE__, __LINE__, "sendto %d bytes sent to %s:%d",
+285       *count, inet_ntoa( trgt->sin_addr ), ntohs( trgt->sin_port ));
+286    return ioError_NO_ERROR;
+287 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

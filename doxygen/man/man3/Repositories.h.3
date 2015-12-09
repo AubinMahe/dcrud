@@ -1,0 +1,41 @@
+.TH "src/dcrud/Repositories.h" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/dcrud/Repositories.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/IRepositoryFactory\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBRepositories_publish\fP (dcrudIRepositoryFactory network, collSet updated, collSet deleted)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "void Repositories_publish (dcrudIRepositoryFactorynetwork, collSetupdated, collSetdeleted)"
+
+.PP
+Definition at line 184 of file Repositories\&.c\&.
+.PP
+.nf
+188 {
+189    Repositories * This = (Repositories *)self;
+190    pushCreateOrUpdateItemForeachCtx ctx;
+191    ctx\&.initDone     = false;
+192    ctx\&.repositories = This;
+193    collSet_foreach( updated, pushCreateOrUpdateItemForeach, &ctx );
+194    collSet_foreach( deleted, pushDeleteItemForeach        , &ctx );
+195    if( ctx\&.initDone ) {
+196       sendFrame( This );
+197    }
+198 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

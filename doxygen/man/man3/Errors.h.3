@@ -1,0 +1,68 @@
+.TH "inc/io/Errors.h" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/io/Errors.h \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef enum \fBioError_e\fP \fBioError\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBioError_e\fP { \fBioError_NO_ERROR\fP, \fBioError_OVERFLOW\fP, \fBioError_UNDERFLOW\fP, \fBioError_ERROR_LAST\fP }"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBioErrorMessages\fP [\fBioError_ERROR_LAST\fP]"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef enum \fBioError_e\fP  \fBioError\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBioError_e\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIioError_NO_ERROR \fP\fP
+.TP
+\fB\fIioError_OVERFLOW \fP\fP
+.TP
+\fB\fIioError_UNDERFLOW \fP\fP
+.TP
+\fB\fIioError_ERROR_LAST \fP\fP
+.PP
+Definition at line 3 of file Errors\&.h\&.
+.PP
+.nf
+3                        {
+4 
+5    ioError_NO_ERROR,
+6    ioError_OVERFLOW,  /* relative to put operations */
+7    ioError_UNDERFLOW, /* relative to get operations */
+8 
+9    ioError_ERROR_LAST
+10 } ioError;
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "const char* ioErrorMessages[\fBioError_ERROR_LAST\fP]"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

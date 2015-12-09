@@ -1,0 +1,92 @@
+.TH "inc/coll/List.h" 3 "Wed Dec 9 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/coll/List.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <util/types\&.h>\fP
+.br
+\fC#include 'ForeachFunction\&.h'\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void * \fBcollListItem\fP"
+.br
+.ti -1c
+.RI "typedef \fBcollListItem\fP * \fBcollListValues\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBUTIL_ADT\fP (collList)"
+.br
+.ti -1c
+.RI "collList \fBcollList_new\fP (void)"
+.br
+.ti -1c
+.RI "void \fBcollList_delete\fP (collList *This)"
+.br
+.ti -1c
+.RI "void \fBcollList_clear\fP (collList This)"
+.br
+.ti -1c
+.RI "void \fBcollList_add\fP (collList This, \fBcollListItem\fP item)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBcollList_remove\fP (collList This, \fBcollListItem\fP item)"
+.br
+.ti -1c
+.RI "\fBcollListItem\fP \fBcollList_get\fP (collList This, unsigned int index)"
+.br
+.ti -1c
+.RI "unsigned int \fBcollList_size\fP (collList This)"
+.br
+.ti -1c
+.RI "\fBcollForeachResult\fP \fBcollList_foreach\fP (collList This, \fBcollForeachFunction\fP fn, void *userData)"
+.br
+.ti -1c
+.RI "\fBcollListValues\fP \fBcollList_values\fP (collList This)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void* \fBcollListItem\fP"
+
+.PP
+Definition at line 7 of file List\&.h\&.
+.SS "typedef \fBcollListItem\fP* \fBcollListValues\fP"
+
+.PP
+Definition at line 8 of file List\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "void collList_add (collListThis, \fBcollListItem\fPitem)"
+
+.SS "void collList_clear (collListThis)"
+
+.SS "void collList_delete (collList *This)"
+
+.SS "\fBcollForeachResult\fP collList_foreach (collListThis, \fBcollForeachFunction\fPfn, void *userData)"
+
+.SS "\fBcollListItem\fP collList_get (collListThis, unsigned intindex)"
+
+.SS "collList collList_new (void)"
+
+.SS "\fBbool\fP collList_remove (collListThis, \fBcollListItem\fPitem)"
+
+.SS "unsigned int collList_size (collListThis)"
+
+.SS "\fBcollListValues\fP collList_values (collListThis)"
+
+.SS "UTIL_ADT (collList)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

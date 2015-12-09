@@ -1,0 +1,203 @@
+.TH "src/dcrud/GUID.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/dcrud/GUID.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/GUID\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBdcrudGUIDImpl_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBdcrudGUIDImpl_s\fP \fBdcrudGUIDImpl\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "dcrudGUID \fBdcrudGUID_init\fP (const char *topic, int classId)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBdcrudGUID_unserialize\fP (ioByteBuffer source, dcrudGUID *target)"
+.br
+.ti -1c
+.RI "void \fBdcrudGUID_setInstance\fP (const dcrudGUID self, int instance)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBdcrudGUID_serialize\fP (const dcrudGUID self, ioByteBuffer target)"
+.br
+.ti -1c
+.RI "int \fBdcrudGUID_getClassId\fP (const dcrudGUID self)"
+.br
+.ti -1c
+.RI "int \fBdcrudGUID_getInstanceId\fP (const dcrudGUID self)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBdcrudGUID_isShared\fP (const dcrudGUID self)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBdcrudGUID_toString\fP (const dcrudGUID self, char *target, size_t targetSize)"
+.br
+.ti -1c
+.RI "int \fBdcrudGUID_compareTo\fP (const dcrudGUID *l, const dcrudGUID *r)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBdcrudGUIDImpl_s\fP  \fBdcrudGUIDImpl\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "int dcrudGUID_compareTo (const dcrudGUID *l, const dcrudGUID *r)"
+
+.PP
+Definition at line 83 of file GUID\&.c\&.
+.PP
+.nf
+83                                                                     {
+84    dcrudGUIDImpl ** left  = (dcrudGUIDImpl **)l;
+85    dcrudGUIDImpl ** right = (dcrudGUIDImpl **)r;
+86    int diff = (*left)->classId - (*right)->classId;
+87    if( diff == 0 ) {
+88       diff = (*left)->instance - (*right)->instance;
+89    }
+90    return diff;
+91 }
+.fi
+.SS "int dcrudGUID_getClassId (const dcrudGUIDself)"
+
+.PP
+Definition at line 60 of file GUID\&.c\&.
+.PP
+.nf
+60                                                  {
+61    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+62    return This->classId;
+63 }
+.fi
+.SS "int dcrudGUID_getInstanceId (const dcrudGUIDself)"
+
+.PP
+Definition at line 65 of file GUID\&.c\&.
+.PP
+.nf
+65                                                     {
+66    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+67    return This->instance;
+68 }
+.fi
+.SS "dcrudGUID dcrudGUID_init (const char *topic, intclassId)"
+
+.PP
+Definition at line 13 of file GUID\&.c\&.
+.PP
+.nf
+13                                                             {
+14    dcrudGUIDImpl * This = (dcrudGUIDImpl *)malloc( sizeof(dcrudGUIDImpl));
+15    strncpy( This->topic, topic, sizeof( This->topic ));
+16    This->classId  = classId;
+17    This->instance = 0;
+18    return (dcrudGUID)This;
+19 }
+.fi
+.SS "\fBbool\fP dcrudGUID_isShared (const dcrudGUIDself)"
+
+.PP
+Definition at line 70 of file GUID\&.c\&.
+.PP
+.nf
+70                                                 {
+71    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+72    return This->instance != 0;
+73 }
+.fi
+.SS "\fBioError\fP dcrudGUID_serialize (const dcrudGUIDself, ioByteBuffertarget)"
+
+.PP
+Definition at line 45 of file GUID\&.c\&.
+.PP
+.nf
+45                                                                          {
+46    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+47    ioError ioStatus = ioByteBuffer_putString( target, This->topic );
+48    if( ioError_NO_ERROR == ioStatus ) {
+49       ioStatus = ioByteBuffer_putInt( target, (unsigned)This->classId );
+50    }
+51    if( ioError_NO_ERROR == ioStatus ) {
+52       ioStatus = ioByteBuffer_putInt( target, (unsigned)This->instance );
+53    }
+54    if( ioError_NO_ERROR != ioStatus ) {
+55       fprintf( stderr, "unable to serialize a GUID: %s\n", ioErrorMessages[ioStatus] );
+56    }
+57    return ioStatus;
+58 }
+.fi
+.SS "void dcrudGUID_setInstance (const dcrudGUIDself, intinstance)"
+
+.PP
+Definition at line 40 of file GUID\&.c\&.
+.PP
+.nf
+40                                                                  {
+41    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+42    This->instance = instance;
+43 }
+.fi
+.SS "\fBbool\fP dcrudGUID_toString (const dcrudGUIDself, char *target, size_ttargetSize)"
+
+.PP
+Definition at line 75 of file GUID\&.c\&.
+.PP
+.nf
+75                                                                                   {
+76    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
+77    int ret =
+78       snprintf( target, targetSize, "%s-%04X-%04X",
+79          This->topic, This->classId, This->instance );
+80    return ret > 0 && ret < (int)targetSize;
+81 }
+.fi
+.SS "\fBioError\fP dcrudGUID_unserialize (ioByteBuffersource, dcrudGUID *target)"
+
+.PP
+Definition at line 21 of file GUID\&.c\&.
+.PP
+.nf
+21                                                                          {
+22    dcrudGUIDImpl * This = (dcrudGUIDImpl *)malloc( sizeof(dcrudGUIDImpl));
+23    ioError ioStatus = ioByteBuffer_getString( source,  This->topic, sizeof( This->topic ));
+24    unsigned v;
+25    if( ioError_NO_ERROR == ioStatus ) {
+26       ioStatus = ioByteBuffer_getInt( source, &v );
+27       This->classId = (int)v;
+28    }
+29    if( ioError_NO_ERROR == ioStatus ) {
+30       ioStatus = ioByteBuffer_getInt( source, &v );
+31       This->instance = (int)v;
+32    }
+33    if( ioError_NO_ERROR == ioStatus ) {
+34       *target = (dcrudGUID)This;
+35    }
+36    fprintf( stderr, "unable to deserialize a GUID: %s\n", ioErrorMessages[ioStatus] );
+37    return ioStatus;
+38 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

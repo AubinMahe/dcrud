@@ -1,0 +1,10 @@
+<map id="dcrudIRepositoryFactory_getRepository" name="dcrudIRepositoryFactory_getRepository">
+<area shape="rect" id="node2" href="$d7/d0e/_cache_8c.html#a62d01b40ed45b9b2a05e77597ca243df" title="dcrudCache_init" alt="" coords="219,107,335,133"/>
+<area shape="rect" id="node3" href="$db/d04/_list_8c.html#a229c6500fb9b2d5097d268d2dd038743" title="collList_reserve" alt="" coords="407,5,521,32"/>
+<area shape="rect" id="node4" href="$db/d04/_list_8c.html#a6f80621c8c9ea07315cd81b58e649fe4" title="collList_add" alt="" coords="419,208,509,235"/>
+<area shape="rect" id="node8" href="$d0/dec/_map_8c.html#a44d3ed73098af51f400ea9058e2e1636" title="collMap_get" alt="" coords="231,208,323,235"/>
+<area shape="rect" id="node9" href="$d0/dec/_map_8c.html#abec77642b91303bd902d7705e97e6a56" title="collMap_put" alt="" coords="231,259,323,285"/>
+<area shape="rect" id="node5" href="$d2/da2/_set_8c.html#af7b40ac61cf8de50cfaf6613045ca8c4" title="collSet_reserve" alt="" coords="408,56,520,83"/>
+<area shape="rect" id="node6" href="$d2/da1/_g_u_i_d_8c.html#a86ad528270a00d60d250a76d9e01dad4" title="dcrudGUID_compareTo" alt="" coords="384,107,544,133"/>
+<area shape="rect" id="node7" href="$d0/dec/_map_8c.html#a47863e17733d81c9205d77917c8c7e07" title="collMap_reserve" alt="" coords="405,157,523,184"/>
+</map>

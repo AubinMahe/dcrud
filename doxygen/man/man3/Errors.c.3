@@ -1,0 +1,36 @@
+.TH "src/io/Errors.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/io/Errors.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <io/Errors\&.h>\fP
+.br
+
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "const char * \fBioErrorMessages\fP [\fBioError_ERROR_LAST\fP]"
+.br
+.in -1c
+.SH "Variable Documentation"
+.PP 
+.SS "const char* ioErrorMessages[\fBioError_ERROR_LAST\fP]"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+   "No error",
+
+   "Too many put operation or buffer too small",
+   "Too many get operation or buffer too small",
+}
+.fi
+.PP
+Definition at line 3 of file Errors\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

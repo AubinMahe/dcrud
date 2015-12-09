@@ -1,0 +1,53 @@
+.TH "src/util/check.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/util/check.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <util/check\&.h>\fP
+.br
+\fC#include <stdarg\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBcheck\fP (\fBbool\fP ok, const char *file, int line, const char *format,\&.\&.\&.)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "void check (\fBbool\fPok, const char *file, intline, const char *format, \&.\&.\&.)"
+
+.PP
+Definition at line 13 of file check\&.c\&.
+.PP
+.nf
+18 {
+19    if( !ok ) {
+20       char    userMsg[1200];
+21 #ifdef WIN32
+22       DWORD   err = GetLastError();
+23       char    systMsg[1000];
+24       if( err == 0 ) {
+25          err = (DWORD)WSAGetLastError();
+26       }
+27       FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, systMsg, sizeof( systMsg ), NULL );
+28 #elif __linux__
+29       const char * systMsg = strerror( errno );
+30 #endif
+31       va_list args;
+32       va_start( args, format );
+33       vsnprintf( userMsg, sizeof( userMsg ), format, args );
+34       fprintf( stderr, "%s:%d:%s:%s", file, line, userMsg, systMsg );
+35    }
+36 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

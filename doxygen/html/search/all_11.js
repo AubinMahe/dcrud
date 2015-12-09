@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['unserialize',['unserialize',['../d0/d07/structdcrud_shareable_impl__s.html#a2f19841f36d6e812605e5fbe1a2b7432',1,'dcrudShareableImpl_s']]],
+  ['updated',['updated',['../d8/df6/struct_cache__s.html#a8138af50b24aed9134936255df486540',1,'Cache_s']]],
+  ['user',['user',['../d5/d35/structcoll_foreach__s.html#a5ab32084b1ccaf8aaa8a0c703b8853cf',1,'collForeach_s::user()'],['../d7/dfc/structcoll_foreach_map__s.html#a5ab32084b1ccaf8aaa8a0c703b8853cf',1,'collForeachMap_s::user()']]],
+  ['util_5fadt',['UTIL_ADT',['../d9/d49/types_8h.html#a2ce2412c542344b82f23b912a492f84d',1,'UTIL_ADT():&#160;types.h'],['../dc/d1f/_list_8h.html#ab9a563aa82f15533e84153669a0ebc31',1,'UTIL_ADT(collList):&#160;List.h'],['../d3/d63/_map_8h.html#a50941fb4c656489302ee4dc2575d79b2',1,'UTIL_ADT(collMap):&#160;Map.h'],['../dc/d09/_set_8h.html#a014c1edd3d4a37f62db37112ab3bb33b',1,'UTIL_ADT(collSet):&#160;Set.h'],['../da/db8/_g_u_i_d_8h.html#a61450b1122170c989f4ca60e784c35ac',1,'UTIL_ADT(dcrudGUID):&#160;GUID.h'],['../df/d14/_i_repository_8h.html#a05a6d8cc357bcefc75573f98b0d61bbb',1,'UTIL_ADT(dcrudIRepository):&#160;IRepository.h'],['../d4/d54/_i_repository_factory_8h.html#a1e2aedd4ffe3f2d513242518c20ac61e',1,'UTIL_ADT(dcrudIRepositoryFactory):&#160;IRepositoryFactory.h'],['../dd/dfb/_shareable_8h.html#a3b8c7397e7e2a71e240c436bcfe81159',1,'UTIL_ADT(dcrudShareable):&#160;Shareable.h'],['../d6/d6c/_byte_buffer_8h.html#a913bbaf658adda1291112d80b4d04b67',1,'UTIL_ADT(ioByteBuffer):&#160;ByteBuffer.h']]]
+];

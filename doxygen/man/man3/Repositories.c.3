@@ -1,0 +1,156 @@
+.TH "src/dcrud/Repositories.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/dcrud/Repositories.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/IRepositoryFactory\&.h>\fP
+.br
+\fC#include <util/types\&.h>\fP
+.br
+\fC#include <util/check\&.h>\fP
+.br
+\fC#include <coll/Map\&.h>\fP
+.br
+\fC#include <coll/List\&.h>\fP
+.br
+\fC#include <coll/Set\&.h>\fP
+.br
+\fC#include <io/ByteBuffer\&.h>\fP
+.br
+\fC#include <io/socket\&.h>\fP
+.br
+\fC#include 'Cache\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBRepositories_s\fP"
+.br
+.ti -1c
+.RI "struct \fBpushCreateOrUpdateItemForeachCtx_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBRepositories_s\fP \fBRepositories\fP"
+.br
+.ti -1c
+.RI "typedef struct 
+.br
+\fBpushCreateOrUpdateItemForeachCtx_s\fP \fBpushCreateOrUpdateItemForeachCtx\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "dcrudIRepositoryFactory * \fBdcrudIRepositoryFactory_Repositories\fP (const char *address, const char *intrfc, unsigned short port, unsigned int id)"
+.br
+.ti -1c
+.RI "dcrudIRepository \fBdcrudIRepositoryFactory_getRepository\fP (dcrudIRepositoryFactory self, const char *topic, \fBdcrudShareableFactory\fP factory)"
+.br
+.ti -1c
+.RI "void \fBRepositories_publish\fP (dcrudIRepositoryFactory self, collSet updated, collSet deleted)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBpushCreateOrUpdateItemForeachCtx_s\fP  \fBpushCreateOrUpdateItemForeachCtx\fP"
+
+.SS "typedef struct \fBRepositories_s\fP  \fBRepositories\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "dcrudIRepository dcrudIRepositoryFactory_getRepository (dcrudIRepositoryFactoryself, const char *topic, \fBdcrudShareableFactory\fPfactory)"
+
+.PP
+Definition at line 82 of file Repositories\&.c\&.
+.PP
+.nf
+86 {
+87    Repositories * This = (Repositories *)self;
+88    dcrudIRepository repo = dcrudCache_init( topic, factory, self );
+89    collList repositories = collMap_get( This->repositories, topic );
+90    if( repositories == NULL ) {
+91       repositories = collList_reserve( repositories );
+92       collMap_put( This->repositories, topic, repositories );
+93    }
+94    collList_add( repositories, repo );
+95    return repo;
+96 }
+.fi
+.SS "dcrudIRepositoryFactory* dcrudIRepositoryFactory_Repositories (const char *address, const char *intrfc, unsigned shortport, unsigned intid)"
+
+.PP
+Definition at line 38 of file Repositories\&.c\&.
+.PP
+.nf
+43 {
+44    int trueValue = 1;
+45    struct sockaddr_in local_sin;
+46    struct ip_mreq mreq;
+47 #ifdef _WIN32
+48    WSADATA wsaData;
+49    check( 0 == WSAStartup( MAKEWORD( 2, 2 ), &wsaData ), __FILE__, __LINE__, "WSAStartup" );
+50    atexit( exitHook );
+51 #endif
+52    Repositories * This = (Repositories*)malloc( sizeof( Repositories ) );
+53    This->sckt = socket( AF_INET, SOCK_DGRAM, 0 );
+54    check( This->sckt != INVALID_SOCKET, __FILE__, __LINE__, "socket" );
+55    check( 0 ==
+56       setsockopt( This->sckt, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue ) ),
+57       __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" );
+58    memset( &local_sin, 0, sizeof( local_sin ) );
+59    local_sin\&.sin_family      = AF_INET;
+60    local_sin\&.sin_port        = htons( port );
+61    local_sin\&.sin_addr\&.s_addr = inet_addr( intrfc );
+62    check( 0 == bind( This->sckt, (struct sockaddr *)&local_sin, sizeof( local_sin )),
+63       __FILE__, __LINE__, "bind(%s,%d)", intrfc, port );
+64    memset( &mreq, 0, sizeof( mreq ));
+65    mreq\&.imr_multiaddr\&.s_addr = inet_addr( address );
+66    mreq\&.imr_interface\&.s_addr = inet_addr( intrfc );
+67    check( 0 == setsockopt( This->sckt, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
+68       __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address );
+69    memset( &This->target, 0, sizeof( This->target ) );
+70    This->target\&.sin_family = AF_INET;
+71    This->target\&.sin_port = htons( port );
+72    This->target\&.sin_addr\&.s_addr = inet_addr( address );
+73    This->repositories = collMap_reserve((collComparator)sourceComparator );
+74    This->header       = ioByteBuffer_allocate(   2*1024 );
+75    This->payload      = ioByteBuffer_allocate(  10*1024 );
+76    This->frame        = ioByteBuffer_allocate( 500*1024 );
+77    This->id           = id;
+78    return (dcrudIRepositoryFactory *)This;
+79    (void)intrfc;
+80 }
+.fi
+.SS "void Repositories_publish (dcrudIRepositoryFactoryself, collSetupdated, collSetdeleted)"
+
+.PP
+Definition at line 184 of file Repositories\&.c\&.
+.PP
+.nf
+188 {
+189    Repositories * This = (Repositories *)self;
+190    pushCreateOrUpdateItemForeachCtx ctx;
+191    ctx\&.initDone     = false;
+192    ctx\&.repositories = This;
+193    collSet_foreach( updated, pushCreateOrUpdateItemForeach, &ctx );
+194    collSet_foreach( deleted, pushDeleteItemForeach        , &ctx );
+195    if( ctx\&.initDone ) {
+196       sendFrame( This );
+197    }
+198 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.
