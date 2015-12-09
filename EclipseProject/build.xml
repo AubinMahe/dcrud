@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="project" default="jar-lib">
+
+   <property name="build-lib" value="BUILD-LIB" />
+   <property name="jar-lib"   value="dcrud.jar" />
+
+   <property name="build-test" value="BUILD-TEST" />
+   <property name="jar-test"   value="dcrud-ui.jar" />
+
+   <target name="clean" description="">
+      <delete dir ="${build-lib}" />
+      <delete file="${jar-lib}" />
+      <delete dir ="${build-test}" />
+      <delete file="${jar-test}" />
+      <delete file="Release/dcrud" />
+      <delete file="Debug/dcrud" />
+   </target>
+
+   <target name="api-docs" description="">
+      <mkdir dir="../javadoc" />
+      <javadoc
+         author    ="Aubin Mahé"
+         destdir   ="../javadoc"
+         doctitle  ="DCRUD v0.0.0"
+         linksource="true"
+         sourcepath="../Java/src"
+         use       ="true"
+      />
+      <exec executable="doxygen" dir="../C" />
+   </target>
+
+   <target name="javac-lib" description="">
+      <mkdir dir="${build-lib}" />
+      <javac
+         debug            ="false"
+         optimize         ="true"
+         destdir          ="${build-lib}"
+         includeantruntime="false">
+         <src path="../Java/src" />
+      </javac>
+   </target>
+
+   <target name="jar-lib" description="" depends="javac-lib">
+      <jar
+         destfile="${jar-lib}"
+         basedir ="${build-lib}">
+         <manifest>
+            <attribute
+               name ="Main-Class"
+               value="org.hpms.mw.distcrud.tooling.XML2CfgConverter" />
+         </manifest>
+      </jar>
+   </target>
+
+   <target name="dcrud-C">
+      <exec
+         executable="make"
+         dir       ="Release">
+         <arg value="all" />
+      </exec>
+   </target>
+
+   <target name="convert-config-file" depends="jar-lib" description="">
+      <java fork="true" jar="${jar-lib}">
+         <arg value="network.xml" />
+         <arg value="network.cfg" />
+      </java>
+   </target>
+
+   <target name="javac-test" description="">
+      <mkdir dir="${build-test}" />
+      <javac
+         debug            ="false"
+         optimize         ="true"
+         destdir          ="${build-test}"
+         includeantruntime="false"
+         classpath        ="${jar-lib}">
+         <src path="../Java/test" />
+      </javac>
+   </target>
+
+   <target name="jar-test" description="" depends="javac-test">
+      <copy todir="${build-test}">
+         <fileset
+            dir     ="../Java/test"
+            includes="**/*.fxml,**/*.png"
+         />
+      </copy>
+      <jar
+         destfile="${jar-test}"
+         basedir ="${build-test}">
+         <manifest>
+            <attribute
+               name ="Class-Path"
+               value="${jar-lib}" />
+            <attribute
+               name ="Main-Class"
+               value="org.hpms.mw.distcrud.samples.shapes.ShapesUI" />
+         </manifest>
+      </jar>
+   </target>
+
+   <target name="run-only-java" depends="jar-lib,jar-test"
+      description="
+&#10;&#9;Launch 4 Java writters which create some coloured rectangles and ellipses.
+&#10;&#9;Each of them moves and publishes the shapes every 40 ms.
+&#10;&#9;All of them display all the shapes published.">
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--conf-file=Network.xml" />
+         <arg value="--interface=eth1" />
+         <arg value="--publisher-name=Shapes-1" />
+         <arg value="--window=left-top" />
+         <arg value="--periodic=true" />
+         <arg value="--move=true" />
+         <arg value="--create=Ellipse,Rectangle" />
+         <arg value="--fill=FF0000" />
+      </java>
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--conf-file=Network.xml" />
+         <arg value="--interface=eth1" />
+         <arg value="--publisher-name=Shapes-2" />
+         <arg value="--window=right-top" />
+         <arg value="--periodic=true" />
+         <arg value="--move=true" />
+         <arg value="--create=Ellipse,Rectangle" />
+         <arg value="--fill=00FF00" />
+      </java>
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--conf-file=Network.xml" />
+         <arg value="--interface=eth1" />
+         <arg value="--publisher-name=Shapes-3" />
+         <arg value="--window=right-bottom" />
+         <arg value="--periodic=true" />
+         <arg value="--move=true" />
+         <arg value="--create=Ellipse,Rectangle" />
+         <arg value="--fill=0000FF" />
+      </java>
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--conf-file=Network.xml" />
+         <arg value="--interface=eth1" />
+         <arg value="--publisher-name=Shapes-4" />
+         <arg value="--window=left-bottom" />
+         <arg value="--periodic=true" />
+         <arg value="--move=true" />
+         <arg value="--create=Ellipse,Rectangle" />
+         <arg value="--fill=808080" />
+      </java>
+   </target>
+
+   <target name="run-java-and-C" depends="dcrud-C,jar-test,convert-config-file"
+      description="
+&#10;&#9;Launch a server - written in C - and a client - written in Java - which call
+&#10;&#9;the server to create some coloured rectangles and ellipses.
+&#10;&#9;The server move and publish the shapes every 40 ms.
+&#10;&#9;The Java client display all the shapes published by the server.">
+      <exec executable="gnome-terminal" spawn="true">
+         <arg value="-t" /><arg value="dcrud" />
+         <arg value="-x" /><arg value="Debug/dcrud" />
+         <arg value="shapes" />
+         <arg value="--pub-id" /><arg value="1" />
+         <arg value="--interface" /><arg value="192.168.1.5" />
+      </exec>
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--conf-file=Network.xml" />
+         <arg value="--interface=eth1" />
+         <arg value="--publisher-name=Shapes-3" />
+         <arg value="--window=right-bottom" />
+         <arg value="--periodic=true" />
+         <arg value="--readonly=true" />
+      </java>
+   </target>
+</project>

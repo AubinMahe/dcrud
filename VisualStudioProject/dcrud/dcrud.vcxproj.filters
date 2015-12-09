@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{78465959-d5d9-445f-bc34-0c9530726163}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{f6cdf18b-5c0a-422e-8dcb-31b267ed76b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\coll">
+      <UniqueIdentifier>{a905c089-f66b-4fcc-92bd-3f18fc8b6226}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\dcrud">
+      <UniqueIdentifier>{5618c5e5-0ba9-43e1-b815-559241c1c1ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\io">
+      <UniqueIdentifier>{44a43652-002f-40e2-b308-dfd59fc475ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\util">
+      <UniqueIdentifier>{5c98435a-ed76-4ca7-a4d5-1781b7b1ff17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\coll">
+      <UniqueIdentifier>{a6d7aa4b-5620-4f97-9e39-39b3539a8d83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dcrud">
+      <UniqueIdentifier>{26ac6382-6950-42e2-b488-046933a23efa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\io">
+      <UniqueIdentifier>{2bfabfa6-6ce2-40e5-bc85-98064610d54d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\util">
+      <UniqueIdentifier>{70de9c24-64c9-4d4c-a651-773729afe98a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\dbg">
+      <UniqueIdentifier>{34403003-2500-408a-a106-0aa3a78123de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\os">
+      <UniqueIdentifier>{e03ecbc3-8fc0-4bc9-9aab-10092a9707d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dbg">
+      <UniqueIdentifier>{36a1c1a8-27e8-4b1d-a9d9-38a94a81d371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\os">
+      <UniqueIdentifier>{4bff20a6-279b-4d5f-8d85-76c5d177c83c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\C\inc\coll\Comparator.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\ForeachFunction.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\List.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Map.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Set.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\GUID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Shareable.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\ByteBuffer.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\types.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Cache.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\limits.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\MapFuncPtr.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICache.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Network.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Status.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dbg\Dump.h">
+      <Filter>inc\dbg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dbg\Performance.h">
+      <Filter>inc\dbg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\socket.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\Status.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\CheckSysCall.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\Perf.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\os\Mutex.h">
+      <Filter>inc\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\os\System.h">
+      <Filter>inc\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\ClassID_private.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Dispatcher.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\GUID_private.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\C\src\coll\List.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\Set.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Cache.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\GUID.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\io\ByteBuffer.c">
+      <Filter>src\io</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\Comparator.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\MapFuncPtr.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\coll\MapVoidPtr.c">
+      <Filter>src\coll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dbg\Dump.c">
+      <Filter>src\dbg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dbg\Performance.c">
+      <Filter>src\dbg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Callback.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\ClassID.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Dispatcher.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Network.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiverImpl.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\ParticipantImpl.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Shareable.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Status.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\io\Errors.c">
+      <Filter>src\io</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\util\CheckSysCall.c">
+      <Filter>src\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\os\Mutex.c">
+      <Filter>src\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\os\System.c">
+      <Filter>src\os</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

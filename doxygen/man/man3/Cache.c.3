@@ -1,0 +1,152 @@
+.TH "src/dcrud/Cache.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/dcrud/Cache.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/IRepository\&.h>\fP
+.br
+\fC#include <dcrud/Shareable\&.h>\fP
+.br
+\fC#include <dcrud/IRepositoryFactory\&.h>\fP
+.br
+\fC#include <coll/Set\&.h>\fP
+.br
+\fC#include <coll/List\&.h>\fP
+.br
+\fC#include 'Repositories\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBCache_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBCache_s\fP \fBCache\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "dcrudIRepository \fBdcrudCache_init\fP (const char *topic, \fBdcrudShareableFactory\fP factory, dcrudIRepositoryFactory network)"
+.br
+.ti -1c
+.RI "void \fBdcrudGUID_setInstance\fP (const dcrudGUID self, unsigned int instance)"
+.br
+.ti -1c
+.RI "\fBdcrudErrorCode\fP \fBdcrudIRepository_create\fP (dcrudIRepository This, dcrudShareable item)"
+.br
+.ti -1c
+.RI "\fBdcrudErrorCode\fP \fBdcrudIRepository_update\fP (dcrudIRepository This, dcrudShareable item)"
+.br
+.ti -1c
+.RI "\fBdcrudErrorCode\fP \fBdcrudIRepository_publish\fP (dcrudIRepository This)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBCache_s\fP  \fBCache\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "dcrudIRepository dcrudCache_init (const char *topic, \fBdcrudShareableFactory\fPfactory, dcrudIRepositoryFactorynetwork)"
+
+.PP
+Definition at line 30 of file Cache\&.c\&.
+.PP
+.nf
+34 {
+35    Cache * cache;
+36    if( caches == NULL ) {
+37       caches = collList_reserve();
+38    }
+39    cache = (Cache *)malloc( sizeof( Cache ) );
+40    collList_add( caches, cache );
+41    cache->updated  = collSet_reserve((collComparator)shareableComparator );
+42    cache->deleted  = collSet_reserve((collComparator)shareableComparator );
+43    cache->toUpdate = collSet_reserve((collComparator)shareableComparator );
+44    cache->toDelete = collSet_reserve((collComparator)dcrudGUID_compareTo );
+45    cache->local    = collMap_reserve((collComparator)dcrudGUID_compareTo );
+46    strncpy( cache->topic, topic, sizeof( cache->topic ));
+47    cache->factory  = factory;
+48    cache->network  = network;
+49    cache->lastInstanceId = 0;
+50    return (dcrudIRepository)cache;
+51 }
+.fi
+.SS "void dcrudGUID_setInstance (const dcrudGUIDself, unsigned intinstance)"
+
+.SS "\fBdcrudErrorCode\fP dcrudIRepository_create (dcrudIRepositoryThis, dcrudShareableitem)"
+
+.PP
+Definition at line 56 of file Cache\&.c\&.
+.PP
+.nf
+56                                                                                      {
+57    Cache *   cache = (Cache *)This;
+58    dcrudGUID id    = dcrudShareable_getId( item );
+59    if( dcrudGUID_isShared( id )) {
+60       char buffer[40];
+61       dcrudGUID_toString( id, buffer, sizeof( buffer ));
+62       fprintf( stderr, "Item already published: %s!\n", buffer );
+63       return DCRUD_ALREADY_CREATED;
+64    }
+65    dcrudGUID_setInstance( id, ++cache->lastInstanceId );
+66    collMap_put( cache->local, id, item );
+67    collSet_add( cache->updated, item );
+68    return DCRUD_NO_ERROR;
+69 }
+.fi
+.SS "\fBdcrudErrorCode\fP dcrudIRepository_publish (dcrudIRepositoryThis)"
+
+.PP
+Definition at line 88 of file Cache\&.c\&.
+.PP
+.nf
+88                                                                  {
+89    Cache * cache = (Cache *)This;
+90    Repositories_publish( cache->network, cache->updated, cache->deleted );
+91    collSet_clear( cache->updated );
+92    collSet_clear( cache->deleted );
+93    return DCRUD_NO_ERROR;
+94 }
+.fi
+.SS "\fBdcrudErrorCode\fP dcrudIRepository_update (dcrudIRepositoryThis, dcrudShareableitem)"
+
+.PP
+Definition at line 71 of file Cache\&.c\&.
+.PP
+.nf
+71                                                                                      {
+72    Cache * cache = (Cache *)This;
+73    dcrudGUID id = dcrudShareable_getId( item );
+74    if( ! dcrudGUID_isShared( id )) {
+75       fprintf( stderr, "Item must be created first!\n" );
+76       return DCRUD_NOT_CREATED;
+77    }
+78    if( ! collMap_get( cache->local, id )) {
+79       char itemId[40];
+80       dcrudGUID_toString( id, itemId, sizeof( itemId ));
+81       fprintf( stderr, "Repository doesn't contains item %s to update!\n", itemId );
+82       return false;
+83    }
+84    collSet_add( cache->updated, item );
+85    return DCRUD_NO_ERROR;
+86 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

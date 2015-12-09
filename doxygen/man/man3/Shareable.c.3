@@ -1,0 +1,99 @@
+.TH "src/dcrud/Shareable.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/dcrud/Shareable.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/Shareable\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBdcrudShareableImpl_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBdcrudShareableImpl_s\fP \fBdcrudShareableImpl\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBdcrudShareable_init\fP (\fBdcrudSerializable\fP serializable, dcrudShareable *baseInSerializable, dcrudGUID id, \fBdcrudShareable_setF\fP set, \fBdcrudShareable_serializeF\fP serialize, \fBdcrudShareable_unserializeF\fP unserialize)"
+.br
+.ti -1c
+.RI "dcrudGUID \fBdcrudShareable_getId\fP (dcrudShareable self)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBdcrudShareable_serialize\fP (dcrudShareable self, ioByteBuffer target)"
+.br
+.ti -1c
+.RI "\fBioError\fP \fBdcrudShareable_unserialize\fP (dcrudShareable self, ioByteBuffer source)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBdcrudShareableImpl_s\fP  \fBdcrudShareableImpl\fP"
+
+.SH "Function Documentation"
+.PP 
+.SS "dcrudGUID dcrudShareable_getId (dcrudShareableself)"
+
+.PP
+Definition at line 30 of file Shareable\&.c\&.
+.PP
+.nf
+30                                                       {
+31    dcrudShareableImpl * This = (dcrudShareableImpl *)self;
+32    return This->id;
+33 }
+.fi
+.SS "void dcrudShareable_init (\fBdcrudSerializable\fPserializable, dcrudShareable *baseInSerializable, dcrudGUIDid, \fBdcrudShareable_setF\fPset, \fBdcrudShareable_serializeF\fPserialize, \fBdcrudShareable_unserializeF\fPunserialize)"
+
+.PP
+Definition at line 13 of file Shareable\&.c\&.
+.PP
+.nf
+20 {
+21    dcrudShareableImpl * This = (dcrudShareableImpl *)malloc( sizeof( dcrudShareableImpl ));
+22    This->serializable = serializable;
+23    This->id           = id;
+24    This->set          = set;
+25    This->serialize    = serialize;
+26    This->unserialize  = unserialize;
+27    *baseInSerializable = (dcrudShareable)This;
+28 }
+.fi
+.SS "\fBioError\fP dcrudShareable_serialize (dcrudShareableself, ioByteBuffertarget)"
+
+.PP
+Definition at line 35 of file Shareable\&.c\&.
+.PP
+.nf
+35                                                                              {
+36    dcrudShareableImpl * This = (dcrudShareableImpl *)self;
+37    return This->serialize( This->serializable, target );
+38 }
+.fi
+.SS "\fBioError\fP dcrudShareable_unserialize (dcrudShareableself, ioByteBuffersource)"
+
+.PP
+Definition at line 40 of file Shareable\&.c\&.
+.PP
+.nf
+40                                                                                {
+41    dcrudShareableImpl * This = (dcrudShareableImpl *)self;
+42    return This->unserialize( This->serializable, source );
+43 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

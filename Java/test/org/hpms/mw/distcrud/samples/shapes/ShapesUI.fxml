@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8"
+   fx:controller="org.hpms.mw.distcrud.samples.shapes.ShapesUI">
+   <padding><Insets bottom="2" left="2" right="2" top="2" /></padding>
+   <top>
+      <MenuBar>
+         <Menu text="Fichier">
+            <MenuItem text="Quitter" onAction="#onQuit" />
+         </Menu>
+         <Menu text="Formes" fx:id="_publisherMnu">
+            <CustomMenuItem text="Contour" hideOnClick="false">
+               <content><ColorPicker fx:id="_strokeColor" /></content>
+            </CustomMenuItem>
+            <CustomMenuItem text="Remplissage" hideOnClick="false">
+               <content><ColorPicker fx:id="_fillColor"/></content>
+            </CustomMenuItem>
+            <MenuItem      text="Rectangle"             onAction="#createRectangle" />
+            <MenuItem      text="Ellipse"               onAction="#createEllipse" />
+            <CheckMenuItem text="Mouvements aléatoires" onAction="#moveThem"
+               fx:id="_moveChkMnu" />
+         </Menu>
+         <Menu text="Distribution">
+            <CheckMenuItem text="Periodique"            onAction="#periodic"
+               fx:id="_periodicChkMnu" />
+            <MenuItem      text="Publish"               onAction="#publish" />
+            <MenuItem      text="Refresh"               onAction="#refresh" />
+         </Menu>
+      </MenuBar>
+   </top>
+   <left>
+      <TableView fx:id="_shapesTbl">
+         <columns>
+            <TableColumn text="ID" prefWidth="172">
+               <cellValueFactory>
+                  <PropertyValueFactory property="id"/>
+               </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Type" prefWidth="120">
+               <cellValueFactory>
+                  <PropertyValueFactory property="kind"/>
+               </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Nom" prefWidth="120">
+               <cellValueFactory>
+                  <PropertyValueFactory property="name"/>
+               </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="X" prefWidth="60">
+               <cellValueFactory>
+                  <PropertyValueFactory property="x"/>
+               </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Y" prefWidth="60">
+               <cellValueFactory>
+                  <PropertyValueFactory property="y"/>
+               </cellValueFactory>
+            </TableColumn>
+         </columns>
+      </TableView>
+   </left>
+   <center>
+      <Pane fx:id="_shapesArea" prefWidth="640" prefHeight="480" />
+   </center>
+</BorderPane>

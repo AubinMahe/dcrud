@@ -1,0 +1,215 @@
+.TH "src/coll/Set.c" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/coll/Set.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <coll/Set\&.h>\fP
+.br
+\fC#include <coll/limits\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBcollPrivateSet_s\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBcollPrivateSet_s\fP \fBcollPrivateSet\fP"
+.br
+.ti -1c
+.RI "typedef int(* \fBPVoidComparator\fP )(const void *, const void *)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "collSet \fBcollSet_reserve\fP (\fBcollComparator\fP cmp)"
+.br
+.ti -1c
+.RI "void \fBcollSet_clear\fP (collSet self)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBcollSet_add\fP (collSet self, \fBcollSetItem\fP item)"
+.br
+.ti -1c
+.RI "\fBbool\fP \fBcollSet_remove\fP (collSet self, \fBcollSetItem\fP item)"
+.br
+.ti -1c
+.RI "unsigned int \fBcollSet_size\fP (collSet self)"
+.br
+.ti -1c
+.RI "\fBcollForeachResult\fP \fBcollSet_foreach\fP (collSet self, \fBcollForeachFunction\fP fn, void *userData)"
+.br
+.ti -1c
+.RI "void \fBcollSet_release\fP (collSet *self)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBcollPrivateSet_s\fP  \fBcollPrivateSet\fP"
+
+.SS "typedef int( *  PVoidComparator)(const void *, const void *)"
+
+.PP
+Definition at line 27 of file Set\&.c\&.
+.SH "Function Documentation"
+.PP 
+.SS "\fBbool\fP collSet_add (collSetself, \fBcollSetItem\fPitem)"
+
+.PP
+Definition at line 57 of file Set\&.c\&.
+.PP
+.nf
+57                                                    {
+58    collPrivateSet * This = (collPrivateSet *)self;
+59    collSetItem prev =
+60       bsearch( &item, This->items, This->count, sizeof( collSetItem ), (PVoidComparator)This->cmp );
+61    if( prev ) {
+62       return false;
+63    }
+64 #ifdef STATIC_ALLOCATION
+65    if( This->count == COLL_SET_ITEM_MAX_COUNT ) {
+66       fprintf( stderr, "%s:%d:collSet_add: out of memory!\n", __FILE__, __LINE__ );
+67       return false;
+68    }
+69 #else
+70    if( This->count == This->limit ) {
+71       This->limit += 100;
+72       This->items = (collSetItem *)realloc( This->items, This->limit * sizeof( collSetItem ));
+73    }
+74 #endif
+75    This->items[This->count++] = item;
+76    qsort( This->items, This->count, sizeof( collSetItem ), (PVoidComparator)This->cmp );
+77    return true;
+78 }
+.fi
+.SS "void collSet_clear (collSetself)"
+
+.PP
+Definition at line 48 of file Set\&.c\&.
+.PP
+.nf
+48                                    {
+49    collPrivateSet * This = (collPrivateSet *)self;
+50    This->count = 0;
+51 #ifndef STATIC_ALLOCATION
+52    This->limit = 100;
+53    This->items = (collSetItem *)realloc( This->items, This->limit * sizeof( collSetItem ));
+54 #endif
+55 }
+.fi
+.SS "\fBcollForeachResult\fP collSet_foreach (collSetself, \fBcollForeachFunction\fPfn, void *userData)"
+
+.PP
+Definition at line 100 of file Set\&.c\&.
+.PP
+.nf
+100                                                                                            {
+101    collPrivateSet * This = (collPrivateSet *)self;
+102    collForeach context;
+103    memset( &context, 0, sizeof( context ));
+104    context\&.user = userData;
+105    for( context\&.index = 0; context\&.index < This->count; ++context\&.index ) {
+106       context\&.item = This->items[context\&.index];
+107       if( !fn( &context ) ) {
+108          break;
+109       }
+110    }
+111    return context\&.retVal;
+112 }
+.fi
+.SS "void collSet_release (collSet *self)"
+
+.PP
+Definition at line 114 of file Set\&.c\&.
+.PP
+.nf
+114                                        {
+115    collPrivateSet * This = (collPrivateSet *)*self;
+116 #ifndef STATIC_ALLOCATION
+117    free( This->items );
+118 #endif
+119    This->count = 0;
+120 #ifndef STATIC_ALLOCATION
+121    This->limit = 0;
+122    This->items = NULL;
+123    free( This );
+124 #endif
+125    *self = NULL;
+126 }
+.fi
+.SS "\fBbool\fP collSet_remove (collSetself, \fBcollSetItem\fPitem)"
+
+.PP
+Definition at line 80 of file Set\&.c\&.
+.PP
+.nf
+80                                                       {
+81    collPrivateSet * This = (collPrivateSet *)self;
+82    unsigned         i;
+83    for( i = 0; i < This->count; ++i ) {
+84       if( This->items[i] == item ) {
+85          memmove(
+86             This->items + i,
+87             This->items + i + 1,
+88             ( This->count - i - 1 )*sizeof( collSetItem ));
+89          --This->count;
+90          return true;
+91       }
+92    }
+93    return false;
+94 }
+.fi
+.SS "collSet collSet_reserve (\fBcollComparator\fPcmp)"
+
+.PP
+Definition at line 29 of file Set\&.c\&.
+.PP
+.nf
+29                                               {
+30 #ifdef STATIC_ALLOCATION
+31    if( NextSet == COLL_SET_MAX_COUNT ) {
+32       fprintf( stderr, "%s:%d:collSet_reserve: out of memory!\n", __FILE__, __LINE__ );
+33       return NULL;
+34    }
+35    collPrivateSet * This = &Sets[NextSet++];
+36 #else
+37    collPrivateSet * This = (collPrivateSet *)malloc( sizeof( collPrivateSet ));
+38 #endif
+39    This->count = 0;
+40 #ifndef STATIC_ALLOCATION
+41    This->limit = 100;
+42    This->items = (collSetItem *)malloc( This->limit * sizeof( collSetItem ));
+43 #endif
+44    This->cmp   = cmp;
+45    return (collSet)This;
+46 }
+.fi
+.SS "unsigned int collSet_size (collSetself)"
+
+.PP
+Definition at line 96 of file Set\&.c\&.
+.PP
+.nf
+96                                           {
+97    return ( (collPrivateSet *)self )->count;
+98 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

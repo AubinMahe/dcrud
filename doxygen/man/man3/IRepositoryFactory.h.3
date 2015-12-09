@@ -1,0 +1,45 @@
+.TH "inc/dcrud/IRepositoryFactory.h" 3 "Mon Nov 16 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/dcrud/IRepositoryFactory.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <dcrud/Shareable\&.h>\fP
+.br
+\fC#include <dcrud/IRepository\&.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef dcrudShareable(* \fBdcrudShareableFactory\fP )(dcrudGUID id)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBUTIL_ADT\fP (dcrudIRepositoryFactory)"
+.br
+.ti -1c
+.RI "dcrudIRepository \fBdcrudIRepositoryFactory_getRepository\fP (dcrudIRepositoryFactory This, const char *topic, \fBdcrudShareableFactory\fP factory)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef dcrudShareable( *  dcrudShareableFactory)(dcrudGUID id)"
+
+.PP
+Definition at line 5 of file IRepositoryFactory\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "dcrudIRepository dcrudIRepositoryFactory_getRepository (dcrudIRepositoryFactoryThis, const char *topic, \fBdcrudShareableFactory\fPfactory)"
+
+.SS "UTIL_ADT (dcrudIRepositoryFactory)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

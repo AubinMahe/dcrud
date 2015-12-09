@@ -1,0 +1,97 @@
+==28319== Memcheck, a memory error detector
+==28319== Copyright (C) 2002-2013, and GNU GPL'd, by Julian Seward et al.
+==28319== Using Valgrind-3.10.0.SVN and LibVEX; rerun with -h for copyright info
+==28319== Command: Debug/dcrud shapes --pub-name Shapes-1 --interface 192.168.1.5
+==28319== 
+==28319== 
+==28319== HEAP SUMMARY:
+==28319==     in use at exit: 3,656 bytes in 10 blocks
+==28319==   total heap usage: 1,416 allocs, 1,406 frees, 1,192,318 bytes allocated
+==28319== 
+==28319== 8 bytes in 1 blocks are indirectly lost in loss record 1 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x405C3E: dcrudGUID_new (GUID.c:6)
+==28319==    by 0x408493: dcrudShareable_new (Shareable.c:9)
+==28319==    by 0x407C67: dcrudIParticipant_createShareable (ParticipantImpl.c:210)
+==28319==    by 0x4030A3: shapesPublisherTests (shapes_publisher.c:277)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 8 bytes in 1 blocks are indirectly lost in loss record 2 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x405C3E: dcrudGUID_new (GUID.c:6)
+==28319==    by 0x408493: dcrudShareable_new (Shareable.c:9)
+==28319==    by 0x407C67: dcrudIParticipant_createShareable (ParticipantImpl.c:210)
+==28319==    by 0x4030F3: shapesPublisherTests (shapes_publisher.c:279)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 8 bytes in 1 blocks are indirectly lost in loss record 3 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x405713: Provided_new (Dispatcher.c:80)
+==28319==    by 0x405A13: dcrudIDispatcher_provide (Dispatcher.c:161)
+==28319==    by 0x40314E: shapesPublisherTests (shapes_publisher.c:282)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 16 bytes in 1 blocks are indirectly lost in loss record 4 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x40562D: Operation_new (Dispatcher.c:48)
+==28319==    by 0x405801: dcrudIProvided_addOperation (Dispatcher.c:108)
+==28319==    by 0x40316C: shapesPublisherTests (shapes_publisher.c:283)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 24 bytes in 1 blocks are indirectly lost in loss record 5 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x4097D9: collMap_new (Map.template:38)
+==28319==    by 0x405721: Provided_new (Dispatcher.c:81)
+==28319==    by 0x405A13: dcrudIDispatcher_provide (Dispatcher.c:161)
+==28319==    by 0x40314E: shapesPublisherTests (shapes_publisher.c:282)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 192 (184 direct, 8 indirect) bytes in 1 blocks are definitely lost in loss record 6 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x40847E: dcrudShareable_new (Shareable.c:6)
+==28319==    by 0x407C67: dcrudIParticipant_createShareable (ParticipantImpl.c:210)
+==28319==    by 0x4030A3: shapesPublisherTests (shapes_publisher.c:277)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 192 (184 direct, 8 indirect) bytes in 1 blocks are definitely lost in loss record 7 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x40847E: dcrudShareable_new (Shareable.c:6)
+==28319==    by 0x407C67: dcrudIParticipant_createShareable (ParticipantImpl.c:210)
+==28319==    by 0x4030F3: shapesPublisherTests (shapes_publisher.c:279)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 1,600 bytes in 1 blocks are indirectly lost in loss record 8 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x409813: collMap_new (Map.template:44)
+==28319==    by 0x40591F: dcrudIDispatcher_new (Dispatcher.c:136)
+==28319==    by 0x407858: ParticipantImpl_new (ParticipantImpl.c:100)
+==28319==    by 0x40661F: dcrudNetwork_join (Network.c:131)
+==28319==    by 0x402FAF: shapesPublisherTests (shapes_publisher.c:249)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 1,600 bytes in 1 blocks are indirectly lost in loss record 9 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x409813: collMap_new (Map.template:44)
+==28319==    by 0x405721: Provided_new (Dispatcher.c:81)
+==28319==    by 0x405A13: dcrudIDispatcher_provide (Dispatcher.c:161)
+==28319==    by 0x40314E: shapesPublisherTests (shapes_publisher.c:282)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== 3,272 (24 direct, 3,248 indirect) bytes in 1 blocks are definitely lost in loss record 10 of 10
+==28319==    at 0x4C2AB80: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==28319==    by 0x4097D9: collMap_new (Map.template:38)
+==28319==    by 0x40591F: dcrudIDispatcher_new (Dispatcher.c:136)
+==28319==    by 0x407858: ParticipantImpl_new (ParticipantImpl.c:100)
+==28319==    by 0x40661F: dcrudNetwork_join (Network.c:131)
+==28319==    by 0x402FAF: shapesPublisherTests (shapes_publisher.c:249)
+==28319==    by 0x402422: main (main.c:25)
+==28319== 
+==28319== LEAK SUMMARY:
+==28319==    definitely lost: 392 bytes in 3 blocks
+==28319==    indirectly lost: 3,264 bytes in 7 blocks
+==28319==      possibly lost: 0 bytes in 0 blocks
+==28319==    still reachable: 0 bytes in 0 blocks
+==28319==         suppressed: 0 bytes in 0 blocks
+==28319== 
+==28319== For counts of detected and suppressed errors, rerun with: -v
+==28319== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)

@@ -1,0 +1,241 @@
+.TH "inc/io/ByteBuffer.h" 3 "Wed Dec 9 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/io/ByteBuffer.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <util/types\&.h>\fP
+.br
+\fC#include <io/socket\&.h>\fP
+.br
+\fC#include <io/Status\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef enum \fBioByteOrder_e\fP \fBioByteOrder\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBioByteOrder_e\fP { \fBioByteOrder_BIG_ENDIAN\fP, \fBioByteOrder_LITTLE_ENDIAN\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBUTIL_ADT\fP (ioByteBuffer)"
+.br
+.ti -1c
+.RI "ioByteBuffer \fBioByteBuffer_new\fP (unsigned int capacity)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_delete\fP (ioByteBuffer *This)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_clear\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_mark\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_reset\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "void \fBioByteBuffer_flip\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "unsigned int \fBioByteBuffer_getPosition\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_setPosition\fP (ioByteBuffer This, unsigned int position)"
+.br
+.ti -1c
+.RI "unsigned int \fBioByteBuffer_getLimit\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "unsigned int \fBioByteBuffer_remaining\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_put\fP (ioByteBuffer This, const \fBbyte\fP *src, unsigned int from, unsigned int to)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_get\fP (ioByteBuffer This, \fBbyte\fP *target, unsigned int from, unsigned int to)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putByte\fP (ioByteBuffer This, \fBbyte\fP value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getByte\fP (ioByteBuffer This, \fBbyte\fP *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putShort\fP (ioByteBuffer This, unsigned short value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getShort\fP (ioByteBuffer This, unsigned short *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putInt\fP (ioByteBuffer This, unsigned int value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putIntAt\fP (ioByteBuffer This, unsigned int value, unsigned int index)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getInt\fP (ioByteBuffer This, unsigned int *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putLong\fP (ioByteBuffer This, uint64_t value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getLong\fP (ioByteBuffer This, uint64_t *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putFloat\fP (ioByteBuffer This, float value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getFloat\fP (ioByteBuffer This, float *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putDouble\fP (ioByteBuffer This, double value)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getDouble\fP (ioByteBuffer This, double *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putString\fP (ioByteBuffer This, const char *src)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_getString\fP (ioByteBuffer This, char *target, unsigned int sizeOfTarget)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_putBuffer\fP (ioByteBuffer This, ioByteBuffer source)"
+.br
+.ti -1c
+.RI "ioByteBuffer \fBioByteBuffer_duplicate\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_send\fP (ioByteBuffer This, SOCKET sckt, struct sockaddr_in *target)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_receive\fP (ioByteBuffer This, SOCKET sckt)"
+.br
+.ti -1c
+.RI "\fBbyte\fP * \fBioByteBuffer_getBytes\fP (ioByteBuffer This)"
+.br
+.ti -1c
+.RI "ioByteBuffer \fBioByteBuffer_copy\fP (ioByteBuffer This, unsigned int length)"
+.br
+.ti -1c
+.RI "\fBioStatus\fP \fBioByteBuffer_dump\fP (ioByteBuffer This, FILE *target)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef enum \fBioByteOrder_e\fP  \fBioByteOrder\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBioByteOrder_e\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIioByteOrder_BIG_ENDIAN \fP\fP
+.TP
+\fB\fIioByteOrder_LITTLE_ENDIAN \fP\fP
+.PP
+Definition at line 8 of file ByteBuffer\&.h\&.
+.PP
+.nf
+8                            {
+9 
+10    ioByteOrder_BIG_ENDIAN,
+11    ioByteOrder_LITTLE_ENDIAN
+12 
+13 } ioByteOrder;
+.fi
+.SH "Function Documentation"
+.PP 
+.SS "void ioByteBuffer_clear (ioByteBufferThis)"
+
+.SS "ioByteBuffer ioByteBuffer_copy (ioByteBufferThis, unsigned intlength)"
+
+.SS "void ioByteBuffer_delete (ioByteBuffer *This)"
+
+.SS "\fBioStatus\fP ioByteBuffer_dump (ioByteBufferThis, FILE *target)"
+
+.SS "ioByteBuffer ioByteBuffer_duplicate (ioByteBufferThis)"
+
+.SS "void ioByteBuffer_flip (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_get (ioByteBufferThis, \fBbyte\fP *target, unsigned intfrom, unsigned intto)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getByte (ioByteBufferThis, \fBbyte\fP *target)"
+
+.SS "\fBbyte\fP* ioByteBuffer_getBytes (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getDouble (ioByteBufferThis, double *target)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getFloat (ioByteBufferThis, float *target)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getInt (ioByteBufferThis, unsigned int *target)"
+
+.SS "unsigned int ioByteBuffer_getLimit (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getLong (ioByteBufferThis, uint64_t *target)"
+
+.SS "unsigned int ioByteBuffer_getPosition (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getShort (ioByteBufferThis, unsigned short *target)"
+
+.SS "\fBioStatus\fP ioByteBuffer_getString (ioByteBufferThis, char *target, unsigned intsizeOfTarget)"
+
+.SS "void ioByteBuffer_mark (ioByteBufferThis)"
+
+.SS "ioByteBuffer ioByteBuffer_new (unsigned intcapacity)"
+
+.SS "\fBioStatus\fP ioByteBuffer_put (ioByteBufferThis, const \fBbyte\fP *src, unsigned intfrom, unsigned intto)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putBuffer (ioByteBufferThis, ioByteBuffersource)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putByte (ioByteBufferThis, \fBbyte\fPvalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putDouble (ioByteBufferThis, doublevalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putFloat (ioByteBufferThis, floatvalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putInt (ioByteBufferThis, unsigned intvalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putIntAt (ioByteBufferThis, unsigned intvalue, unsigned intindex)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putLong (ioByteBufferThis, uint64_tvalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putShort (ioByteBufferThis, unsigned shortvalue)"
+
+.SS "\fBioStatus\fP ioByteBuffer_putString (ioByteBufferThis, const char *src)"
+
+.SS "\fBioStatus\fP ioByteBuffer_receive (ioByteBufferThis, SOCKETsckt)"
+
+.SS "unsigned int ioByteBuffer_remaining (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_reset (ioByteBufferThis)"
+
+.SS "\fBioStatus\fP ioByteBuffer_send (ioByteBufferThis, SOCKETsckt, struct sockaddr_in *target)"
+
+.SS "\fBioStatus\fP ioByteBuffer_setPosition (ioByteBufferThis, unsigned intposition)"
+
+.SS "UTIL_ADT (ioByteBuffer)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

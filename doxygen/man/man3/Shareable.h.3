@@ -1,0 +1,79 @@
+.TH "inc/dcrud/Shareable.h" 3 "Wed Dec 9 2015" "Version 0.0.0" "dcrud" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+inc/dcrud/Shareable.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <io/ByteBuffer\&.h>\fP
+.br
+\fC#include <dcrud/GUID\&.h>\fP
+.br
+\fC#include <dcrud/ClassID\&.h>\fP
+.br
+\fC#include <util/types\&.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void * \fBdcrudShareableData\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBUTIL_ADT\fP (dcrudShareable)"
+.br
+.ti -1c
+.RI "void \fBdcrudShareable_delete\fP (dcrudShareable *This)"
+.br
+.ti -1c
+.RI "dcrudGUID \fBdcrudShareable_getGUID\fP (dcrudShareable This)"
+.br
+.ti -1c
+.RI "dcrudClassID \fBdcrudShareable_getClassID\fP (dcrudShareable This)"
+.br
+.ti -1c
+.RI "void \fBdcrudShareable_set\fP (dcrudShareable This, dcrudShareable source)"
+.br
+.ti -1c
+.RI "int \fBdcrudShareable_compareTo\fP (dcrudShareable *left, dcrudShareable *right)"
+.br
+.ti -1c
+.RI "\fBdcrudShareableData\fP \fBdcrudShareable_getUserData\fP (dcrudShareable This)"
+.br
+.ti -1c
+.RI "dcrudShareable \fBdcrudShareable_getShareable\fP (\fBdcrudShareableData\fP user)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void* \fBdcrudShareableData\fP"
+
+.PP
+Definition at line 9 of file Shareable\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "int dcrudShareable_compareTo (dcrudShareable *left, dcrudShareable *right)"
+
+.SS "void dcrudShareable_delete (dcrudShareable *This)"
+
+.SS "dcrudClassID dcrudShareable_getClassID (dcrudShareableThis)"
+
+.SS "dcrudGUID dcrudShareable_getGUID (dcrudShareableThis)"
+
+.SS "dcrudShareable dcrudShareable_getShareable (\fBdcrudShareableData\fPuser)"
+
+.SS "\fBdcrudShareableData\fP dcrudShareable_getUserData (dcrudShareableThis)"
+
+.SS "void dcrudShareable_set (dcrudShareableThis, dcrudShareablesource)"
+
+.SS "UTIL_ADT (dcrudShareable)"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for dcrud from the source code\&.

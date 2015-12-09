@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="test">
+      <UniqueIdentifier>{5570b093-fcf2-4663-b356-62b9c5e6eff8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{c1ce6e68-6508-4c31-858d-6a5e6b01df6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\dcrud">
+      <UniqueIdentifier>{a4122116-6cd9-4e89-932d-b6fbcc4543b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\util">
+      <UniqueIdentifier>{83a073da-53a0-4151-8495-a7e352bcb2ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\coll">
+      <UniqueIdentifier>{6a84a269-3c9c-48bf-aadf-2b7155894cc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\io">
+      <UniqueIdentifier>{a4d98a9d-c571-4f82-81a0-075dd0874f8d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\C\test\main.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\coll.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\io.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\shapes_publisher.c">
+      <Filter>test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\C\inc\dcrud\GUID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Shareable.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\check.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\types.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Comparator.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\ForeachFunction.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\List.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Map.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\coll\Set.h">
+      <Filter>inc\coll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\io\ByteBuffer.h">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
