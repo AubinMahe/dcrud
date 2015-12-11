@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <util/types.h>
 #include <io/socket.h>
 #include <io/Status.h>
@@ -48,3 +52,7 @@ ioStatus     ioByteBuffer_receive    ( ioByteBuffer   This, SOCKET sckt );
 byte *       ioByteBuffer_getBytes   ( ioByteBuffer   This );
 ioByteBuffer ioByteBuffer_copy       ( ioByteBuffer   This, unsigned int length );
 ioStatus     ioByteBuffer_dump       ( ioByteBuffer   This, FILE * target );
+
+#ifdef __cplusplus
+}
+#endif

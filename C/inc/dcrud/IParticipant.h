@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <dcrud/ICache.h>
 #include <dcrud/IDispatcher.h>
 
@@ -23,3 +27,7 @@ dcrudICache      dcrudIParticipant_getCache       ( dcrudIParticipant   This, by
 dcrudIDispatcher dcrudIParticipant_getDispatcher  ( dcrudIParticipant   This );
 dcrudShareable   dcrudIParticipant_createShareable( dcrudIParticipant   This, dcrudClassID classID );
 void             dcrudIParticipant_run            ( dcrudIParticipant   This );
+
+#ifdef __cplusplus
+}
+#endif

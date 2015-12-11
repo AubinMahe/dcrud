@@ -1,17 +1,16 @@
 #pragma once
 
-#include <string>
-
 namespace dcrud {
 
-   class IParticipant;
+   struct IParticipant;
 
-   class Network {
-   public:
+   struct Network {
 
       static IParticipant & join(
          const char *   networkConfFile,
          const char *   intrfcName,
          unsigned short id             );
+
+      static void leave( IParticipant & toDelete );
    };
 }

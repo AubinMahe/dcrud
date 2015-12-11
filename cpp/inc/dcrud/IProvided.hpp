@@ -1,6 +1,15 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-public interface IProvided {
+namespace dcrud {
 
-   boolean addOperation( String operationName, IOperation executor );
+   struct IOperation;
+
+   struct IProvided {
+
+      virtual ~ IProvided() {}
+
+      virtual void addOperation(
+         const char * operationName,
+         IOperation & executor      ) = 0;
+   };
 }

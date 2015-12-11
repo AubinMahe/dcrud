@@ -1,9 +1,22 @@
 #include <dcrud/Network.hpp>
+#include <dcrud/ClassID.hpp>
+#include <dcrud/Shareable.hpp>
+#include <dcrud/IOperation.hpp>
+#include <dcrud/ICache.hpp>
+#include <dcrud/IParticipant.hpp>
+#include <dcrud/IDispatcher.hpp>
+#include <dcrud/IProvided.hpp>
+
+#include <io/ByteBuffer.hpp>
+
 #include <os/System.h>
 #include <util/CheckSysCall.h>
 
 #include <string>
 #include <map>
+#include <sstream>
+#include <stdexcept>
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +33,7 @@
 #  include <mswsock.h>
 #endif
 
-#define LOOP_COUNT 10000
+#define LOOP_COUNT 10000U
 
 /*
 #define PRINT_SERIALIZE
@@ -46,7 +59,11 @@ struct FxColor {
 
 static unsigned int g_rank;
 
-struct ShareableShape : public Shareable {
+static double nextDouble( double max, double min ) {
+   return min + ((double)rand() / RAND_MAX )*( max - min );
+}
+
+struct ShareableShape : public dcrud::Shareable {
 
    std::string name;
    double      x;
@@ -58,26 +75,21 @@ struct ShareableShape : public Shareable {
    double      dx;
    double      dy;
 
-   static ShareableShape * createRectangle() {
-      return new ShareableShape( rectangleClassID );
-   }
-
-   static ShareableShape * createEllipse() {
-      return new ShareableShape( ellipseClassID );
-   }
-
    ShareableShape( const dcrud::ClassID & classID ) :
-      Shareable( classID )
+      dcrud::Shareable( classID )
    {
+      std::ostringstream fmt;
       if( classID == rectangleClassID ) {
-         name = "Rectangle " + ++g_rank;
+         fmt << "Rectangle " << ++g_rank;
       }
       else if( classID == ellipseClassID ) {
-         name = "Ellipse " + ++g_rank;
+         fmt << "Ellipse " << ++g_rank;
       }
       else {
-         throw std::invalid_argument( classID.toString());
+         fmt << classID;
+         throw std::invalid_argument( fmt.str());
       }
+      name           = fmt.str();
       x              = nextDouble( 540.0,  0.0 );
       y              = nextDouble( 400.0,  0.0 );
       w              = nextDouble( 100.0, 40.0 );
@@ -104,8 +116,8 @@ struct ShareableShape : public Shareable {
       stroke.set( source.stroke );
    }
 
-   void serialize( ioByteBuffer & target ) const {
-      target.putString( name );
+   virtual void serialize( io::ByteBuffer & target ) const {
+      target.putString( name.c_str());
       target.putDouble( x );
       target.putDouble( y );
       target.putDouble( w );
@@ -136,7 +148,7 @@ struct ShareableShape : public Shareable {
    #endif
    }
 
-   void unserialize( ioByteBuffer & source ) {
+   virtual void unserialize( io::ByteBuffer & source ) {
       name           = source.getString();
       x              = source.getDouble();
       y              = source.getDouble();
@@ -153,18 +165,23 @@ struct ShareableShape : public Shareable {
    }
 };
 
-static double nextDouble( double max, double min ) {
-   return min + ((double)rand() / RAND_MAX )*( max - min );
+static ShareableShape * createRectangle() {
+   return new ShareableShape( rectangleClassID );
 }
 
-static double areaMaxX = 640.0;
-static double areaMaxY = 480.0;
+static ShareableShape * createEllipse() {
+   return new ShareableShape( ellipseClassID );
+}
+
+//static double areaMaxX = 640.0;
+//static double areaMaxY = 480.0;
 #define MOVE 2.0
 
-static bool moveShape( collForeach * context ) {
+static bool moveShape( dcrud::Shareable * shareable ) {
+/*
    collMapPair *    pair      = (collMapPair *   )context->item;
    dcrudICache      cache     = (dcrudICache     )context->user;
-   dcrudShareable   shareable = (dcrudShareable  )pair->value;
+   dcrud = (dcrudShareable  )pair->value;
    ShareableShape * shape     = (ShareableShape *)dcrudShareable_getUserData( shareable );
    bool             outOfBounds;
 
@@ -190,29 +207,32 @@ static bool moveShape( collForeach * context ) {
       }
    } while( outOfBounds );
    dcrudICache_update( cache, dcrudShareable_getShareable( shape ));
+*/
+   (void)shareable;
    return true;
 }
 
-static bool removeFromCache( collForeach * context ) {
+static bool removeFromCache( dcrud::Shareable * shareable ) {
+   /*
    collMapPair *  pair      = (collMapPair *   )context->item;
    dcrudICache    cache     = (dcrudICache     )context->user;
    dcrudShareable shareable = (dcrudShareable  )pair->value;
    dcrudICache_delete( cache, shareable );
+   */
+   (void)shareable;
    return true;
 }
 
-static bool deleteShape( collForeach * context ) {
-   collMapPair *  pair      = (collMapPair *   )context->item;
-   dcrudShareable shareable = (dcrudShareable  )pair->value;
-   dcrudShareable_delete( &shareable );
+static bool deleteShape( dcrud::Shareable * shareable ) {
+   delete shareable;
    return true;
 }
 
-class ShapesFactory : public IOperation {
+class ShapesFactory : public dcrud::IOperation {
 private:
 
    dcrud::IParticipant & _participant;
-   dcrudICache &         _cache;
+   dcrud::ICache &       _cache;
 
 public:
 
@@ -221,28 +241,23 @@ public:
       _cache      ( participant.getCache( 0 ))
    {}
 
-   virtual void execute(
-      const std::map<std::string, void *> & in,
-      std::map<std::string, void *> &       out )
-   {
-      const dcrud::ClassID & clazz     = in[ "class" ];
-      const double &         x         = in[ "x" ];
-      const double &         y         = in[ "y" ];
-      const double &         w         = in[ "w" ];
-      const double &         h         = in[ "h" ];
-      ShareableShape * shape = new ShareableShape( clazz );
-      shape->x = x;
-      shape->y = y;
-      shape->w = w;
-      shape->h = h;
-      _cache.create( shareable );
+   virtual void execute( const dcrud::Arguments & in, dcrud::args_t & out ) {
+      const dcrud::ClassID * clazz;
+      if( in.get( "class", clazz )) {
+         ShareableShape * shape = new ShareableShape( *clazz );
+         in.get( "x", shape->x );
+         in.get( "y", shape->y );
+         in.get( "w", shape->w );
+         in.get( "h", shape->h );
+         _cache.create( *shape );
+      }
       out.clear(); /* No out parameter */
    }
 };
 
 int main( int argc, char * argv[] ) {
-   int         pubId       = 0;
-   std::string intrfc;
+   int          pubId       = 0;
+   const char * intrfc;
 
    for( int i = 2; i < argc; ++i ) {
       if( 0 == strcmp( argv[i], "--pub-id" )) {
@@ -256,28 +271,29 @@ int main( int argc, char * argv[] ) {
       fprintf( stderr, "%s --pub-id <publisher-id> is mandatory\n", argv[0] );
       exit(-1);
    }
-   if( intrfc.empty()) {
+   if( ! intrfc ) {
       fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
       exit(-1);
    }
    try {
       dcrud::IParticipant & participant =
-         dcrud::Network_join( "network.cfg", intrfc, (unsigned short)pubId );
+         dcrud::Network::join( "network.cfg", intrfc, (unsigned short)pubId );
 #ifdef PRINT_TIMING
       static uint64_t prev = osSystem_nanotime();
 #endif
-      participant.registerClass( rectangleClassID, ShareableShape::createRectangle );
-      participant.registerClass( ellipseClassID  , ShareableShape::createEllipse );
+      participant.registerClass( rectangleClassID, (dcrud::factory_t)&createRectangle );
+      participant.registerClass( ellipseClassID  , (dcrud::factory_t)&createEllipse   );
       dcrud::ICache & cache = participant.createCache();
-      cache.create( new ShareableShape( rectangleClassID ));
-      cache.create( new ShareableShape( ellipseClassID   ));
-      cache.create( new ShareableShape( rectangleClassID ));
-      cache.create( new ShareableShape( ellipseClassID   ));
+      cache.create( *new ShareableShape( rectangleClassID ));
+      cache.create( *new ShareableShape( ellipseClassID   ));
+      cache.create( *new ShareableShape( rectangleClassID ));
+      cache.create( *new ShareableShape( ellipseClassID   ));
       dcrud::IDispatcher & dispatcher = participant.getDispatcher();
       dcrud::IProvided & shapesFactory = dispatcher.provide( "IShapesFactory" );
-      shapesFactory.addOperation( "create", new ShapesFactory( participant ));
+      ShapesFactory      shapesFactoryCreate( participant );
+      shapesFactory.addOperation( "create", shapesFactoryCreate );
       std::cout << "Publish every 40 ms, " << LOOP_COUNT << " times." << std::endl;
-      for( i = 0; i < LOOP_COUNT; ++i ) {
+      for( unsigned i = 0; i < LOOP_COUNT; ++i ) {
    #ifdef PRINT_TIMING
          uint64_t now = osSystem_nanotime();
          fprintf( stderr, "-- Publish, delta = %7.2f ------------------------------------------\n",
@@ -286,19 +302,17 @@ int main( int argc, char * argv[] ) {
    #endif
          cache.publish();
          osSystem_sleep( 40U );
-         cache.foreach( moveShape );
+         std::for_each( cache.values().begin(), cache.values().end(), moveShape );
          dispatcher.handleRequests();
       }
-      dcrudICache_foreach( cache, removeFromCache, cache );
-      dcrudICache_publish( cache );
-      dcrudICache_foreach( cache, deleteShape, NULL );
-      dcrudClassID_delete( &rectangleClassID );
-      dcrudClassID_delete( &ellipseClassID );
-      dcrudNetwork_leave( &participant );
+      std::for_each( cache.values().begin(), cache.values().end(), removeFromCache );
+      cache.publish();
+      std::for_each( cache.values().begin(), cache.values().end(), deleteShape );
+      dcrud::Network::leave( participant );
       printf( "Well done.\n" );
    }
    catch( const std::exception & x ) {
-      std::cerr << x << std::endl;
+      std::cerr << x.what() << std::endl;
    }
    catch( ... ) {
       std::cerr << "Exception '...' catched!" << std::endl;

@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <dcrud/IParticipant.h>
 
 dcrudIParticipant dcrudNetwork_join(
@@ -7,3 +11,7 @@ dcrudIParticipant dcrudNetwork_join(
    unsigned short id       );
 
 void dcrudNetwork_leave( dcrudIParticipant * This );
+
+#ifdef __cplusplus
+}
+#endif

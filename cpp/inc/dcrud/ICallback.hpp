@@ -1,8 +1,16 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-import java.util.Map;
+#include "Arguments.hpp"
 
-public interface ICallback {
+namespace dcrud {
 
-   void callback( String intrfc, String operation, Map<String, Object> results );
+   struct ICallback {
+
+      virtual ~ ICallback(){}
+
+      virtual void callback(
+         const std::string & intrfc,
+         const std::string & operation,
+         const Arguments &   results   ) = 0;
+   };
 }

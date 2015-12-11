@@ -1,10 +1,18 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-public interface IDispatcher {
+namespace dcrud {
 
-   IProvided provide( String name );
+   struct IProvided;
+   struct IRequired;
 
-   IRequired require( String name );
+   struct IDispatcher {
 
-   void handleRequests();
+      virtual ~ IDispatcher() {}
+
+      virtual IProvided & provide( const char * name ) = 0;
+
+      virtual IRequired & require( const char * name ) = 0;
+
+      virtual void handleRequests( void ) = 0;
+   };
 }

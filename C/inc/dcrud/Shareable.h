@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <io/ByteBuffer.h>
 #include <dcrud/GUID.h>
 #include <dcrud/ClassID.h>
@@ -15,3 +19,7 @@ void               dcrudShareable_set         ( dcrudShareable   This, dcrudShar
 int                dcrudShareable_compareTo   ( dcrudShareable * left, dcrudShareable * right );
 dcrudShareableData dcrudShareable_getUserData ( dcrudShareable   This );
 dcrudShareable     dcrudShareable_getShareable( dcrudShareableData user );
+
+#ifdef __cplusplus
+}
+#endif

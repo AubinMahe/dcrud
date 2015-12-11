@@ -14,7 +14,7 @@ Features
  - Data distribution on LAN using multicast, the Internet (WAN) is not a target.
  - Remote operation, asynchronous or synchronous, with or without returned result.
  - Multi-OS: currently Windows and Linux
- - Multi-languages: currently Java and C, C++ may be addressed in a near future.
+ - Multi-languages: Java, C, C-static-allocation, C++
  - Low level resources (CPU, RAM) consumption
 
 Design and usage
@@ -47,6 +47,7 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list (in priority order)
 -----------------------------
 
+ * Complete C++ implementation
  * Add UDP/IP and TCP/IP support
  * Add streams services for big data
  * Update C static allocation implementation

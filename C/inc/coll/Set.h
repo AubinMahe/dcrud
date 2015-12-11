@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <util/types.h>
 #include <coll/Comparator.h>
 #include "ForeachFunction.h"
@@ -16,3 +20,7 @@ bool              collSet_remove ( collSet   This, collSetItem item );
 unsigned int      collSet_size   ( collSet   This );
 collForeachResult collSet_foreach( collSet   This, collForeachFunction fn, void * userData );
 collSetValues     collSet_values ( collSet   This );
+
+#ifdef __cplusplus
+}
+#endif

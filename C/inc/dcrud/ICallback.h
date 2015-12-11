@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <coll/Map.h>
 
 UTIL_ADT( dcrudICallback );
@@ -13,3 +17,7 @@ dcrudICallback dcrudICallback_new( dcrudICallback_function callback, void * user
 void   dcrudICallback_delete     ( dcrudICallback * This );
 void   dcrudICallback_callback   ( dcrudICallback   This, const char * intrfc, const char * operation, collMap results );
 void * dcrudICallback_getUserData( dcrudICallback   This );
+
+#ifdef __cplusplus
+}
+#endif

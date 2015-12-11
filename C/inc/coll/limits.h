@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef STATIC_ALLOCATION
 
@@ -26,4 +29,8 @@ extern unsigned int collLimitsSetItemCountMax;
 extern unsigned int collLimitsMapCountMax;
 extern unsigned int collLimitsMapItemCountMax;
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

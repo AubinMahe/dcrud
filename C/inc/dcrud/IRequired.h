@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <dcrud/Status.h>
 #include <dcrud/ICallback.h>
 
@@ -27,3 +31,7 @@ dcrudStatus dcrudIRequired_call(
    collMap        arguments,
    dcrudICallback callback,
    int *          callId    );
+
+#ifdef __cplusplus
+}
+#endif

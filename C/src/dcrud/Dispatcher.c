@@ -6,11 +6,13 @@
 
 #include "ParticipantImpl.h"
 
+#define OPERATION_QUEUE_COUNT 256
+
 typedef struct Dispatcher_s {
 
    ParticipantImpl * participant;
    collMap           provided;
-   collList          operationQueues[256];
+   collList          operationQueues[OPERATION_QUEUE_COUNT];
    osMutex           operationQueuesMutex;
 
 } Dispatcher;
@@ -136,7 +138,7 @@ dcrudIDispatcher dcrudIDispatcher_new( ParticipantImpl * participant ) {
    memset( This, 0, sizeof( Dispatcher ));
    This->participant = participant;
    This->provided    = collMap_new((collComparator)collStringComparator );
-   for( i = 0; i < 256; ++i ) {
+   for( i = 0; i < OPERATION_QUEUE_COUNT; ++i ) {
       This->operationQueues[i] = collList_new();
    }
    if( utilCheckSysCall( 0 ==
@@ -152,7 +154,7 @@ void dcrudIDispatcher_delete( dcrudIDispatcher * self ) {
    Dispatcher * This = (Dispatcher *)*self;
    if( This ) {
       unsigned int i;
-      for( i = 0; i < 256; ++i ) {
+      for( i = 0; i < OPERATION_QUEUE_COUNT; ++i ) {
          collList_delete( &(This->operationQueues[i]));
       }
       osMutex_delete( &This->operationQueuesMutex );
@@ -178,7 +180,7 @@ void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
    unsigned     queueNdx;
 
    osMutex_take( This->operationQueuesMutex );
-   for( queueNdx = 0; queueNdx < 256; ++queueNdx ) {
+   for( queueNdx = 0; queueNdx < OPERATION_QUEUE_COUNT; ++queueNdx ) {
       collList_foreach(
          This->operationQueues[queueNdx],
          runAllPendingOperations,

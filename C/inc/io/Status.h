@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum ioStatus_e {
 
@@ -14,3 +17,7 @@ typedef enum ioStatus_e {
 } ioStatus;
 
 extern const char * ioStatusMessages[IO_STATUS_LAST];
+
+#ifdef __cplusplus
+}
+#endif

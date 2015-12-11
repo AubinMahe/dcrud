@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 UTIL_ADT( dcrudIProvided );
 
@@ -9,3 +12,7 @@ bool dcrudIProvided_addOperation(
    const char *    name,
    void *          context,
    dcrudIOperation operation );
+
+#ifdef __cplusplus
+}
+#endif

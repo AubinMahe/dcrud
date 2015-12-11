@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void * collForeachResult;
 
@@ -12,3 +15,7 @@ typedef struct collForeach_s {
 } collForeach;
 
 typedef bool( * collForeachFunction )( collForeach * context );
+
+#ifdef __cplusplus
+}
+#endif

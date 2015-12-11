@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -13,4 +16,8 @@
 #  include <string.h>
 #  define SOCKET int
 #  define INVALID_SOCKET (-1)
+#endif
+
+#ifdef __cplusplus
+}
 #endif

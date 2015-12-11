@@ -22,7 +22,10 @@ typedef struct Participant_s {
 
 } Participant;
 
-static std::vector<NetworkReceiver *> s_receivers;
+typedef std::vector<NetworkReceiver *> networkReceiver_t;
+typedef networkReceiver_t::iterator    networkReceiverIter_t;
+
+static networkReceiver_t s_receivers;
 
 IParticipant & Network::join(
    const char *   networkConfFile,
@@ -79,4 +82,17 @@ IParticipant & Network::join(
       idSub = strtok( NULL, "," );
    }
    return *participant;
+}
+
+void Network::leave( IParticipant & toDelete ) {
+   delete &toDelete;
+   for( networkReceiverIter_t it = s_receivers.begin(); it != s_receivers.end(); ++it ) {
+      NetworkReceiver * nr = *it;
+      if( nr ) {
+         delete nr;
+      }
+      else {
+         break;
+      }
+   }
 }

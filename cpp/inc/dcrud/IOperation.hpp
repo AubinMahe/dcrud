@@ -1,8 +1,13 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-import java.util.Map;
+#include "Arguments.hpp"
 
-public interface IOperation {
+namespace dcrud {
 
-   void execute( Map<String, Object> in, Map<String, Object> out );
+   struct IOperation {
+
+      virtual ~ IOperation() {}
+
+      virtual void execute( const Arguments & in, args_t & out ) = 0;
+   };
 }

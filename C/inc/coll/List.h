@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <util/types.h>
 #include "ForeachFunction.h"
 
@@ -16,3 +20,7 @@ collListItem      collList_get    ( collList   This, unsigned int index );
 unsigned int      collList_size   ( collList   This );
 collForeachResult collList_foreach( collList   This, collForeachFunction fn, void * userData );
 collListValues    collList_values ( collList   This );
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,24 +1,28 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-import java.io.IOException;
-import java.util.Map;
+#include "Arguments.hpp"
 
-public interface IRequired {
+namespace dcrud {
 
-   int VERY_URGENT_QUEUE =   0;
-   int URGENT_QUEUE      =  50;
-   int DEFAULT_QUEUE     = 100;
-   int NON_URGENT_QUEUE  = 255;
+   struct ICallback;
 
-   enum CallMode {
-      SYNCHRONOUS,
-      ASYNCHRONOUS_DEFERRED,
-      ASYNCHRONOUS_IMMEDIATE,
-   }
+   struct IRequired {
 
-   int call( String opName ) throws IOException;
+      static const byte VERY_URGENT_QUEUE      =   0;
+      static const byte URGENT_QUEUE           =  50;
+      static const byte DEFAULT_QUEUE          = 100;
+      static const byte NON_URGENT_QUEUE       = 255;
 
-   int call( String opName, Map<String, Object> arguments ) throws IOException;
+      static const byte SYNCHRONOUS            =   0;
+      static const byte ASYNCHRONOUS_DEFERRED  =   1;
+      static const byte ASYNCHRONOUS_IMMEDIATE =   2;
 
-   int call( String opName, Map<String, Object> arguments, ICallback callback ) throws IOException;
+      virtual ~ IRequired() {}
+
+      virtual int call( const char * opName ) = 0;
+
+      virtual int call( const char * opName, Arguments & arguments ) = 0;
+
+      virtual int call( const char * opName, Arguments & arguments, ICallback & callback ) = 0;
+   };
 }

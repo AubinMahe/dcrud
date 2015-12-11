@@ -1,22 +1,40 @@
-package org.hpms.mw.distcrud;
+#pragma once
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
-import java.util.function.Predicate;
+#include <set>
+#include <algorithm>
 
-public interface ICache {
+namespace dcrud {
 
-   void                  setOwnership( boolean enabled );
-   boolean               owns        ( GUID id );
-   Status                create      ( Shareable item );
-   <T extends Shareable>
-   T                     read        ( GUID id );
-   Status                update      ( Shareable item );
-   Status                delete      ( Shareable item );
-   Collection<Shareable> values      ();
-   Set<Shareable>        select      ( Predicate<Shareable> query );
-   void                  publish     () throws IOException;
-   void                  subscribe   ( ClassID id );
-   void                  refresh     ();
+   struct ClassID;
+   struct GUID;
+   struct Shareable;
+
+   typedef bool ( * shareablePredicate_t)( const Shareable & shareable );
+
+   struct ICache {
+
+      virtual ~ ICache() {}
+
+      virtual void setOwnership( bool enabled ) = 0;
+
+      virtual bool owns( const GUID & id ) const = 0;
+
+      virtual void create( Shareable & item ) = 0;
+
+      virtual Shareable & read( const GUID & id ) const = 0;
+
+      virtual void update( Shareable & item ) = 0;
+
+      virtual void deleTe( Shareable & item ) = 0;
+
+      virtual std::set<Shareable *> & values( void ) const = 0;
+
+      virtual std::set<Shareable *> & select( shareablePredicate_t query ) = 0;
+
+      virtual void publish( void ) = 0;
+
+      virtual void subscribe( const ClassID & id ) = 0;
+
+      virtual void refresh( void ) = 0;
+   };
 }

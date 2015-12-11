@@ -1,4 +1,7 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum dcrudStatus_e {
 
@@ -15,3 +18,7 @@ typedef enum dcrudStatus_e {
 } dcrudStatus;
 
 extern const char * dcrudStatusMessages[DCRUD_STATUS_LAST];
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <coll/Map.h>
 #include <dcrud/Shareable.h>
 #include <dcrud/Status.h>
@@ -20,3 +24,7 @@ collSet           dcrudICache_select      ( dcrudICache This, dcrudPredicate que
 dcrudStatus       dcrudICache_publish     ( dcrudICache This );
 void              dcrudICache_subscribe   ( dcrudICache This, dcrudClassID id );
 void              dcrudICache_refresh     ( dcrudICache This );
+
+#ifdef __cplusplus
+}
+#endif

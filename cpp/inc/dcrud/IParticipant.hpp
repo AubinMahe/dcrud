@@ -1,6 +1,7 @@
 #pragma once
 
 #include <util/types.h>
+#include <functional>
 
 namespace dcrud {
 
@@ -9,16 +10,13 @@ namespace dcrud {
    struct IDispatcher;
    class Shareable;
 
-   template< class T >
-   struct Supplier {
-
-   };
+   typedef Shareable * (* factory_t )( void );
 
    struct IParticipant {
 
       virtual ~ IParticipant() {}
 
-      virtual void registerClass( const ClassID & id, Supplier<Shareable> & factory ) = 0;
+      virtual void registerClass( const ClassID & id, factory_t factory ) = 0;
 
       virtual ICache & createCache() = 0;
 
