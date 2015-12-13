@@ -15,9 +15,19 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
+import org.hpms.mw.distcrud.IRequired.CallMode;
+
+enum FrameType {
+
+   NO_OP,
+   DATA_CREATE_OR_UPDATE,
+   DATA_DELETE,
+   OPERATION
+}
+
 final class ParticipantImpl implements IParticipant {
 
-   static final byte[] SIGNATURE = { 'H','P','M','S'};
+   static final byte[] SIGNATURE = {'D','C','R','U','D'};
 
    public static final int FRAME_TYPE_SIZE = 1;
    public static final int SIZE_SIZE       = 4;
@@ -34,10 +44,10 @@ final class ParticipantImpl implements IParticipant {
    private final ByteBuffer              _header     = ByteBuffer.allocate( HEADER_SIZE );
    private final ByteBuffer              _payload    = ByteBuffer.allocate( PAYLOAD_SIZE );
    private final ByteBuffer              _message    = ByteBuffer.allocate( 64*1024 );
-   /*   */ final Cache[]                 _caches     = new Cache[256];
-   /*   */ final Dispatcher              _dispatcher = new Dispatcher( this );
-   /*   */ final Map<Integer, ICallback> _callbacks  = new HashMap<>();
-   /*   */ final byte                    _publisherId;
+   private final Cache[]                 _caches     = new Cache[256];
+   private final Dispatcher              _dispatcher = new Dispatcher( this );
+   private final Map<Integer, ICallback> _callbacks  = new HashMap<>();
+   private final byte                    _publisherId;
    private final Map<ClassID,
       Supplier<Shareable>>               _factories  = new TreeMap<>();
    private final InetSocketAddress       _target;
@@ -58,6 +68,10 @@ final class ParticipantImpl implements IParticipant {
          .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc )
       ;
       System.out.printf( "Sending to %s via interface %s\n", group, intrfc );
+   }
+
+   short getPublisherId() {
+      return _publisherId;
    }
 
    Shareable newInstance( ClassID classId, ByteBuffer frame ) {
@@ -83,8 +97,7 @@ final class ParticipantImpl implements IParticipant {
    public ICache createCache() {
       synchronized( _caches ) {
          final Cache cache = new Cache( this );
-         assert cache._cacheId > 0;
-         return _caches[cache._cacheId-1] = cache;
+         return _caches[cache.getCacheId()-1] = cache;
       }
    }
 
@@ -231,5 +244,53 @@ final class ParticipantImpl implements IParticipant {
          return _callId++;
       }
       return 0;
+   }
+
+   void dataDelete( GUID id ) {
+      synchronized( _caches ) {
+         for( final Cache cache : _caches ) {
+            if( cache == null ) {
+               break;
+            }
+            cache.deleteFromNetwork( id );
+         }
+      }
+   }
+
+   void dataUpdate( ByteBuffer frame, int payloadSize ) {
+      synchronized( _caches ) {
+         for( final Cache cache : _caches ) {
+            if( cache == null ) {
+               break;
+            }
+            final byte[] copy = new byte[payloadSize];
+            System.arraycopy( frame.array(), frame.position(), copy, 0, payloadSize );
+            final ByteBuffer fragment = ByteBuffer.wrap( copy );
+//            Dump.dump( fragment );
+            cache.updateFromNetwork( fragment );
+         }
+      }
+   }
+
+   void execute(
+      String               intrfcName,
+      String               opName,
+      Map<String, Object>  arguments,
+      Map<String, Object>  results,
+      int                  queueNdx,
+      CallMode             callMode )
+   {
+      _dispatcher.execute( intrfcName, opName, arguments, results, queueNdx, callMode );
+   }
+
+   void callback( String intrfcName, String opName, Map<String, Object> args, int callId ) {
+      final ICallback callback = _callbacks.get( callId );
+      if( callback == null ) {
+         System.err.printf( "Unknown Callback received: %s.%s, id: %d\n",
+            intrfcName, opName, -callId );
+      }
+      else {
+         callback.callback( intrfcName, opName, args );
+      }
    }
 }

@@ -4,7 +4,7 @@
 #include <io/socket.h>
 #include <os/Mutex.h>
 
-#define DCRUD_SIGNATURE_SIZE  4U
+#define DCRUD_SIGNATURE_SIZE  5U
 extern const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE];
 #define FRAME_TYPE_SIZE 1U
 #define SIZE_SIZE       4U

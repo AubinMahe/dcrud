@@ -78,7 +78,7 @@ IParticipant & Network::join(
       unsigned int  index      = (unsigned int)atoi( idSub ) - 1;
       Participant * subscriber = &conf[index];
       s_receivers.push_back(
-         new NetworkReceiver( *participant, subscriber->address, subscriber->port, intrfc ));
+         createNetworkReceiver( *participant, subscriber->address, subscriber->port, intrfc ));
       idSub = strtok( NULL, "," );
    }
    return *participant;
@@ -89,7 +89,7 @@ void Network::leave( IParticipant & toDelete ) {
    for( networkReceiverIter_t it = s_receivers.begin(); it != s_receivers.end(); ++it ) {
       NetworkReceiver * nr = *it;
       if( nr ) {
-         delete nr;
+         deleteNetworkReceiver( nr );
       }
       else {
          break;

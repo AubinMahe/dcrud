@@ -34,7 +34,7 @@ public final class GUID implements Comparable<GUID> {
 
    @Override
    public String toString() {
-      return String.format( "Instance-%02X-%02X-%04X", _publisher, _cache, _instance );
+      return String.format( "%04X-%02X-%08X", _publisher, _cache, _instance );
    }
 
    @Override

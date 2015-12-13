@@ -1,10 +1,9 @@
-#include "INetworkReceiver.h"
+#include "NetworkReceiver.h"
 #include "Dispatcher.h"
 #include "Cache.h"
 #include "ParticipantImpl.h"
 
 #include <io/ByteBuffer.h>
-#include <io/socket.h>
 
 #include <os/System.h>
 
@@ -22,7 +21,7 @@
 #endif
 #include <stdio.h>
 
-typedef struct NetworkReceiverImpl_s {
+typedef struct NetworkReceiver_s {
 
    ParticipantImpl * participant;
    SOCKET            in;
@@ -32,9 +31,9 @@ typedef struct NetworkReceiverImpl_s {
 #else
    pthread_t         thread;
 #endif
-} NetworkReceiverImpl;
+} NetworkReceiver;
 
-static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
+static void dataDelete( NetworkReceiver * This, ioByteBuffer frame ) {
    dcrudGUID    id;
    unsigned int c;
 
@@ -51,7 +50,7 @@ static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
    osMutex_release( This->participant->cachesMutex );
 }
 
-static void dataUpdate( NetworkReceiverImpl * This, ioByteBuffer frame ) {
+static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
    unsigned int size = 0;
    unsigned int c;
 
@@ -72,7 +71,7 @@ static void dataUpdate( NetworkReceiverImpl * This, ioByteBuffer frame ) {
       ioByteBuffer_getPosition( frame ) + GUID_SIZE + CLASS_ID_SIZE + size );
 }
 
-static void operation( NetworkReceiverImpl * This, ioByteBuffer frame ) {
+static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
    byte          count = 0;
    char          intrfcName[1000];
    char          opName[1000];
@@ -199,7 +198,7 @@ static void operation( NetworkReceiverImpl * This, ioByteBuffer frame ) {
    }
 }
 
-static void * run( NetworkReceiverImpl * This ) {
+static void * run( NetworkReceiver * This ) {
    char     signa[DCRUD_SIGNATURE_SIZE];
    uint64_t atStart = 0;
 
@@ -215,7 +214,7 @@ static void * run( NetworkReceiverImpl * This ) {
          */
          ioByteBuffer_get( This->inBuf, (byte *)signa, 0, sizeof( signa ));
          if( 0 == strncmp( signa, (const char *)DCRUD_SIGNATURE, DCRUD_SIGNATURE_SIZE )) {
-            const FrameType frameType = FRAMETYPE_NO_OP;
+            FrameType frameType = FRAMETYPE_NO_OP;
             ioByteBuffer_getByte( This->inBuf, (byte*)&frameType );
             switch( frameType ) {
             case FRAMETYPE_DATA_CREATE_OR_UPDATE: dataUpdate( This, This->inBuf ); break;
@@ -243,31 +242,31 @@ static void * run( NetworkReceiverImpl * This ) {
 
 typedef void * ( * pthread_routine_t )( void * );
 
-INetworkReceiver INetworkReceiver_new(
+struct NetworkReceiver_s * createNetworkReceiver(
    ParticipantImpl * participant,
    const char *      address,
    unsigned short    port,
    const char *      intrfc )
 {
-   NetworkReceiverImpl * This = (NetworkReceiverImpl *)malloc( sizeof( NetworkReceiverImpl ));
-   int                   trueValue = 1;
-   struct sockaddr_in    local_sin;
-   struct ip_mreq        mreq;
+   NetworkReceiver *  This = (NetworkReceiver *)malloc( sizeof( NetworkReceiver ));
+   int                trueValue = 1;
+   struct sockaddr_in local_sin;
+   struct ip_mreq     mreq;
 
    memset( &local_sin, 0, sizeof( local_sin ));
    memset( &mreq     , 0, sizeof( mreq ));
-   memset( This, 0, sizeof( NetworkReceiverImpl ));
+   memset( This, 0, sizeof( NetworkReceiver ));
    This->participant = participant;
    This->inBuf       = ioByteBuffer_new( 64*1024 );
    This->in          = socket( AF_INET, SOCK_DGRAM, 0 );
    if( ! utilCheckSysCall( This->in != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
-      return (INetworkReceiver)This;
+      return This;
    }
    if( ! utilCheckSysCall( 0 ==
       setsockopt( This->in, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
       __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" ))
    {
-      return (INetworkReceiver)This;
+      return This;
    }
    local_sin.sin_family      = AF_INET;
    local_sin.sin_port        = htons( port );
@@ -276,7 +275,7 @@ INetworkReceiver INetworkReceiver_new(
       bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
       __FILE__, __LINE__, "bind(%s,%d)", intrfc, port ))
    {
-      return (INetworkReceiver)This;
+      return This;
    }
    mreq.imr_multiaddr.s_addr = inet_addr( address );
    mreq.imr_interface.s_addr = inet_addr( intrfc );
@@ -284,7 +283,7 @@ INetworkReceiver INetworkReceiver_new(
       setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
       __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address ))
    {
-      return (INetworkReceiver)This;
+      return This;
    }
    printf( "receiving from %s, bound to %s:%d\n", address, intrfc, port );
 #ifdef WIN32
@@ -297,14 +296,13 @@ INetworkReceiver INetworkReceiver_new(
       __FILE__, __LINE__, "pthread_create" ))
 #endif
    {
-      return (INetworkReceiver)This;
+      return This;
    }
-   return (INetworkReceiver)This;
+   return This;
 }
 
-void INetworkReceiver_delete( INetworkReceiver * self ) {
-   NetworkReceiverImpl * This   = (NetworkReceiverImpl *)*self;
-   void *                retVal = NULL;
+void deleteNetworkReceiver( struct NetworkReceiver_s * This ) {
+   void * retVal = NULL;
 
 #ifdef WIN32
    WSACancelBlockingCall();
@@ -317,5 +315,4 @@ void INetworkReceiver_delete( INetworkReceiver * self ) {
 #endif
    ioByteBuffer_delete( &This->inBuf );
    free( This );
-   *self = NULL;
 }

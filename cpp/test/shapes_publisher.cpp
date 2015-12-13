@@ -86,8 +86,7 @@ struct ShareableShape : public dcrud::Shareable {
          fmt << "Ellipse " << ++g_rank;
       }
       else {
-         fmt << classID;
-         throw std::invalid_argument( fmt.str());
+         throw std::invalid_argument( classID.toString());
       }
       name           = fmt.str();
       x              = nextDouble( 540.0,  0.0 );
@@ -293,6 +292,7 @@ int main( int argc, char * argv[] ) {
       ShapesFactory      shapesFactoryCreate( participant );
       shapesFactory.addOperation( "create", shapesFactoryCreate );
       std::cout << "Publish every 40 ms, " << LOOP_COUNT << " times." << std::endl;
+      std::set<dcrud::Shareable *> snapshot;
       for( unsigned i = 0; i < LOOP_COUNT; ++i ) {
    #ifdef PRINT_TIMING
          uint64_t now = osSystem_nanotime();
@@ -302,12 +302,14 @@ int main( int argc, char * argv[] ) {
    #endif
          cache.publish();
          osSystem_sleep( 40U );
-         std::for_each( cache.values().begin(), cache.values().end(), moveShape );
+         cache.values( snapshot );
+         std::for_each( snapshot.begin(), snapshot.end(), moveShape );
          dispatcher.handleRequests();
       }
-      std::for_each( cache.values().begin(), cache.values().end(), removeFromCache );
+      cache.values( snapshot );
+      std::for_each( snapshot.begin(), snapshot.end(), removeFromCache );
       cache.publish();
-      std::for_each( cache.values().begin(), cache.values().end(), deleteShape );
+      std::for_each( snapshot.begin(), snapshot.end(), deleteShape );
       dcrud::Network::leave( participant );
       printf( "Well done.\n" );
    }

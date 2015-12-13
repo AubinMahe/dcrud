@@ -13,6 +13,10 @@ public class SerializerHelper {
       target.put( bytes );
    }
 
+   public static boolean getBoolean( ByteBuffer source ) {
+      return source.get() != 0;
+   }
+
    public static String getString( ByteBuffer source ) {
       final int len = source.getInt();
       final byte[] bytes = new byte[len];

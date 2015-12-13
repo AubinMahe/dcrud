@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <util/CheckSysCall.h>
 
-const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE] = { 'H','P','M','S' };
+const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE] = { 'D','C','R','U', 'D' };
 
 static unsigned int nextCacheID = 0;
 
@@ -82,7 +82,6 @@ dcrudStatus ParticipantImpl_new(
    if( ! utilCheckSysCall( This->out != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
       return DCRUD_INIT_FAILED;
    }
-   utilCheckSysCall( This->out != INVALID_SOCKET, __FILE__, __LINE__, "socket" );
    if( ! utilCheckSysCall( 0 ==
       setsockopt( This->out, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
       __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" ))

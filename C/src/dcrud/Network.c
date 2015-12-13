@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "INetworkReceiver.h"
+#include "NetworkReceiver.h"
 #include "ParticipantImpl.h"
 
 #ifdef __linux__
@@ -28,8 +28,8 @@ typedef struct Participant_s {
 
 } Participant;
 
-static INetworkReceiver s_receivers[65536];
-static unsigned short   s_receiversCount;
+static struct NetworkReceiver_s * s_receivers[65536];
+static unsigned short             s_receiversCount;
 
 dcrudIParticipant dcrudNetwork_join(
    const char *   networkConfFile,
@@ -84,8 +84,7 @@ dcrudIParticipant dcrudNetwork_join(
                   unsigned int  index      = (unsigned int)atoi( id ) - 1;
                   Participant * subscriber = &conf[index];
                   s_receivers[s_receiversCount++] =
-                     INetworkReceiver_new(
-                        retVal, subscriber->address, subscriber->port, intrfc );
+                     createNetworkReceiver( retVal, subscriber->address, subscriber->port, intrfc );
                   id = strtok( NULL, "," );
                }
             }
@@ -104,7 +103,7 @@ void dcrudNetwork_leave( dcrudIParticipant * self ) {
    ParticipantImpl_delete((ParticipantImpl **)self);
    for( i = 0; ; ++i ) {
       if( s_receivers[i] ) {
-         INetworkReceiver_delete( &s_receivers[i] );
+         deleteNetworkReceiver( s_receivers[i] );
       }
       else {
          break;

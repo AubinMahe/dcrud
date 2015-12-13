@@ -8,10 +8,12 @@ void GUID::set( const GUID & id ) {
    _instance  = id._instance;
 }
 
-void GUID::unserialize( io::ByteBuffer & buffer ) {
-   _publisher = buffer.getShort();
-   _cache     = buffer.getByte();
-   _instance  = buffer.getInt();
+GUID GUID::unserialize( io::ByteBuffer & buffer ) {
+   GUID guid;
+   guid._publisher = buffer.getShort();
+   guid._cache     = buffer.getByte();
+   guid._instance  = buffer.getInt();
+   return guid;
 }
 
 void GUID::serialize( io::ByteBuffer & buffer ) const {
@@ -32,4 +34,10 @@ int GUID::compareTo( const GUID & right ) const {
       diff = _instance  - right._instance;
    }
    return diff;
+}
+
+std::string GUID::toString( void ) const {
+   char buffer[100];
+   sprintf( buffer, "%04X-%02X-%08X", _publisher, _cache, _instance );
+   return buffer;
 }

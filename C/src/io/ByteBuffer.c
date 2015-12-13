@@ -20,7 +20,7 @@ typedef struct ioByteBufferImpl_s {
 static bool init            = true;
 static bool hostIsBigEndian = false;
 
-ioByteBuffer ioByteBuffer_new( unsigned int capacity ) {
+ioByteBuffer ioByteBuffer_wrap( unsigned int capacity, byte * array ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)malloc( sizeof( ioByteBufferImpl ));
    if( init ) {
       init = false;
@@ -31,8 +31,12 @@ ioByteBuffer ioByteBuffer_new( unsigned int capacity ) {
    This->limit    = capacity;
    This->capacity = capacity;
    This->mark     = capacity + 1;
-   This->bytes    = (byte*)malloc( capacity );
+   This->bytes    = array;
    return (ioByteBuffer)This;
+}
+
+ioByteBuffer ioByteBuffer_new( unsigned int capacity ) {
+   return ioByteBuffer_wrap( capacity, (byte*)malloc( capacity ));
 }
 
 void ioByteBuffer_delete( ioByteBuffer * self ) {
@@ -42,6 +46,18 @@ void ioByteBuffer_delete( ioByteBuffer * self ) {
       free( This );
       *self = NULL;
    }
+}
+
+ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, unsigned int length ) {
+   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+   ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
+   memcpy( copy->bytes, This->bytes + This->position, length );
+   return (ioByteBuffer)copy;
+}
+
+byte * ioByteBuffer_array( ioByteBuffer self ) {
+   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
+   return This->bytes;
 }
 
 void ioByteBuffer_clear( ioByteBuffer self ) {
@@ -377,18 +393,6 @@ ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
       This->position += (unsigned)count;
    }
    return retVal;
-}
-
-byte * ioByteBuffer_getBytes( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   return This->bytes;
-}
-
-ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, unsigned int length ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
-   memcpy( copy->bytes, This->bytes + This->position, length );
-   return (ioByteBuffer)copy;
 }
 
 ioStatus ioByteBuffer_dump( ioByteBuffer self, FILE * target ) {

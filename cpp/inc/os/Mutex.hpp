@@ -1,24 +1,36 @@
 #pragma once
 
+#include <os/Mutex.h>
+
 namespace os {
 
    class Mutex {
    private:
 
-      void * _impl;
+      osMutex _mutex;
 
       Mutex( const Mutex & );
       Mutex & operator = ( const Mutex & );
 
    public:
 
-      Mutex();
-      ~ Mutex();
+      Mutex() {
+         osMutex_new( &_mutex );
+      }
+
+      ~ Mutex() {
+         osMutex_delete( &_mutex );
+      }
 
    public:
 
-      int take();
-      int release();
+      int take() {
+         return osMutex_take( _mutex );
+      }
+
+      int release() {
+         return osMutex_release( _mutex );
+      }
    };
 
    struct Synchronized {

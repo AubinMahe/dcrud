@@ -27,12 +27,17 @@ final class Cache implements ICache {
    private /* */ boolean              _ownershipCheck = false;
    private final ParticipantImpl      _participant;
    private final short                _publisherId;
-   /*   */ final byte                 _cacheId;
+   private final byte                 _cacheId;
 
    Cache( ParticipantImpl participant ) {
       _participant = participant;
-      _publisherId = participant._publisherId;
+      _publisherId = participant.getPublisherId();
       _cacheId     = _NextCacheId++;
+      assert _cacheId > 0;
+   }
+
+   public int getCacheId() {
+      return _cacheId;
    }
 
    boolean matches( short publisherId, byte cacheId ) {

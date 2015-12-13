@@ -1,7 +1,10 @@
 #pragma once
 
 #include <util/types.h>
+#include <io/ByteBuffer.h>
 #include <io/socket.h>
+
+#include <math.h>
 
 #include <iostream>
 #include <string>
@@ -15,83 +18,188 @@ namespace io {
    };
 
    struct ByteBuffer {
+   private:
+      ByteBuffer( const ByteBuffer & right );
+      ByteBuffer & operator = ( const ByteBuffer & );
 
-      static ByteBuffer & allocate( unsigned int capacity );
+      ByteBuffer( ioByteBuffer buffer ) {
+         _buffer = buffer;
+      }
 
-      virtual ~ ByteBuffer() {}
+      ioByteBuffer _buffer;
 
-      virtual ByteBuffer & duplicate( void ) const = 0;
+   public:
 
-      virtual void release( void ) = 0;
+      ByteBuffer( unsigned int capacity, byte * array = 0 ) {
+         if( array ) {
+            _buffer = ioByteBuffer_wrap( capacity, array );
+         }
+         else {
+            _buffer = ioByteBuffer_new( capacity );
+         }
+      }
 
-      virtual void clear( void ) = 0;
+      ~ ByteBuffer() {
+         ioByteBuffer_delete( &_buffer );
+      }
 
-      virtual void mark( void ) = 0;
+      ByteBuffer * copy( unsigned int length ) const {
+         return new io::ByteBuffer( ioByteBuffer_copy( _buffer, length ));
+      }
 
-      virtual void reset( void ) = 0;
+      void clear( void ) {
+         ioByteBuffer_clear( _buffer );
+      }
 
-      virtual void flip( void ) = 0;
+      void mark( void ) {
+         ioByteBuffer_mark( _buffer );
+      }
 
-      virtual unsigned int position( void ) const = 0;
+      void reset( void ) {
+         ioByteBuffer_reset( _buffer );
+      }
 
-      virtual void position( unsigned int position ) = 0;
+      void flip( void ) {
+         ioByteBuffer_flip( _buffer );
+      }
 
-      virtual unsigned int limit( void ) const = 0;
+      unsigned int position( void ) const {
+         return ioByteBuffer_getPosition( _buffer );
+      }
 
-      virtual unsigned int remaining( void ) const = 0;
+      void position( unsigned int position ) {
+         ioByteBuffer_setPosition( _buffer, position );
+      }
 
-      virtual void put( const byte * src, unsigned int from, unsigned int to ) = 0;
+      unsigned int limit( void ) const {
+         return ioByteBuffer_getLimit( _buffer );
+      }
 
-      virtual void get( byte * target, unsigned int from, unsigned int to ) = 0;
+      unsigned int remaining( void ) const {
+         return ioByteBuffer_remaining( _buffer );
+      }
 
-      virtual void putByte( byte value ) = 0;
+      void put( const byte * src, unsigned int from, unsigned int to ) {
+         ioByteBuffer_put( _buffer, src, from, to );
+      }
 
-      virtual byte getByte( void ) = 0;
+      void get( byte * target, unsigned int from, unsigned int to ) {
+         ioByteBuffer_get( _buffer, target, from, to );
+      }
 
-      virtual void putShort( unsigned short value ) = 0;
+      void putByte( byte value ) {
+         ioByteBuffer_putByte( _buffer, value );
+      }
 
-      virtual unsigned short getShort( void ) = 0;
+      byte getByte( void ) {
+         byte value = 0;
+         ioByteBuffer_getByte( _buffer, &value );
+         return value;
+      }
 
-      virtual void putInt( unsigned int value ) = 0;
+      void putBoolean( bool value ) {
+         ioByteBuffer_putByte( _buffer, value ? 1 : 0 );
+      };
 
-      virtual void putIntAt( unsigned int value, unsigned int index ) = 0;
+      bool getBoolean( void ) {
+         byte value = 0;
+         ioByteBuffer_getByte( _buffer, &value );
+         return value != 0;
+      }
 
-      virtual int getInt( void ) = 0;
+      void putShort( unsigned short value ) {
+         ioByteBuffer_putShort( _buffer, value );
+      }
 
-      virtual void putLong( uint64_t value ) = 0;
+      unsigned short getShort( void ) {
+         unsigned short value = 0;
+         ioByteBuffer_getShort( _buffer, &value );
+         return value;
+      }
 
-      virtual uint64_t getLong( void ) = 0;
+      void putInt( unsigned int value ) {
+         ioByteBuffer_putInt( _buffer, value );
+      }
 
-      virtual void putFloat( float value ) = 0;
+      void putIntAt( unsigned int value, unsigned int index ) {
+         ioByteBuffer_putIntAt( _buffer, value, index );
+      }
 
-      virtual float getFloat( void ) = 0;
+      int getInt( void ) {
+         unsigned int value = 0;
+         ioByteBuffer_getInt( _buffer, &value );
+         return value;
+      }
 
-      virtual void putDouble( double value ) = 0;
+      void putLong( uint64_t value ) {
+         ioByteBuffer_putLong( _buffer, value );
+      }
 
-      virtual double getDouble( void ) = 0;
+      uint64_t getLong( void ) {
+         uint64_t value = 0;
+         ioByteBuffer_getLong( _buffer, &value );
+         return value;
+      }
 
-      virtual void putString( const char * src ) = 0;
+      void putFloat( float value ) {
+         ioByteBuffer_putFloat( _buffer, value );
+      }
 
-      virtual void getString( char * target, unsigned int sizeOfTarget ) = 0;
+      float getFloat( void ) {
+         float value = 0.0f;
+         ioByteBuffer_getFloat( _buffer, &value );
+         return value;
+      }
 
-      virtual void putString( const std::string & src ) = 0;
+      void putDouble( double value ) {
+         ioByteBuffer_putDouble( _buffer, value );
+      }
 
-      virtual std::string getString() = 0;
+      double getDouble( void ) {
+         double value = NAN;
+         if( ioByteBuffer_getDouble( _buffer, &value )) {
+            return value;
+         }
+         return NAN;
+      }
 
-      virtual void put( ByteBuffer & source ) = 0;
+      void putString( const char * value ) {
+         ioByteBuffer_putString( _buffer, value );
+      }
 
-      virtual void send( SOCKET sckt, struct sockaddr_in * target ) = 0;
+      void getString( char * target, unsigned int sizeOfTarget ) {
+         ioByteBuffer_getString( _buffer, target, sizeOfTarget );
+      }
 
-      virtual void receive( SOCKET sckt ) = 0;
+      void putString( const std::string & value ) {
+         ioByteBuffer_putString( _buffer, value.c_str());
+      }
 
-      virtual byte * getBytes( void ) = 0;
+      std::string getString() {
+         static const unsigned sizeOfTarget = 64*1024;
+         char target[sizeOfTarget];
+         ioByteBuffer_getString( _buffer, target, sizeOfTarget );
+         return std::string( target );
+      }
 
-      virtual ByteBuffer & copy( unsigned int length ) = 0;
+      void put( ByteBuffer & source ) {
+         ioByteBuffer_putBuffer( _buffer, source._buffer );
+      }
 
-      virtual std::ostream & operator >> ( std::ostream & stream ) const = 0;
+      void send( SOCKET sckt, struct sockaddr_in & target ) {
+         ioByteBuffer_send( _buffer, sckt, &target );
+      }
+
+      bool receive( SOCKET sckt ) {
+         return ioByteBuffer_receive( _buffer, sckt );
+      }
+
+      byte * array( void ) {
+         return ioByteBuffer_array( _buffer );
+      }
+
+      void dump( FILE * target ) const {
+         ioByteBuffer_dump( _buffer, target );
+      }
    };
-}
-
-inline std::ostream & operator << ( std::ostream & stream, const io::ByteBuffer & buffer ) {
-   return buffer >> stream;
 }

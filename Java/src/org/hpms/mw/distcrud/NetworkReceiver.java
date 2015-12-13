@@ -13,11 +13,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hpms.dbg.Performance;
+import org.hpms.mw.distcrud.ClassID.PredefinedType;
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
 final class NetworkReceiver extends Thread {
 
    private final ParticipantImpl _participant;
+   private final ByteBuffer      _inBuf = ByteBuffer.allocate( 64*1024 );
    private final DatagramChannel _in;
 
    NetworkReceiver(
@@ -43,107 +45,99 @@ final class NetworkReceiver extends Thread {
       start();
    }
 
-   private void dataDelete( ByteBuffer frame ) {
-      final GUID id = GUID.unserialize( frame );
-      synchronized( _participant._caches ) {
-         for( final Cache cache : _participant._caches ) {
-            if( cache == null ) {
-               break;
-            }
-            cache.deleteFromNetwork( id );
-         }
-      }
+   private void dataUpdate() {
+      final int payloadSize =
+         ParticipantImpl.GUID_SIZE + ParticipantImpl.CLASS_ID_SIZE + _inBuf.getInt();
+      _participant.dataUpdate( _inBuf, payloadSize );
+      _inBuf.position( _inBuf.position() + payloadSize );
    }
 
-   private void dataUpdate( ByteBuffer frame ) {
-      final int size        = frame.getInt();
-      final int payloadSize = ParticipantImpl.GUID_SIZE + ParticipantImpl.CLASS_ID_SIZE + size;
-      synchronized( _participant._caches ) {
-         for( final Cache cache : _participant._caches ) {
-            if( cache == null ) {
-               break;
-            }
-            final byte[] copy = new byte[payloadSize];
-            System.arraycopy( frame.array(), frame.position(), copy, 0, payloadSize );
-            final ByteBuffer fragment = ByteBuffer.wrap( copy );
-//            Dump.dump( fragment );
-            cache.updateFromNetwork( fragment );
-         }
-      }
-      frame.position( frame.position() + payloadSize );
+   private void dataDelete() {
+      _participant.dataDelete( GUID.unserialize( _inBuf ));
    }
 
-   private void operation( ByteBuffer frame ) throws IOException {
-      final Map<String, Object> arguments  = new HashMap<>();
+   private void operation() throws IOException {
+      final Map<String, Object> args       = new HashMap<>();
       /* */ int                 queueNdx   = IRequired.DEFAULT_QUEUE;
       /* */ CallMode            callMode   = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
-      final int                 count      = frame.getInt();
-      final String              intrfcName = SerializerHelper.getString( frame );
-      final String              opName     = SerializerHelper.getString( frame );
-      final int                 callId     = frame.getInt();
+      final int                 count      = _inBuf.getInt();
+      final String              intrfcName = SerializerHelper.getString( _inBuf );
+      final String              opName     = SerializerHelper.getString( _inBuf );
+      final int                 callId     = _inBuf.getInt();
       for( int i = 0; i < count; ++i ) {
-         final String argName = SerializerHelper.getString( frame );
+         final String argName = SerializerHelper.getString( _inBuf );
          if( argName.equals("@queue")) {
-            queueNdx = frame.get();
+            queueNdx = _inBuf.get();
             if( queueNdx < 0 ) {
                queueNdx += 256;
             }
          }
          else if( argName.equals("@mode")) {
-            callMode = CallMode.values()[frame.get()];
+            callMode = CallMode.values()[_inBuf.get()];
          }
          else {
-            final ClassID   classId = ClassID.unserialize( frame );
-            final Shareable item    = _participant.newInstance( classId, frame );
-            arguments.put( argName, item );
+            final ClassID classId = ClassID.unserialize( _inBuf );
+            if( classId.isPredefined()) {
+               final PredefinedType predef = classId.getPredefinedTypeID();
+               switch( predef ) {
+               case NullType   : args.put( argName, null               ); break;
+               case ByteType   : args.put( argName, _inBuf.get       ()); break;
+               case BooleanType: args.put( argName, SerializerHelper.getBoolean( _inBuf )); break;
+               case ShortType  : args.put( argName, _inBuf.getShort  ()); break;
+               case IntegerType: args.put( argName, _inBuf.getInt    ()); break;
+               case LongType   : args.put( argName, _inBuf.getLong   ()); break;
+               case FloatType  : args.put( argName, _inBuf.getFloat  ()); break;
+               case DoubleType : args.put( argName, _inBuf.getDouble ()); break;
+               case StringType : args.put( argName, SerializerHelper.getString ( _inBuf )); break;
+               case ClassIDType: args.put( argName, ClassID        .unserialize( _inBuf )); break;
+               case GUIDType   : args.put( argName, GUID           .unserialize( _inBuf )); break;
+               default: throw new IllegalStateException( "Unexpected " + predef );
+               }
+            }
+            else {
+               final Shareable item = _participant.newInstance( classId, _inBuf );
+               args.put( argName, item );
+            }
          }
       }
       if( callId > 0 ) {
          final Map<String, Object> out = new HashMap<>();
-         _participant._dispatcher.execute( intrfcName, opName, arguments, out, queueNdx, callMode );
+         _participant.execute( intrfcName, opName, args, out, queueNdx, callMode );
          if( ! out.isEmpty()) {
             _participant.call( intrfcName, opName, out, -callId );
          }
       }
       else if( callId < 0 ) {
-         final ICallback callback = _participant._callbacks.get( -callId );
-         if( callback == null ) {
-            System.err.printf( "Unknown Callback received: %s.%s, id: %d\n",
-               intrfcName, opName, -callId );
-         }
-         else {
-            callback.callback( intrfcName, opName, arguments );
-         }
+         _participant.callback( intrfcName, opName, args, -callId );
       }
    }
 
    @Override
    public void run() {
-      final byte[]     signa = new byte[ParticipantImpl.SIGNATURE.length];
-      final ByteBuffer frame = ByteBuffer.allocate( 64*1024 );
+      final byte[] signa = new byte[ParticipantImpl.SIGNATURE.length];
       for( long atStart = 0;;) {
          try {
             if( atStart > 0 ) {
                Performance.record( "network", System.nanoTime() - atStart );
             }
-            frame.clear();
-            _in.receive( frame );
+            _inBuf.clear();
+            _in.receive( _inBuf );
             atStart = System.nanoTime();
-            frame.flip();
+            _inBuf.flip();
 //            Dump.dump( frame );
-            frame.get( signa );
+            _inBuf.get( signa );
             if( Arrays.equals( signa, ParticipantImpl.SIGNATURE )) {
-               final FrameType frameType = FrameType.values()[frame.get()];
+               final FrameType frameType = FrameType.values()[_inBuf.get()];
                switch( frameType ) {
-               case DATA_CREATE_OR_UPDATE: dataUpdate( frame ); break;
-               case DATA_DELETE          : dataDelete( frame ); break;
-               case OPERATION            : operation ( frame ); break;
+               case DATA_CREATE_OR_UPDATE: dataUpdate(); break;
+               case DATA_DELETE          : dataDelete(); break;
+               case OPERATION            : operation (); break;
                default: throw new IllegalStateException();
                }
-               assert frame.remaining() == 0;
+               assert _inBuf.remaining() == 0;
             }
             else {
-               System.err.printf( "Garbage received, %d bytes discarded!\n", frame.limit());
+               System.err.printf( "Garbage received, %d bytes discarded!\n", _inBuf.limit());
             }
          }
          catch( final Throwable t ){
