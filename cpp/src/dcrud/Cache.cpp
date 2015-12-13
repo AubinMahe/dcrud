@@ -82,7 +82,7 @@ Status Cache::deleTe( Shareable & item ) {
    return NO_ERROR;
 }
 
-void Cache::values( std::set<Shareable *> & snapshot ) const {
+void Cache::values( shareables_t & snapshot ) const {
    os::Synchronized sync( _localMutex );
    snapshot.clear();
    for( localCstIter_t it = _local.begin(); it != _local.end(); ++it ) {
@@ -90,7 +90,7 @@ void Cache::values( std::set<Shareable *> & snapshot ) const {
    }
 }
 
-bool Cache::select( shareablePredicate_t query, std::set<Shareable *> & snapshot ) const {
+bool Cache::select( shareablePredicate_t query, shareables_t & snapshot ) const {
    os::Synchronized sync( _localMutex );
    snapshot.clear();
    for( localCstIter_t it = _local.begin(); it != _local.end(); ++it ) {

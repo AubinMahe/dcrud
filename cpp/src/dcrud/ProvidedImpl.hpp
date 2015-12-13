@@ -12,8 +12,9 @@ namespace dcrud {
 
       opsInOut_t _opsInOut;
 
-      void addOperation( const char * opName, IOperation & executor ) {
+      IProvided & addOperation( const char * opName, IOperation & executor ) {
          _opsInOut[opName] = &executor;
+         return *this;
       }
    };
 }

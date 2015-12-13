@@ -24,15 +24,15 @@ const byte ParticipantImpl::SIGNATURE[] = { 'H','P','M','S'};
 #define PAYLOAD_SIZE    ( 64U*1024U - HEADER_SIZE )
 
 ParticipantImpl::ParticipantImpl(
-   unsigned short id,
+   unsigned short publisherId,
    const char *   address,
    unsigned short port,
    const char *   intrfc )
  :
-   _publisherId( id ),
+   _publisherId( publisherId ),
    _header     ( HEADER_SIZE  ),
    _payload    ( PAYLOAD_SIZE ),
-   _message    ( 64*1024 ), /* UDP MAX packet size */
+   _message    ( 64*1024 ), // UDP MAX packet size
    _itemCount  ( 0 ),
    _callId     ( 0 )
 {
@@ -75,19 +75,16 @@ ParticipantImpl::ParticipantImpl(
    _dispatcher = new Dispatcher( *this );
 }
 
-Shareable * ParticipantImpl::newInstance( const ClassID & classId, io::ByteBuffer & frame ) {
-   os::Synchronized sync( _factoriesMutex );
-   factoriesIter_t it = _factories.find( classId );
-   if( it == _factories.end()) {
-      return 0;
+ParticipantImpl:: ~ ParticipantImpl() {
+   delete _dispatcher;
+   for( unsigned i = 0U; i < CACHE_COUNT; ++i ) {
+      if( _caches[i] ) {
+         delete _caches[i];
+      }
+      else {
+         break;
+      }
    }
-   factory_t factory = it->second;
-   if( ! factory ) {
-      return 0;
-   }
-   Shareable * item = factory();
-   item->unserialize( frame );
-   return item;
 }
 
 void ParticipantImpl::registerClass( const ClassID & id, factory_t factory ) {
@@ -185,7 +182,8 @@ void ParticipantImpl::call(
       else {
          if( ! value ) {
             ClassID::serializePredefined( ClassID::NullType, _payload );
-         }/*
+         }
+         /* TODO how to serialize primitive arguments without meta data?
          else if( value instanceof Shareable ) {
             Shareable item = (Shareable)value;
             item._class.serialize( _payload );
@@ -249,6 +247,21 @@ int ParticipantImpl::call(
       return _callId++;
    }
    return 0;
+}
+
+Shareable * ParticipantImpl::newInstance( const ClassID & classId, io::ByteBuffer & frame ) {
+   os::Synchronized sync( _factoriesMutex );
+   factoriesIter_t it = _factories.find( classId );
+   if( it == _factories.end()) {
+      return 0;
+   }
+   factory_t factory = it->second;
+   if( ! factory ) {
+      return 0;
+   }
+   Shareable * item = factory();
+   item->unserialize( frame );
+   return item;
 }
 
 void ParticipantImpl::dataDelete( const GUID & id ) {

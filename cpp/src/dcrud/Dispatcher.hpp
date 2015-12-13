@@ -26,6 +26,7 @@ namespace dcrud {
       static const unsigned int OPERATION_QUEUE_COUNT = 256;
 
       ParticipantImpl & _participant;
+      os::Mutex         _providedMutex;
       provided_t        _provided;
       operations_t      _operationQueues[OPERATION_QUEUE_COUNT];
       os::Mutex         _operationQueuesMutex;

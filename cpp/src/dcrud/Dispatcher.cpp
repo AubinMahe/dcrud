@@ -7,9 +7,14 @@
 using namespace dcrud;
 
 IProvided & Dispatcher::provide( const char * interfaceName ) {
-   ProvidedImpl * provided = new ProvidedImpl();
-   _provided[interfaceName] = provided;
-   return *provided;
+   os::Synchronized sync( _providedMutex );
+   providedIter_t it = _provided.find( interfaceName );
+   if( it == _provided.end()) {
+      ProvidedImpl * provided = new ProvidedImpl();
+      _provided[interfaceName] = provided;
+      return *provided;
+   }
+   return *it->second;
 }
 
 bool Dispatcher::execute(
@@ -20,24 +25,27 @@ bool Dispatcher::execute(
    int               queueNdx,
    byte              callMode )
 {
-   providedIter_t it = _provided.find( intrfcName );
-   if( it == _provided.end()) {
+   ProvidedImpl * provided = 0;
+   {
+      os::Synchronized sync( _providedMutex );
+      providedIter_t it = _provided.find( intrfcName );
+      if( it == _provided.end()) {
+         return false;
+      }
+      provided  = it->second;
+   }
+   opsInOutIter_t it = provided->_opsInOut.find( opName );
+   if( it == provided->_opsInOut.end()) {
       return false;
    }
-   ProvidedImpl * provided  = it->second;
-   opsInOutIter_t it2 = provided->_opsInOut.find( opName );
-   if( it2 == provided->_opsInOut.end()) {
-      return false;
-   }
-   IOperation * operation = it2->second;
+   IOperation * operation = it->second;
    if( callMode == IRequired::SYNCHRONOUS ) {
       operation->execute( arguments, results );
    }
    else {
       {
          os::Synchronized sync(_operationQueuesMutex);
-         Operation * op = new Operation( *operation, arguments, results );
-         _operationQueues[queueNdx].push_back( op );
+         _operationQueues[queueNdx].push_back( new Operation( *operation, arguments, results ));
       }
       if( callMode == IRequired::ASYNCHRONOUS_IMMEDIATE ) {
          handleRequests();

@@ -73,8 +73,8 @@ namespace dcrud {
       virtual Status      update( Shareable & item );
       virtual Status      deleTe( Shareable & item );
 
-      virtual void values( std::set<Shareable *> & snapshot ) const;
-      virtual bool select( shareablePredicate_t query, std::set<Shareable *> & snapshot ) const;
+      virtual void values( shareables_t & snapshot ) const;
+      virtual bool select( shareablePredicate_t query, shareables_t & snapshot ) const;
 
       virtual void publish( void );
 

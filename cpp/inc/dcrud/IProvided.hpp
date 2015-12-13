@@ -8,7 +8,7 @@ namespace dcrud {
 
       virtual ~ IProvided() {}
 
-      virtual void addOperation(
+      virtual IProvided & addOperation(
          const char * operationName,
          IOperation & executor      ) = 0;
    };

@@ -2,6 +2,7 @@
 
 #include <dcrud/IParticipant.hpp>
 #include <dcrud/Arguments.hpp>
+
 #include <dcrud/GUID.hpp>
 
 #include <io/ByteBuffer.hpp>
@@ -14,6 +15,7 @@ namespace dcrud {
 
    struct ICallback;
    struct Cache;
+   struct Dispatcher;
 
    typedef std::set<Shareable *>        shareables_t;
    typedef shareables_t::iterator       shareablesIter_t;
@@ -23,8 +25,6 @@ namespace dcrud {
 
    typedef std::map<int, ICallback *>   callbacks_t;
    typedef callbacks_t::iterator        callbacksIter_t;
-
-   struct Dispatcher;
 
    struct ParticipantImpl : public IParticipant {
 
@@ -54,16 +54,13 @@ namespace dcrud {
       unsigned int       _itemCount;
       int                _callId;
 
-
       ParticipantImpl(
-         unsigned short id,
+         unsigned short publisherId,
          const char *   address,
          unsigned short port,
          const char *   intrfc );
 
-      short getPublisherId() const {
-         return _publisherId;
-      }
+      ~ ParticipantImpl();
 
       virtual void registerClass( const ClassID & id, factory_t factory );
 
@@ -84,6 +81,10 @@ namespace dcrud {
          const std::string & opName,
          const Arguments &   in,
          ICallback *         callback );
+
+      short getPublisherId() const {
+         return _publisherId;
+      }
 
       Shareable * newInstance( const ClassID & classId, io::ByteBuffer & frame );
 

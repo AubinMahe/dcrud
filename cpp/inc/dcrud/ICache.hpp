@@ -13,6 +13,9 @@ namespace dcrud {
 
    typedef bool ( * shareablePredicate_t)( const Shareable & shareable );
 
+   typedef std::set<Shareable *>  shareables_t;
+   typedef shareables_t::iterator shareablesIter_t;
+
    struct ICache {
 
       virtual ~ ICache() {}
@@ -26,8 +29,8 @@ namespace dcrud {
       virtual Status      update( Shareable & item )       = 0;
       virtual Status      deleTe( Shareable & item )       = 0;
 
-      virtual void values( std::set<Shareable *> & snapshot ) const = 0;
-      virtual bool select( shareablePredicate_t query, std::set<Shareable *> & snapshot ) const = 0;
+      virtual void values( shareables_t & snapshot ) const = 0;
+      virtual bool select( shareablePredicate_t query, shareables_t & snapshot ) const = 0;
 
       virtual void publish( void ) = 0;
 
