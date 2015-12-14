@@ -40,12 +40,13 @@ bool Dispatcher::execute(
    }
    IOperation * operation = it->second;
    if( callMode == IRequired::SYNCHRONOUS ) {
-      operation->execute( arguments, results );
+      operation->execute( _participant, arguments, results );
    }
    else {
       {
          os::Synchronized sync(_operationQueuesMutex);
-         _operationQueues[queueNdx].push_back( new Operation( *operation, arguments, results ));
+         _operationQueues[queueNdx].push_back(
+            new Operation( _participant, *operation, arguments, results ));
       }
       if( callMode == IRequired::ASYNCHRONOUS_IMMEDIATE ) {
          handleRequests();

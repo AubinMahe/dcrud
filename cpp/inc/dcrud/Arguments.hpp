@@ -24,7 +24,7 @@ namespace dcrud {
          _args[key] = new T( value );
       }
 
-      template<class T> bool get( const std::string & name, T * & target ) const {
+      template<class T> bool get( const std::string & name, const T * & target ) const {
          argsCstIter_t it = _args.find( name );
          if( it == _args.end()) {
             return false;

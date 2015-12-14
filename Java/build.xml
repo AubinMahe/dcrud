@@ -27,6 +27,7 @@
          use       ="true"
       />
       <exec executable="doxygen" dir="../C" />
+      <exec executable="doxygen" dir="../cpp" />
    </target>
 
    <target name="javac-lib" description="">

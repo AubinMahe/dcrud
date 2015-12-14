@@ -14,7 +14,7 @@ Features
  - Data distribution on LAN using multicast, the Internet (WAN) is not a target.
  - Remote operation, asynchronous or synchronous, with or without returned result.
  - Multi-OS: currently Windows and Linux
- - Multi-languages: Java, C, C-static-allocation, C++
+ - Multi-languages: Java, C, C-static-allocation, C++, and a lot of C friendly scripting languages because DCRUD is completely dynamic
  - Low level resources (CPU, RAM) consumption
 
 Design and usage
@@ -113,6 +113,62 @@ nanosleep( &req, NULL );
 move( ellipse );
 dcrudIRepository_update( shapes, ellipse->base );
 ```
+------------
+
+C++: [shapes_publisher.cpp](cpp/test/shapes_publisher.cpp) has been *simplified* below for clarity reason.
+
+```C++
+struct ShapesSample {
+
+   static const unsigned int LOOP_COUNT = 10000U;
+
+   dcrud::IParticipant & _participant;
+   dcrud::ICache &       _cache;
+   dcrud::IDispatcher &  _dispatcher;
+
+   ShapesSample( unsigned short publisherId, const char * intrfc ) :
+      _participant  ( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
+      _cache        ( _participant.createCache()),
+      _dispatcher   ( _participant.getDispatcher())
+   {
+      ShareableShape::registerClasses   ( _participant );
+      ShareableShape::registerOperations( _dispatcher  );
+   }
+
+   void run() {
+      _cache.create( *new ShareableShape( ShareableShape::RectangleClassID ));
+      _cache.create( *new ShareableShape( ShareableShape::EllipseClassID ));
+      _cache.create( *new ShareableShape( ShareableShape::RectangleClassID ));
+      _cache.create( *new ShareableShape( ShareableShape::EllipseClassID ));
+      std::set<dcrud::Shareable *> snapshot;
+      for( unsigned i = 0; i < LOOP_COUNT; ++i ) {
+         _cache.publish();
+         osSystem_sleep( 40U );
+         _cache.values( snapshot );
+         for( dcrud::shareablesIter_t it = snapshot.begin(); it != snapshot.end(); ++it ) {
+            ShareableShape * shape = dynamic_cast<ShareableShape *>( *it );
+            shape->move();
+            _cache.update( *shape );
+         }
+         _dispatcher.handleRequests();
+      }
+   }
+   
+   ~ ShapesSample() {
+      dcrud::shareables_t snapshot;
+      _cache.values( snapshot );
+      for( dcrud::shareablesIter_t it = snapshot.begin(); it != snapshot.end(); ++it ) {
+         _cache.deleTe( **it );
+      }
+      _cache.publish();
+      for( dcrud::shareablesIter_t it = snapshot.begin(); it != snapshot.end(); ++it ) {
+         delete *it;
+      }
+      dcrud::Network::leave( _participant );
+   }
+};
+```
+
 
 API references
 --------------
@@ -121,3 +177,4 @@ API references
 
 [C API](http://aubinmahe.github.io/doxygen/html)
 
+[C++ API](http://aubinmahe.github.io/doxygen-cpp/html)

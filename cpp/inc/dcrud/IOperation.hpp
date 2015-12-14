@@ -4,10 +4,11 @@
 
 namespace dcrud {
 
+   struct IParticipant;
    struct IOperation {
 
       virtual ~ IOperation() {}
 
-      virtual void execute( const Arguments & in, args_t & out ) = 0;
+      virtual void execute( IParticipant & participant, const Arguments & in, args_t & out ) = 0;
    };
 }
