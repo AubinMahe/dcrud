@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{edb09485-b379-4903-ba18-089d9d738526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\dcrud">
+      <UniqueIdentifier>{10252e7b-d56b-4e8f-aabe-d2f8e72ab426}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\io">
+      <UniqueIdentifier>{b0cdfc4d-216b-41a5-8a31-6db734b30842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\os">
+      <UniqueIdentifier>{ecf310c4-971e-4123-9da6-55d332e03f94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{506a09a5-aada-47b3-9504-24d7202e978b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\dcrud">
+      <UniqueIdentifier>{b4b37fb6-4da2-40cf-a311-2763d7114c50}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\cpp\inc\dcrud\Arguments.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\ClassID.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\GUID.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICache.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICallback.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\IDispatcher.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\IOperation.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\IParticipant.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\IProvided.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\IRequired.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\Network.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\Shareable.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\Status.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\io\ByteBuffer.hpp">
+      <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\os\Mutex.hpp">
+      <Filter>inc\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\Cache.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\Dispatcher.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\NetworkReceiver.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\Operation.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\ParticipantImpl.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\ProvidedImpl.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\RequiredImpl.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\cpp\src\dcrud\Cache.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\ClassID.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\Dispatcher.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\GUID.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\Network.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\NetworkReceiver.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\ParticipantImpl.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\RequiredImpl.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

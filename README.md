@@ -36,8 +36,8 @@ Overview
 - `Status` is a simple enumeration to report success or failure of the API implementation.
 - `IDispatcher` allows application to declare theirs operation in terms of *provide* and *require*. Method `handleRequests` allow application to trigger the deferred operation requests when desired.
 - `IRequired` is used by a client when `IProvided` is used to add `IOperation` which must be implemented by a server.
-- `ICallback` must be implemented in case of asynchronous calls via `IRequired`.
-- `SerializerHelper` is an utility static class which provides methods to deal with the network, handling endianness, serialization and deserialization.
+- `ICallback` may be implemented in case of asynchronous calls with returns results via `IRequired`.
+- `SerializerHelper` (Java), `ioByteBuffer` (C), `io::ByteBuffer` (C++) is an utility class to deal with the network, handling endianness, serialization and deserialization.
 - `Performance` is a simple timestamp recorder, GNU plot compatible, see [plot.sh](EclipseProject/plot.sh).
 
 ### Implementation of the inheritance in C language ###
@@ -47,10 +47,13 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list (in priority order)
 -----------------------------
 
- * Complete C++ implementation
- * Add UDP/IP and TCP/IP support
- * Add streams services for big data
- * Update C static allocation implementation
+ * Adding hand made Makefiles to ease building without Eclipse
+ * Adding UDP/IP, TCP/IP protocols
+ * Building a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation
+ * Adding TCP-IP streams services and protocol for big data
+ * Adding HTML5-WebSocket support
+ * Add JavaScript support to address HTML5-WebSockets
+ * Updating C static allocation implementation for embedded, low resource targets
 
 Interfaces sample usage
 -----------------------
@@ -74,7 +77,6 @@ arguments.put( "w"    , nextDouble( 40, 100 ));
 arguments.put( "h"    , nextDouble( 20,  80 ));
 remoteShapesFactory.call( "create", arguments );
 cache.refresh();
-// update JavaFX graphics
 ```
 ------------
 
@@ -127,9 +129,9 @@ struct ShapesSample {
    dcrud::IDispatcher &  _dispatcher;
 
    ShapesSample( unsigned short publisherId, const char * intrfc ) :
-      _participant  ( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
-      _cache        ( _participant.createCache()),
-      _dispatcher   ( _participant.getDispatcher())
+      _participant( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
+      _cache      ( _participant.createCache()),
+      _dispatcher ( _participant.getDispatcher())
    {
       ShareableShape::registerClasses   ( _participant );
       ShareableShape::registerOperations( _dispatcher  );
@@ -169,7 +171,6 @@ struct ShapesSample {
 };
 ```
 
-
 API references
 --------------
 
@@ -178,3 +179,11 @@ API references
 [C API](http://aubinmahe.github.io/doxygen/html)
 
 [C++ API](http://aubinmahe.github.io/doxygen-cpp/html)
+
+How to build
+------------
+
+Use Eclipse JDT with CDT plugin to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, then go to Java project and use ANT, target `jar-lib`. 
+Jar `jar-lib` contains a tool which convert XML configuration file to a plain text for C and C++ implementations of DCRUD (to reduce dependencies).
+
+*In progress*: hand made Makefiles are on the way...

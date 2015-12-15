@@ -42,10 +42,8 @@ ParticipantImpl::ParticipantImpl(
       WSAStartup( MAKEWORD( 2, 2 ), &wsaData ),
       __FILE__, __LINE__, "WSAStartup" ))
    {
-      *target = NULL;
       throw std::runtime_error( "WSAStartup" );
    }
-   atexit( exitHook );
 #endif
    _out = socket( AF_INET, SOCK_DGRAM, 0 );
    if( ! utilCheckSysCall( _out != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {

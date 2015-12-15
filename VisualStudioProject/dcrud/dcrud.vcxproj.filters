@@ -150,6 +150,9 @@
     <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\NetworkReceiver.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\C\src\coll\List.c">
@@ -194,9 +197,6 @@
     <ClCompile Include="..\..\C\src\dcrud\Network.c">
       <Filter>src\dcrud</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiverImpl.c">
-      <Filter>src\dcrud</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\C\src\dcrud\ParticipantImpl.c">
       <Filter>src\dcrud</Filter>
     </ClCompile>
@@ -217,6 +217,9 @@
     </ClCompile>
     <ClCompile Include="..\..\C\src\os\System.c">
       <Filter>src\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiver.c">
+      <Filter>src\dcrud</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

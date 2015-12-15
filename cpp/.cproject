@@ -49,6 +49,7 @@
 								<option id="gnu.c.compiler.option.misc.other.57369399" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -pthread" valueType="string"/>
 								<option id="gnu.c.compiler.option.dialect.std.1543664857" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.flags.826210440" name="Other dialect flags" superClass="gnu.c.compiler.option.dialect.flags" value="-Wno-long-long" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.pic.712590304" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.192219174" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.so.debug.1534711625" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.debug">
@@ -107,6 +108,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dcrud-c-lib/inc}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.std.504004428" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.other.pic.814044631" superClass="gnu.cpp.compiler.option.other.pic" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1913435189" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.so.release.798452901" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.so.release">
@@ -115,6 +117,7 @@
 								<option id="gnu.c.compiler.option.misc.other.1014650260" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -pthread" valueType="string"/>
 								<option id="gnu.c.compiler.option.dialect.std.1189148301" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.flags.1355102378" name="Other dialect flags" superClass="gnu.c.compiler.option.dialect.flags" value="-Wno-long-long" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.pic.1898613411" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.111209549" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.so.release.107735820" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.release">

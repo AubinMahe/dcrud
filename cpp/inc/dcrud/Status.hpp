@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef NO_ERROR
+#  undef NO_ERROR
+#endif
+
 namespace dcrud {
 
    enum Status {

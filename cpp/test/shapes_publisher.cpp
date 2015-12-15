@@ -75,7 +75,7 @@ struct ShapesSample {
 
 int main( int argc, char * argv[] ) {
    unsigned short publisherId = 0;
-   const char * intrfc;
+   const char *   intrfc      = 0;
 
    for( int i = 2; i < argc; ++i ) {
       if( 0 == strcmp( argv[i], "--pub-id" )) {

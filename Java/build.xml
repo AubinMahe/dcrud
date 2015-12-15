@@ -12,8 +12,6 @@
       <delete file="${jar-lib}" />
       <delete dir ="${build-test}" />
       <delete file="${jar-test}" />
-      <delete file="Release/dcrud" />
-      <delete file="Debug/dcrud" />
    </target>
 
    <target name="api-docs" description="">
@@ -51,14 +49,6 @@
                value="org.hpms.mw.distcrud.tooling.XML2CfgConverter" />
          </manifest>
       </jar>
-   </target>
-
-   <target name="dcrud-C">
-      <exec
-         executable="make"
-         dir       ="Release">
-         <arg value="all" />
-      </exec>
    </target>
 
    <target name="convert-config-file" depends="jar-lib" description="">
@@ -148,15 +138,15 @@
       </java>
    </target>
 
-   <target name="run-java-and-C" depends="dcrud-C,jar-test,convert-config-file"
+   <target name="run-java-and-C" depends="jar-test,convert-config-file"
       description="
 &#10;&#9;Launch a server - written in C - and a client - written in Java - which call
 &#10;&#9;the server to create some coloured rectangles and ellipses.
 &#10;&#9;The server move and publish the shapes every 40 ms.
 &#10;&#9;The Java client display all the shapes published by the server.">
       <exec executable="gnome-terminal" spawn="true">
-         <arg value="-t" /><arg value="dcrud" />
-         <arg value="-x" /><arg value="Debug/dcrud" />
+         <arg value="-t" /><arg value="dcrud-c-test" />
+         <arg value="-x" /><arg value="../C/Debug/" />
          <arg value="shapes" />
          <arg value="--pub-id" /><arg value="1" />
          <arg value="--interface" /><arg value="192.168.1.5" />

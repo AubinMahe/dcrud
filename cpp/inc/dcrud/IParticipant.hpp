@@ -8,7 +8,7 @@ namespace dcrud {
    struct ClassID;
    struct ICache;
    struct IDispatcher;
-   class Shareable;
+   struct Shareable;
 
    typedef Shareable * (* factory_t )( void );
 

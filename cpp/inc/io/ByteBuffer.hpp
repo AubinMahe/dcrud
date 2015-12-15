@@ -191,7 +191,7 @@ namespace io {
       }
 
       bool receive( SOCKET sckt ) {
-         return ioByteBuffer_receive( _buffer, sckt );
+         return ioByteBuffer_receive( _buffer, sckt ) == IO_STATUS_NO_ERROR;
       }
 
       byte * array( void ) {

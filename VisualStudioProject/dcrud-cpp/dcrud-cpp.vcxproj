@@ -19,100 +19,71 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\C\inc\coll\Comparator.h" />
-    <ClInclude Include="..\..\C\inc\coll\ForeachFunction.h" />
-    <ClInclude Include="..\..\C\inc\coll\limits.h" />
-    <ClInclude Include="..\..\C\inc\coll\List.h" />
-    <ClInclude Include="..\..\C\inc\coll\Map.h" />
-    <ClInclude Include="..\..\C\inc\coll\MapFuncPtr.h" />
-    <ClInclude Include="..\..\C\inc\coll\Set.h" />
-    <ClInclude Include="..\..\C\inc\dbg\Dump.h" />
-    <ClInclude Include="..\..\C\inc\dbg\Performance.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\GUID.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\ICache.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\Network.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\Shareable.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\Status.h" />
-    <ClInclude Include="..\..\C\inc\io\ByteBuffer.h" />
-    <ClInclude Include="..\..\C\inc\io\socket.h" />
-    <ClInclude Include="..\..\C\inc\io\Status.h" />
-    <ClInclude Include="..\..\C\inc\os\Mutex.h" />
-    <ClInclude Include="..\..\C\inc\os\System.h" />
-    <ClInclude Include="..\..\C\inc\util\CheckSysCall.h" />
-    <ClInclude Include="..\..\C\inc\util\Perf.h" />
-    <ClInclude Include="..\..\C\inc\util\types.h" />
-    <ClInclude Include="..\..\C\src\dcrud\Cache.h" />
-    <ClInclude Include="..\..\C\src\dcrud\ClassID_private.h" />
-    <ClInclude Include="..\..\C\src\dcrud\Dispatcher.h" />
-    <ClInclude Include="..\..\C\src\dcrud\GUID_private.h" />
-    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h" />
-    <ClInclude Include="..\..\C\src\dcrud\NetworkReceiver.h" />
-    <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h" />
-    <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\Arguments.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\ClassID.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\GUID.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICache.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICallback.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\IDispatcher.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\IOperation.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\IParticipant.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\IProvided.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\IRequired.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\Network.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\Shareable.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\Status.hpp" />
+    <ClInclude Include="..\..\cpp\inc\io\ByteBuffer.hpp" />
+    <ClInclude Include="..\..\cpp\inc\os\Mutex.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\Cache.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\Dispatcher.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\NetworkReceiver.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\Operation.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\ParticipantImpl.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\ProvidedImpl.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\RequiredImpl.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C\src\coll\Comparator.c" />
-    <ClCompile Include="..\..\C\src\coll\List.c" />
-    <ClCompile Include="..\..\C\src\coll\MapFuncPtr.c" />
-    <ClCompile Include="..\..\C\src\coll\MapVoidPtr.c" />
-    <ClCompile Include="..\..\C\src\coll\Set.c" />
-    <ClCompile Include="..\..\C\src\dbg\Dump.c" />
-    <ClCompile Include="..\..\C\src\dbg\Performance.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Cache.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Callback.c" />
-    <ClCompile Include="..\..\C\src\dcrud\ClassID.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Dispatcher.c" />
-    <ClCompile Include="..\..\C\src\dcrud\GUID.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Network.c" />
-    <ClCompile Include="..\..\C\src\dcrud\NetworkReceiver.c" />
-    <ClCompile Include="..\..\C\src\dcrud\ParticipantImpl.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Shareable.c" />
-    <ClCompile Include="..\..\C\src\dcrud\Status.c" />
-    <ClCompile Include="..\..\C\src\io\ByteBuffer.c" />
-    <ClCompile Include="..\..\C\src\io\Errors.c" />
-    <ClCompile Include="..\..\C\src\os\Mutex.c" />
-    <ClCompile Include="..\..\C\src\os\System.c" />
-    <ClCompile Include="..\..\C\src\util\CheckSysCall.c" />
+    <ClCompile Include="..\..\cpp\src\dcrud\Cache.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\ClassID.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\Dispatcher.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\GUID.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\Network.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\NetworkReceiver.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\ParticipantImpl.cpp" />
+    <ClCompile Include="..\..\cpp\src\dcrud\RequiredImpl.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{530ABE8A-91AC-4B44-969F-80899726E450}</ProjectGuid>
+    <ProjectGuid>{4DC3723F-AF42-4262-92A7-23DC7607FD12}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>dcrud</RootNamespace>
+    <RootNamespace>dcrudcpp</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>dcrud-c</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -139,18 +110,17 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)c\</AssemblerListingLocation>
-      <ObjectFileName>$(IntDir)c\</ObjectFileName>
-      <ProgramDataBaseFileName>$(IntDir)c\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(IntDir)c\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(IntDir)cpp\</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)cpp\</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)cpp\$(ProjectName).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <BrowseInformationFile>$(IntDir)c\</BrowseInformationFile>
+      <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\c\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -159,18 +129,17 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)c\</AssemblerListingLocation>
-      <ObjectFileName>$(IntDir)c\</ObjectFileName>
-      <ProgramDataBaseFileName>$(IntDir)c\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(IntDir)c\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(IntDir)cpp\</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)cpp\</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)cpp\$(ProjectName).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <BrowseInformationFile>$(IntDir)c\</BrowseInformationFile>
+      <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\c\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -181,18 +150,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)c\</AssemblerListingLocation>
-      <ObjectFileName>$(IntDir)c\</ObjectFileName>
-      <ProgramDataBaseFileName>$(IntDir)c\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(IntDir)c\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(IntDir)cpp\</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)cpp\</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)cpp\$(ProjectName).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <BrowseInformationFile>$(IntDir)c\</BrowseInformationFile>
+      <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\c\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
@@ -205,18 +173,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>$(IntDir)c\</AssemblerListingLocation>
-      <ObjectFileName>$(IntDir)c\</ObjectFileName>
-      <ProgramDataBaseFileName>$(IntDir)c\$(ProjectName).pdb</ProgramDataBaseFileName>
-      <XMLDocumentationFileName>$(IntDir)c\</XMLDocumentationFileName>
+      <AssemblerListingLocation>$(IntDir)cpp\</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)cpp\</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)cpp\$(ProjectName).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <PrecompiledHeaderFile />
       <PrecompiledHeaderOutputFile />
-      <BrowseInformationFile>$(IntDir)c\</BrowseInformationFile>
+      <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\c\inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
