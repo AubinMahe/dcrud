@@ -87,11 +87,36 @@
       <exec executable="gnome-terminal" spawn="true">
          <arg value="-t" /><arg value="dcrud-c-test" />
          <arg value="-x" /><arg value="../C/Debug/" />
-         <arg value="Test_002" />
+         <arg value="002" />
       </exec>
    </target>
 
-   <target name="Test_003" depends="jar-lib,jar-test"
+   <target name="Test_003" description="C only test: ioByteBuffer" />
+
+   <target name="Test_004" description="Not written yet" />
+
+   <target name="Test_005" depends="jar-lib,jar-test"
+      description="C Person publisher, Java subscrber">
+      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.person.Test_005" />
+      <exec executable="gnome-terminal" spawn="true">
+         <arg value="-t" /><arg value="dcrud-c-test" />
+         <arg value="-x" /><arg value="../C/Debug/" />
+         <arg value="005" />
+      </exec>
+   </target>
+
+   <target name="Test_006" depends="jar-lib,jar-test"
+      description="C Person subscrber, Java publisher">
+      <exec spawn="true" executable="gnome-terminal">
+      	<env key="LD_LIBRARY_PATH" value="/home/aubin/Dev/Git/dcrud/C/Debug" />
+         <arg value="-t" /><arg value="dcrud-c-test" />
+         <arg value="-x" /><arg value="../C/test/Debug/dcrud-c-test" />
+         <arg value="006" />
+      </exec>
+      <java fork="true" classpath="${jar-test}" classname="tests.person.Test_006" />
+   </target>
+
+   <target name="Test_007" depends="jar-lib,jar-test"
       description="
 &#10;&#9;Launch 4 Java writters which create some coloured rectangles and ellipses.
 &#10;&#9;Each of them moves and publishes the shapes every 40 ms.
@@ -130,7 +155,7 @@
       </java>
    </target>
 
-   <target name="Test_004" depends="jar-test"
+   <target name="Test_008" depends="jar-test"
       description="
 &#10;&#9;Launch a server - written in C - and a client - written in Java - which call
 &#10;&#9;the server to create some coloured rectangles and ellipses.
@@ -139,7 +164,7 @@
       <exec executable="gnome-terminal" spawn="true">
          <arg value="-t" /><arg value="dcrud-c-test" />
          <arg value="-x" /><arg value="../C/Debug/" />
-         <arg value="Test_001" />
+         <arg value="4" />
       </exec>
       <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
    </target>

@@ -3,6 +3,7 @@
 #include "Cache.h"
 #include "Dispatcher.h"
 #include "Shareable_private.h"
+#include "NetworkReceiver.h"
 
 #include <coll/List.h>
 #include <coll/MapFuncPtr.h>
@@ -17,8 +18,6 @@
 #include <util/CheckSysCall.h>
 
 const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE] = { 'D','C','R','U', 'D' };
-
-static unsigned int nextCacheID = 0;
 
 #ifdef _WIN32
 static void exitHook( void ) {
@@ -64,7 +63,11 @@ dcrudStatus ParticipantImpl_new(
    This->header  = ioByteBuffer_new( HEADER_SIZE );
    This->payload = ioByteBuffer_new( PAYLOAD_SIZE );
    This->message = ioByteBuffer_new( 64*1024 );/* UDP MAX packet size */
-   if( osMutex_new( &This->classesMutex )) {
+   if( osMutex_new( &This->factoriesMutex )) {
+      perror( "Unable to create mutex\n" );
+      return DCRUD_INIT_FAILED;
+   }
+   if( osMutex_new( &This->publishersMutex )) {
       perror( "Unable to create mutex\n" );
       return DCRUD_INIT_FAILED;
    }
@@ -72,7 +75,8 @@ dcrudStatus ParticipantImpl_new(
       perror( "Unable to create mutex\n" );
       return DCRUD_INIT_FAILED;
    }
-   This->classes                = collMap_new((collComparator)dcrudClassID_compareTo );
+   This->factories              = collMap_new((collComparator)dcrudClassID_compareTo );
+   This->publishers             = collMap_new((collComparator)dcrudClassID_compareTo );
    This->callbacks              = collMap_new((collComparator)IntegerCompare );
    This->publisherId            = publisherId;
    This->target.sin_family      = AF_INET;
@@ -95,21 +99,42 @@ dcrudStatus ParticipantImpl_new(
    {
       return DCRUD_INIT_FAILED;
    }
-   printf( "sending to %s:%d via interface %s\n", address, port, intrfc );
+   printf( "Sending to %s:%d via interface %s\n", address, port, intrfc );
    This->dispatcher = dcrudIDispatcher_new( This );
+   This->caches[This->nextCacheID++] = dcrudCache_new( This );
    return DCRUD_NO_ERROR;
 }
 
-static void deleteRegisteredClasses( collForeach * context ) {
-   collMapPair * pair = UTIL_CAST( collMapPair *, context->item );
-   free( pair->value );
+static struct NetworkReceiver_s * s_receivers[65536];
+static unsigned short             s_receiversCount;
+
+void dcrudIParticipant_listen(
+   dcrudIParticipant  self,
+   const char *       intrfc,
+   dcrudCounterpart * others[] )
+{
+   ParticipantImpl * This = (ParticipantImpl *)self;
+   unsigned int      i;
+
+   for( i = 0; others[i]; ++i ) {
+      s_receivers[s_receiversCount++] =
+         createNetworkReceiver( This, others[i]->mcastAddr, others[i]->port, intrfc );
+   }
 }
 
-void ParticipantImpl_delete( ParticipantImpl * * self ) {
+void dcrudIParticipant_delete( dcrudIParticipant * self ) {
    ParticipantImpl * This = (ParticipantImpl *)*self;
    if( This ) {
       unsigned int i;
-      for( i = 0; i < nextCacheID; ++i ) {
+      for( i = 0; ; ++i ) {
+         if( s_receivers[i] ) {
+            deleteNetworkReceiver( s_receivers[i] );
+         }
+         else {
+            break;
+         }
+      }
+      for( i = 0; i < This->nextCacheID; ++i ) {
          if( This->caches[i] ) {
             dcrudCache_delete( &(This->caches[i] ));
          }
@@ -117,21 +142,20 @@ void ParticipantImpl_delete( ParticipantImpl * * self ) {
             break;
          }
       }
-      collMap_foreach( This->classes, (collForeachFunction)deleteRegisteredClasses, NULL );
-      osMutex_delete         ( &This->cachesMutex  );
-      ioByteBuffer_delete    ( &This->header       );
-      ioByteBuffer_delete    ( &This->payload      );
-      ioByteBuffer_delete    ( &This->message      );
-      osMutex_delete         ( &This->classesMutex );
-      collMap_delete         ( &This->classes      );
-      collMap_delete         ( &This->callbacks    );
-      osMutex_delete         ( &This->outMutex     );
+      osMutex_delete     ( &This->cachesMutex    );
+      ioByteBuffer_delete( &This->header         );
+      ioByteBuffer_delete( &This->payload        );
+      ioByteBuffer_delete( &This->message        );
+      osMutex_delete     ( &This->factoriesMutex );
+      collMap_delete     ( &This->factories      );
+      collMap_delete     ( &This->callbacks      );
+      osMutex_delete     ( &This->outMutex       );
 #ifdef WIN32
-      closesocket            (  This->out          );
+      closesocket        (  This->out            );
 #else
-      close                  (  This->out          );
+      close              (  This->out            );
 #endif
-      dcrudIDispatcher_delete( &This->dispatcher   );
+      dcrudIDispatcher_delete( &This->dispatcher );
       free( This );
       *self = NULL;
    }
@@ -141,32 +165,46 @@ unsigned int ParticipantImpl_getMCastAddress( ParticipantImpl * This ) {
    return This->target.sin_addr.s_addr;
 }
 
-bool dcrudIParticipant_registerClass(
-   dcrudIParticipant          self,
-   dcrudClassID               id,
-   size_t                     size,
-   dcrudShareable_Initialize  initialize,
-   dcrudShareable_Set         set,
-   dcrudShareable_Serialize   serialize,
-   dcrudShareable_Unserialize unserialize )
-{
-   ParticipantImpl *     This     = (ParticipantImpl *)self;
-   dcrudShareableClass * factory  = (dcrudShareableClass *)malloc( sizeof( dcrudShareableClass ));
-   collMapPair           previous;
-   bool                  known;
+bool dcrudIParticipant_registerFactory( dcrudIParticipant self, dcrudIFactory * factory ) {
+   ParticipantImpl * This = (ParticipantImpl *)self;
+   collMapPair       previous;
+   bool              known;
 
-   factory->size        = size;
-   factory->initialize  = initialize;
-   factory->set         = set;
-   factory->serialize   = serialize;
-   factory->unserialize = unserialize;
-   osMutex_take( This->classesMutex );
-   known = collMap_put( This->classes, id, (collMapValue)factory, &previous );
+   osMutex_take( This->factoriesMutex );
+   known = collMap_put( This->factories, factory->classID, (collMapValue)factory, &previous );
    if( known ) {
       free( previous.value );
    }
-   osMutex_release( This->classesMutex );
+   osMutex_release( This->factoriesMutex );
    return known;
+}
+
+bool dcrudIParticipant_registerPublisher(
+   dcrudIParticipant self,
+   dcrudClassID      id,
+   dcrudICRUDSrvc *  publisher )
+{
+   ParticipantImpl * This = (ParticipantImpl *)self;
+   collMapPair       previous;
+   bool              known;
+
+   osMutex_take( This->publishersMutex );
+   known = collMap_put( This->publishers, id, (collMapValue)publisher, &previous );
+   if( known ) {
+      free( previous.value );
+   }
+   osMutex_release( This->publishersMutex );
+   return known;
+}
+
+dcrudICache dcrudIParticipant_getDefaultCache( dcrudIParticipant self ) {
+   ParticipantImpl *   This  = (ParticipantImpl *)self;
+   dcrudICache cache = NULL;
+
+   osMutex_take( This->cachesMutex );
+   cache = This->caches[0];
+   osMutex_release( This->cachesMutex );
+   return cache;
 }
 
 dcrudStatus dcrudIParticipant_createCache( dcrudIParticipant self, dcrudICache * target ) {
@@ -174,13 +212,12 @@ dcrudStatus dcrudIParticipant_createCache( dcrudIParticipant self, dcrudICache *
    dcrudStatus status = DCRUD_NO_ERROR;
 
    osMutex_take( This->cachesMutex );
-   if( nextCacheID > 255 ) {
+   if( This->nextCacheID > 255 ) {
       *target = NULL;
       status  = DCRUD_TOO_MANY_CACHES;
    }
    else {
-      *target =
-      This->caches[nextCacheID++] = dcrudCache_new( This );
+      *target = This->caches[This->nextCacheID++] = dcrudCache_new( This );
    }
    osMutex_release( This->cachesMutex );
    return status;
@@ -202,37 +239,41 @@ dcrudIDispatcher dcrudIParticipant_getDispatcher( dcrudIParticipant self ) {
 }
 
 dcrudShareable dcrudIParticipant_createShareable( dcrudIParticipant self, dcrudClassID classID ) {
-   ParticipantImpl *             This  = (ParticipantImpl *)self;
-   dcrudShareable        item  = NULL;
-   dcrudShareableClass * clazz = NULL;
+   ParticipantImpl * This    = (ParticipantImpl *)self;
+   dcrudShareable    item    = NULL;
+   dcrudIFactory *   factory = NULL;
 
-   osMutex_take( This->classesMutex );
-   clazz = (dcrudShareableClass *)collMap_get( This->classes, classID );
-   osMutex_release( This->classesMutex );
-   if( clazz ) {
-      item = dcrudShareable_new( clazz, classID );
-      if( !clazz->initialize((dcrudShareable)item )) {
+   osMutex_take( This->factoriesMutex );
+   factory = (dcrudIFactory *)collMap_get( This->factories, classID );
+   osMutex_release( This->factoriesMutex );
+   if( factory ) {
+      item = dcrudShareable_new( factory, classID );
+      if( !factory->initialize((dcrudShareable)item )) {
          dcrudShareable_delete( &item );
       }
    }
    else {
-      fprintf( stderr, "%s:%d: No class found!\n", __FILE__, __LINE__ );
+      char buffer[1024];
+      dcrudClassID_toString( classID, buffer, sizeof( buffer ));
+      fprintf( stderr, "%s:%d: No class '%s' found!\n", __FILE__, __LINE__, buffer );
    }
    return item;
 }
 
 dcrudShareable ParticipantImpl_newInstance( ParticipantImpl * This, ioByteBuffer frame ) {
-   dcrudShareable        item  = NULL;
-   dcrudShareableClass * clazz = NULL;
-   dcrudClassID          classID;
+   dcrudShareable  item    = NULL;
+   dcrudIFactory * factory = NULL;
+   dcrudClassID    classID = NULL;
 
    dcrudClassID_unserialize( frame, &classID );
-   osMutex_take( This->classesMutex );
-   clazz = (dcrudShareableClass *)collMap_get( This->classes, classID );
-   osMutex_release( This->classesMutex );
-   if( clazz ) {
-      item = dcrudShareable_new( clazz, classID );
-      if( IO_STATUS_NO_ERROR != clazz->unserialize( item, frame )) {
+   osMutex_take( This->factoriesMutex );
+   factory = (dcrudIFactory *)collMap_get( This->factories, classID );
+   osMutex_release( This->factoriesMutex );
+   if( factory ) {
+      dcrudShareableData data;
+      item = dcrudShareable_new( factory, classID );
+      data = dcrudShareable_getUserData( item );
+      if( IO_STATUS_NO_ERROR != factory->unserialize( data, frame )) {
          dcrudShareable_delete( &item );
       }
    }
@@ -306,7 +347,7 @@ void ParticipantImpl_sendCall(
    ioByteBuffer_clear    ( This->header );
    ioByteBuffer_put      ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    ioByteBuffer_putByte  ( This->header, FRAMETYPE_OPERATION );
-   ioByteBuffer_putInt   ( This->header, args ? dcrudArguments_getCount( args ) : 0 );
+   ioByteBuffer_putByte  ( This->header, (byte)( args ? dcrudArguments_getCount( args ) : 0 ));
    ioByteBuffer_flip     ( This->header );
    ioByteBuffer_putBuffer( This->message, This->header );
    ioByteBuffer_putString( This->message, intrfcName );
@@ -346,7 +387,8 @@ bool ParticipantImpl_callback(
 {
    dcrudICallback callback = collMap_get( This->callbacks, &callId );
    if( callback == NULL ) {
-      fprintf( stderr, "Unknown Callback received: %s.%s, id: %d\n", intrfcName, opName, -callId );
+      fprintf( stderr, "%s:%d:Unknown Callback received: %s.%s, id: %d\n",
+         __FILE__, __LINE__, intrfcName, opName, -callId );
       return false;
    }
    dcrudICallback_callback( callback, intrfcName, opName, args );

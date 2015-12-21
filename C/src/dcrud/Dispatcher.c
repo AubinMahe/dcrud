@@ -161,6 +161,50 @@ dcrudIRequired dcrudIDispatcher_require( dcrudIDispatcher self, const char * nam
    return Required_new( This->participant, name );
 }
 
+typedef struct CRUD_s {
+
+   dcrudClassID      classID;
+   ParticipantImpl * participant;
+
+} CRUD;
+
+static const char * ICRUD_INTERFACE_NAME    = "dcrud.ICRUD";
+static const char * ICRUD_INTERFACE_CREATE  = "create";
+static const char * ICRUD_INTERFACE_UPDATE  = "update";
+static const char * ICRUD_INTERFACE_DELETE  = "delete";
+static const char * ICRUD_INTERFACE_CLASSID = "class-id";
+static const char * ICRUD_INTERFACE_GUID    = "guid";
+
+void dcrudICRUD_create( dcrudICRUD self, dcrudArguments how ) {
+   CRUD * This = (CRUD *)self;
+   dcrudArguments_putClassID( how, ICRUD_INTERFACE_CLASSID, This->classID );
+   ParticipantImpl_sendCall(
+      This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_CREATE, how, 0 );
+}
+
+void dcrudICRUD_update( dcrudICRUD self, dcrudShareable what, dcrudArguments how ) {
+   CRUD * This = (CRUD *)self;
+   dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, dcrudShareable_getGUID( what ));
+   ParticipantImpl_sendCall(
+      This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_UPDATE, how, 0 );
+}
+
+void dcrudICRUD_delete( dcrudICRUD self, dcrudShareable what ) {
+   CRUD *         This = (CRUD *)self;
+   dcrudArguments how  = dcrudArguments_new();
+   dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, dcrudShareable_getGUID( what ));
+   ParticipantImpl_sendCall(
+      This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_DELETE, how, 0 );
+}
+
+dcrudICRUD dcrudIDispatcher_requireCRUD( dcrudIDispatcher self, dcrudClassID classID ) {
+   Dispatcher * This = (Dispatcher *)self;
+   CRUD *       crud = (CRUD *)malloc( sizeof( CRUD ));
+   crud->classID     = classID;
+   crud->participant = This->participant;
+   return (dcrudICRUD)crud;
+}
+
 void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
    Dispatcher * This = (Dispatcher *)self;
    unsigned     queueNdx;
@@ -185,22 +229,32 @@ void dcrudIDispatcher_execute(
    unsigned         queueNdx,
    dcrudCallMode    callMode )
 {
-   Dispatcher * This      = (Dispatcher *)self;
-   Provided *   provided  = collMap_get( This->provided, (collMapKey)intrfcName );
-   Operation *  operation = collMap_get( provided->opsInOut, (collMapKey)opName );
-   if( callMode == DCRUD_SYNCHRONOUS ) {
-      dcrudArguments results = operation->function( operation->context, args );
-      if( callId ) {
-         ParticipantImpl_sendCall( This->participant, intrfcName, opName, results, -callId );
-      }
+   Dispatcher * This     = (Dispatcher *)self;
+   Provided *   provided = collMap_get( This->provided, (collMapKey)intrfcName );
+   if( provided == NULL ) {
+      fprintf( stderr, "%s:%d:Unexpected operation: '%s.%s'\n",
+         __FILE__, __LINE__, intrfcName, opName );
    }
    else {
-      osMutex_take( This->operationQueuesMutex );
-      collList_add( This->operationQueues[queueNdx],
-         OperationCall_new( operation, intrfcName, opName, callId, args ));
-      osMutex_release( This->operationQueuesMutex );
-      if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
-         dcrudIDispatcher_handleRequests( self );
+      Operation * operation = collMap_get( provided->opsInOut, (collMapKey)opName );
+      if( operation == NULL ) {
+         fprintf( stderr, "%s:%d:Unexpected operation: '%s.%s'\n",
+            __FILE__, __LINE__, intrfcName, opName );
+      }
+      else if( callMode == DCRUD_SYNCHRONOUS ) {
+         dcrudArguments results = operation->function( operation->context, args );
+         if( callId ) {
+            ParticipantImpl_sendCall( This->participant, intrfcName, opName, results, -callId );
+         }
+      }
+      else {
+         osMutex_take( This->operationQueuesMutex );
+         collList_add( This->operationQueues[queueNdx],
+            OperationCall_new( operation, intrfcName, opName, callId, args ));
+         osMutex_release( This->operationQueuesMutex );
+         if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
+            dcrudIDispatcher_handleRequests( self );
+         }
       }
    }
 }

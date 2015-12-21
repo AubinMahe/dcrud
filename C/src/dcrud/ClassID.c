@@ -50,7 +50,8 @@ ioStatus dcrudClassID_unserialize( ioByteBuffer source, dcrudClassID * target ) 
       *target = NULL;
    }
    if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "unable to deserialize a GUID: %s\n", ioStatusMessages[ioStatus] );
+      fprintf( stderr, "%s:%d:Unable to deserialize a ClassID: %s\n",
+         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
    }
    return ioStatus;
 }
@@ -71,7 +72,8 @@ ioStatus dcrudClassID_serialize( const dcrudClassID self, ioByteBuffer target ) 
       ioStatus = ioByteBuffer_putByte( target, This->clazz );
    }
    if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "unable to serialize a GUID: %s\n", ioStatusMessages[ioStatus] );
+      fprintf( stderr, "%s:%d:Unable to serialize a ClassID: %s\n",
+         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
    }
    return ioStatus;
 }

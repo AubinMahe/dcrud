@@ -4,9 +4,9 @@ extern "C" {
 #endif
 
 #include <io/ByteBuffer.h>
-#include <dcrud/GUID.h>
-#include <dcrud/ClassID.h>
-#include <util/types.h>
+
+#include "GUID.h"
+#include "ClassID.h"
 
 UTIL_ADT( dcrudShareable );
 

@@ -32,7 +32,7 @@ public class Publisher extends Thread {
          final Person person    = new Person( forname, name, LocalDate.parse( birthdate ));
          _cache.create( person );
          _cache.publish();
-//         System.err.printf( "%s.create|%s\n", getClass().getName(), person );
+         System.err.printf( "%s.create|%s\n", getClass().getName(), person );
       }
 
       @Override
@@ -43,7 +43,7 @@ public class Publisher extends Thread {
          person.update( forname, null, birthdate );
          _cache.update( person );
          _cache.publish();
-//         System.err.printf( "%s.update|%s\n", getClass().getName(), person );
+         System.err.printf( "%s.update|%s\n", getClass().getName(), person );
       }
 
       @Override
@@ -51,7 +51,7 @@ public class Publisher extends Thread {
          final Person person = (Person)what;
          _cache.delete( person );
          _cache.publish();
-//         System.err.printf( "%s.delete|%s\n", getClass().getName(), person );
+         System.err.printf( "%s.delete|%s\n", getClass().getName(), person );
       }
    }
 
@@ -73,7 +73,7 @@ public class Publisher extends Thread {
       iPerson.addOperation( "exit", args -> { System.exit(0); return null; });
       _participant.registerFactory  ( Person.CLASS_ID, Person::new );
       _participant.registerPublisher( Person.CLASS_ID, publisher );
-      for( int i = 0; i < 100; ++i ) {
+      for(;;) {
          try {
             Thread.sleep( 100 );
          }

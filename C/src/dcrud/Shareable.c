@@ -2,7 +2,7 @@
 #include "GUID_private.h"
 #include "ParticipantImpl.h"
 
-dcrudShareable dcrudShareable_new( dcrudShareableClass * meta, dcrudClassID classID ) {
+dcrudShareable dcrudShareable_new( dcrudIFactory * meta, dcrudClassID classID ) {
    dcrudShareableImpl * This =
       UTIL_CAST( dcrudShareableImpl *, malloc( sizeof( dcrudShareableImpl ) + meta->size ));
    This->classID     = classID;

@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
 
+import org.hpms.dbg.Dump;
 import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.ClassID.Type;
 import org.hpms.mw.distcrud.IRequired.CallMode;
@@ -107,7 +108,7 @@ final class NetworkReceiver extends Thread {
             _in.receive( inBuf );
             atStart = System.nanoTime();
             inBuf.flip();
-//          Dump.dump( inBuf );
+            Dump.dump( inBuf );
             inBuf.get( signa );
             if( Arrays.equals( signa, ParticipantImpl.SIGNATURE )) {
                final FrameType frameType = FrameType.values()[inBuf.get()];

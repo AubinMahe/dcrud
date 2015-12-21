@@ -18,10 +18,7 @@ ioStatus dcrudGUID_unserialize( ioByteBuffer source, dcrudGUID * target ) {
    dcrudGUIDImpl * This     = (dcrudGUIDImpl *)dcrudGUID_new();
    ioStatus        ioStatus = IO_STATUS_NO_ERROR;
    if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getShort( source, &This->publisher );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getByte( source, &This->cache );
+      ioStatus = ioByteBuffer_getInt( source, &This->publisher );
    }
    if( IO_STATUS_NO_ERROR == ioStatus ) {
       ioStatus = ioByteBuffer_getInt( source, &This->instance );
@@ -33,7 +30,8 @@ ioStatus dcrudGUID_unserialize( ioByteBuffer source, dcrudGUID * target ) {
       *target = NULL;
    }
    if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "unable to deserialize a GUID: %s\n", ioStatusMessages[ioStatus] );
+      fprintf( stderr, "%s:%d:Unable to deserialize a GUID: %s\n",
+         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
    }
    return ioStatus;
 }
@@ -42,16 +40,14 @@ ioStatus dcrudGUID_serialize( const dcrudGUID self, ioByteBuffer target ) {
    dcrudGUIDImpl * This     = (dcrudGUIDImpl *)self;
    ioStatus        ioStatus = IO_STATUS_NO_ERROR;
    if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putShort( target, This->publisher );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, This->cache );
+      ioStatus = ioByteBuffer_putInt( target, This->publisher );
    }
    if( IO_STATUS_NO_ERROR == ioStatus ) {
       ioStatus = ioByteBuffer_putInt( target, (unsigned)This->instance );
    }
    if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "unable to serialize a GUID: %s\n", ioStatusMessages[ioStatus] );
+      fprintf( stderr, "%s:%d:Unable to serialize a GUID: %s\n",
+         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
    }
    return ioStatus;
 }
@@ -65,22 +61,19 @@ void dcrudGUID_set( dcrudGUID self, const dcrudGUID id ) {
    dcrudGUIDImpl * This  = (dcrudGUIDImpl *)self;
    dcrudGUIDImpl * right = (dcrudGUIDImpl *)id;
    This->publisher = right->publisher;
-   This->cache     = right->cache;
    This->instance  = right->instance;
 }
 
-void dcrudGUID_init( dcrudGUID self, unsigned short publisher, byte cache, unsigned int instance ) {
+void dcrudGUID_init( dcrudGUID self, unsigned int publisher, unsigned int instance ) {
    dcrudGUIDImpl * This  = (dcrudGUIDImpl *)self;
    This->publisher = publisher;
-   This->cache     = cache;
    This->instance  = instance;
 }
 
 bool dcrudGUID_toString( const dcrudGUID self, char * target, size_t targetSize ) {
    dcrudGUIDImpl * This = (dcrudGUIDImpl *)self;
-   int             ret  =
-      snprintf( target, targetSize, "Instance-%02X-%02X-%04X",
-         This->publisher, This->cache, This->instance );
+   int ret = snprintf( target, targetSize, "Instance-%08X-%08X", This->publisher, This->instance );
+   target[targetSize-1] = '\0';
    return ret > 0 && ret < (int)targetSize;
 }
 
@@ -89,10 +82,7 @@ int dcrudGUID_compareTo( const dcrudGUID * l, const dcrudGUID * r ) {
    dcrudGUIDImpl ** right = (dcrudGUIDImpl **)r;
    int diff = 0;
    if( diff == 0 ) {
-      diff =       (*left)->publisher - (*right)->publisher;
-   }
-   if( diff == 0 ) {
-      diff =       (*left)->cache     - (*right)->cache;
+      diff = (int)((*left)->publisher - (*right)->publisher );
    }
    if( diff == 0 ) {
       diff = (int)((*left)->instance  - (*right)->instance );

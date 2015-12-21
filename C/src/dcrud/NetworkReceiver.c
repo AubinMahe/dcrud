@@ -160,7 +160,7 @@ static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
          dcrudArguments_putShareable( args, name, item );
       }break;
       default:
-         fprintf( stderr, "%s:%d: Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
+         fprintf( stderr, "%s:%d:Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
       break;
       }
    }
@@ -184,28 +184,32 @@ static void * run( NetworkReceiver * This ) {
       if( IO_STATUS_NO_ERROR == ioByteBuffer_receive( This->inBuf, This->in )) {
          atStart = osSystem_nanotime();
          ioByteBuffer_flip( This->inBuf );
-         /*
+         /**/
          ioByteBuffer_dump( This->inBuf, stderr );
-         */
+         /**/
          ioByteBuffer_get( This->inBuf, (byte *)signa, 0, sizeof( signa ));
          if( 0 == strncmp( signa, (const char *)DCRUD_SIGNATURE, DCRUD_SIGNATURE_SIZE )) {
-            FrameType frameType = FRAMETYPE_NO_OP;
+            FrameType    frameType = FRAMETYPE_NO_OP;
+            unsigned int ignored = 0;
             ioByteBuffer_getByte( This->inBuf, (byte*)&frameType );
             switch( frameType ) {
             case FRAMETYPE_DATA_CREATE_OR_UPDATE: dataUpdate( This, This->inBuf ); break;
             case FRAMETYPE_DATA_DELETE          : dataDelete( This, This->inBuf ); break;
             case FRAMETYPE_OPERATION            : operation ( This, This->inBuf ); break;
             default:
-               fprintf( stderr, "%d isn't a valid FrameType\n", frameType );
+               fprintf( stderr, "%s:%d:%d isn't a valid FrameType\n",
+                  __FILE__, __LINE__, frameType );
                break;
             }
-            if( ioByteBuffer_remaining( This->inBuf ) != 0 ) {
-               fprintf( stderr, "%d received bytes ignored\n", ioByteBuffer_remaining( This->inBuf ));
+            ignored = ioByteBuffer_remaining( This->inBuf );
+            if( ignored != 0 ) {
+               fprintf( stderr, "%s:%d:%d received byte%s ignored\n",
+                  __FILE__, __LINE__, ignored, ignored > 1 ? "s": "" );
             }
          }
          else {
-            fprintf( stderr, "Garbage received, %d bytes discarded!\n",
-               ioByteBuffer_getLimit( This->inBuf ));
+            fprintf( stderr, "%s:%d:Garbage received, %d bytes discarded!\n",
+               __FILE__, __LINE__, ioByteBuffer_getLimit( This->inBuf ));
          }
       }
       else {
@@ -260,7 +264,7 @@ struct NetworkReceiver_s * createNetworkReceiver(
    {
       return This;
    }
-   printf( "receiving from %s, bound to %s:%d\n", address, intrfc, port );
+   printf( "Receiving from %s, bound to %s:%d\n", address, intrfc, port );
 #ifdef WIN32
    DWORD tid;
    This->thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, This, 0, &tid );

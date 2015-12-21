@@ -6,7 +6,7 @@ public interface IDispatcher {
 
    IRequired require( String name );
 
-   void handleRequests();
-
    ICRUD requireCRUD( ClassID classId );
+
+   void handleRequests();
 }

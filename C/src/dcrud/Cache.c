@@ -18,8 +18,6 @@
 
 #include "ParticipantImpl.h"
 
-static byte NextCacheId = 1; /* cache 0 doesn't exists, it's a flag for operation */
-
 typedef struct Cache_s {
 
    collSet           classes;
@@ -37,7 +35,6 @@ typedef struct Cache_s {
    unsigned int      nextInstance;
    bool              ownershipCheck;
    ParticipantImpl * participant;
-   byte              cacheId;
 
 } Cache;
 
@@ -53,7 +50,6 @@ dcrudICache dcrudCache_new( ParticipantImpl * participant ) {
    This->nextInstance   = 1;
    This->ownershipCheck = false;
    This->participant    = participant;
-   This->cacheId        = NextCacheId++;
    osMutex_new( &This->classesMutex  );
    osMutex_new( &This->updatedMutex  );
    osMutex_new( &This->deletedMutex  );
@@ -83,15 +79,10 @@ void dcrudCache_delete( dcrudICache * self ) {
    }
 }
 
-bool dcrudCache_matches( dcrudICache self, unsigned short publisherId, byte cacheId ) {
-   Cache * This = (Cache *)self;
-   return( publisherId == This->participant->publisherId )
-      && ( cacheId     == This->cacheId    );
-}
-
 bool dcrudICache_owns( dcrudICache self, dcrudGUID guid ) {
-   dcrudGUIDImpl * id = (dcrudGUIDImpl *)guid;
-   return dcrudCache_matches( self, id->publisher, id->cache );
+   Cache *         This = (Cache *)self;
+   dcrudGUIDImpl * id   = (dcrudGUIDImpl *)guid;
+   return This->participant->publisherId == id->publisher;
 }
 
 void dcrudICache_setOwnership( dcrudICache self, bool enabled ) {
@@ -106,14 +97,10 @@ dcrudStatus dcrudICache_create( dcrudICache self, dcrudShareable item ) {
    if( dcrudGUID_isShared( id )) {
       char buffer[40];
       dcrudGUID_toString((dcrudGUID)id, buffer, sizeof( buffer ));
-      fprintf( stderr, "Item already published: %s!\n", buffer );
+      fprintf( stderr, "%s:%d:Item already published: %s!\n", __FILE__, __LINE__, buffer );
       return DCRUD_ALREADY_CREATED;
    }
-   dcrudGUID_init(
-      id,
-      This->participant->publisherId,
-      This->cacheId,
-      This->nextInstance++ );
+   dcrudGUID_init( id, This->participant->publisherId, This->nextInstance++ );
    osMutex_take( This->localMutex );
    collMap_put( This->local, id, item, NULL );
    osMutex_release( This->localMutex );
@@ -132,13 +119,14 @@ dcrudStatus dcrudICache_update( dcrudICache self, dcrudShareable item ) {
    Cache *   This = (Cache *)self;
    dcrudGUID id   = dcrudShareable_getGUID( item );
    if( ! dcrudGUID_isShared( id )) {
-      fprintf( stderr, "Item must be created first!\n" );
+      fprintf( stderr, "%s:%d:Item must be created first!\n", __FILE__, __LINE__ );
       return DCRUD_NOT_CREATED;
    }
    if( ! collMap_get( This->local, id )) {
       char itemId[40];
       dcrudGUID_toString((dcrudGUID)id, itemId, sizeof( itemId ));
-      fprintf( stderr, "Repository doesn't contains item %s to update!\n", itemId );
+      fprintf( stderr, "%s:%d:Repository doesn't contains item %s to update!\n",
+         __FILE__, __LINE__, itemId );
       return false;
    }
    osMutex_take( This->updatedMutex );
@@ -243,10 +231,8 @@ void dcrudICache_refresh( dcrudICache self ) {
       dcrudGUID      id;
       dcrudShareable t;
       ioByteBuffer   update = toUpdate[i];
-      dcrudClassID   classId;
 
-      dcrudGUID_unserialize   ( update, &id );
-      dcrudClassID_unserialize( update, &classId );
+      dcrudGUID_unserialize( update, &id );
       t = collMap_get( This->local, id );
       if( t == NULL ) {
          dcrudShareable item = ParticipantImpl_newInstance( This->participant, update );
@@ -258,9 +244,12 @@ void dcrudICache_refresh( dcrudICache self ) {
          else {
             char bufferClass[1024];
             char bufferGUID [1024];
+            dcrudClassID classId;
+            dcrudClassID_unserialize( update, &classId );
             dcrudClassID_toString( classId, bufferClass, sizeof( bufferClass ));
             dcrudGUID_toString   ( id     , bufferGUID , sizeof( bufferGUID  ));
-            fprintf( stderr, "Unknown %s of %s\n", bufferClass, bufferGUID );
+            fprintf( stderr, "%s:%d:Unknown %s of %s\n",
+               __FILE__, __LINE__, bufferClass, bufferGUID );
          }
       }
       else if( ! This->ownershipCheck || ! dcrudICache_owns( self, id )) {
@@ -268,16 +257,16 @@ void dcrudICache_refresh( dcrudICache self ) {
          impl->unserialize( t, update );
       }
    }
-   collSet_clear( This->toUpdate );
+   collSet_clear  ( This->toUpdate );
    osMutex_release( This->toUpdateMutex );
 
-   osMutex_take( This->toDeleteMutex );
+   osMutex_take   ( This->toDeleteMutex );
    toDelete = collSet_values( This->toDelete );
    size     = collSet_size  ( This->toDelete );
    for( i = 0; i < size; ++i ) {
       collMap_remove( This->local, toDelete[i], NULL );
    }
-   collSet_clear( This->toDelete );
+   collSet_clear  ( This->toDelete );
    osMutex_release( This->toDeleteMutex );
    osMutex_release( This->localMutex );
    dbgPerformance_record( "refresh", osSystem_nanotime() - atStart );
@@ -285,13 +274,14 @@ void dcrudICache_refresh( dcrudICache self ) {
 
 void dcrudCache_updateFromNetwork( dcrudICache self, ioByteBuffer source ) {
    Cache * This = (Cache*)self;
-   osMutex_take( This->toUpdateMutex );
-   collSet_add( This->toUpdate, source );
+   osMutex_take   ( This->toUpdateMutex );
+   collSet_add    ( This->toUpdate, source );
+   osMutex_release( This->toUpdateMutex );
 }
 
 void dcrudCache_deleteFromNetwork( dcrudICache self, dcrudGUID id ) {
    Cache * This = (Cache*)self;
-   osMutex_take( This->toDeleteMutex );
-   collSet_add( This->toDelete, id );
+   osMutex_take   ( This->toDeleteMutex );
+   collSet_add    ( This->toDelete, id );
    osMutex_release( This->toDeleteMutex );
 }

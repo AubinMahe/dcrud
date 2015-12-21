@@ -8,7 +8,7 @@
 extern const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE];
 #define FRAME_TYPE_SIZE 1U
 #define SIZE_SIZE       4U
-#define GUID_SIZE       ( 1U + 1U + 1U + 4U )
+#define GUID_SIZE       ( 4U + 4U )
 #define CLASS_ID_SIZE   ( 1U + 1U + 1U + 1U )
 #define HEADER_SIZE     ( SIZE_SIZE + FRAME_TYPE_SIZE + SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE )
 #define PAYLOAD_SIZE    ( 64U*1024U - HEADER_SIZE )
@@ -26,11 +26,14 @@ typedef struct ParticipantImpl_s {
 
    osMutex            cachesMutex;
    dcrudICache        caches[256];
+   unsigned int       nextCacheID;
    ioByteBuffer       header;
    ioByteBuffer       payload;
    ioByteBuffer       message;
-   osMutex            classesMutex;
-   collMap            classes;
+   osMutex            factoriesMutex;
+   collMap            factories;
+   osMutex            publishersMutex;
+   collMap            publishers;
    collMap            callbacks;
    struct sockaddr_in target;
    osMutex            outMutex;
@@ -43,7 +46,6 @@ typedef struct ParticipantImpl_s {
 } ParticipantImpl;
 
 dcrudStatus    ParticipantImpl_new            ( unsigned short publisherId, const char * address, unsigned short port, const char * intrfc, ParticipantImpl * * target );
-void           ParticipantImpl_delete         ( ParticipantImpl * * This );
 unsigned int   ParticipantImpl_getMCastAddress( ParticipantImpl *   This );
 void           ParticipantImpl_publishUpdated ( ParticipantImpl *   This, collSet updated );
 void           ParticipantImpl_publishDeleted ( ParticipantImpl *   This, collSet deleted );

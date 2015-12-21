@@ -188,7 +188,9 @@ ioStatus ioByteBuffer_getShort( ioByteBuffer self, unsigned short * target ) {
    if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
      ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
    {
-      value = (unsigned short)((( value & 0x00FF ) >> 8 )|(( value & 0xFF00 ) << 8 ));
+      value = (unsigned short)(
+             (( value & 0xFF00 ) >> 8 )
+            |(( value & 0x00FF ) << 8 ));
    }
    *target = value;
    This->position += (unsigned int)sizeof( short );

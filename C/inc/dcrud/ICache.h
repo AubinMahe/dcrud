@@ -3,11 +3,10 @@
 extern "C" {
 #endif
 
-#include <coll/Map.h>
-#include <dcrud/Shareable.h>
-#include <dcrud/Status.h>
+#include "Shareable.h"
+#include "Status.h"
+
 #include <coll/Set.h>
-#include <coll/Map.h>
 
 UTIL_ADT( dcrudICache );
 

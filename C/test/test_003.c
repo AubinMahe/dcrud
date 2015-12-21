@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int ioTests( int argc, char * argv[] ) {
+void test_003( void ) {
    ioByteBuffer buffer = ioByteBuffer_new( sizeof( double ));
    double       ref    = 3.141592653;
    ioStatus      status = ioByteBuffer_putDouble( buffer, ref );
@@ -22,7 +22,4 @@ int ioTests( int argc, char * argv[] ) {
          printf( "read value: %f, expected: %f\n", value, ref );
       }
    }
-   return 0;
-   (void)argc;
-   (void)argv;
 }

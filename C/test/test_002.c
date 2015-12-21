@@ -70,7 +70,7 @@ static bool printPersonEntry2( collForeach * context ) {
    return true;
 }
 
-int collTests( int argc, char * argv[] ) {
+void test_002( void ) {
    Person *           aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
    Person *           muriel = Person_create( "Le Nain", "Muriel", 42 );
    Person *           eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
@@ -79,8 +79,6 @@ int collTests( int argc, char * argv[] ) {
    Person *           person;
    bool               alreadyExists;
    collMapPair previous;
-   (void)argc;
-   (void)argv;
    printf( "+----+----+----------------------------------------\n" );
    {
       collList persons = collList_new();
@@ -260,5 +258,4 @@ int collTests( int argc, char * argv[] ) {
    free( aubin );
    free( muriel );
    free( eve );
-   return 0;
 }

@@ -26,10 +26,11 @@ LIB_SRCS =\
  src/dbg/Dump.c
 
 EXE_SRCS =\
- test/shapes_publisher.c\
- test/io.c\
  test/main.c\
- test/coll.c
+ test/test_002.c\
+ test/test_003.c\
+ test/test_006.c\
+ test/test_008.c
 
 LIB_OBJS_DEBUG   = $(patsubst %.c,Debug/%.o,$(LIB_SRCS))
 LIB_OBJS_RELEASE = $(patsubst %.c,Release/%.o,$(LIB_SRCS))

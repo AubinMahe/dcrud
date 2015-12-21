@@ -23,8 +23,9 @@
 #define PRINT_SERIALIZE
 #define PRINT_TIMING
 */
-dcrudClassID rectangleClassID;
-dcrudClassID ellipseClassID;
+
+static dcrudIFactory rectangleFactory;
+static dcrudIFactory ellipseFactory;
 
 typedef struct FxColor_s {
 
@@ -126,10 +127,10 @@ static bool ShareableShape_init( dcrudShareable shareable ) {
    dcrudClassID     classID = dcrudShareable_getClassID( shareable );
    ShareableShape * shape   = (ShareableShape *)dcrudShareable_getUserData( shareable );
 
-   if( 0 == dcrudClassID_compareTo( &classID, &rectangleClassID )) {
+   if( 0 == dcrudClassID_compareTo( &classID, &rectangleFactory.classID )) {
       sprintf( shape->name, "Rectangle %03u", ++g_rank );
    }
-   else if( 0 == dcrudClassID_compareTo( &classID, &ellipseClassID )) {
+   else if( 0 == dcrudClassID_compareTo( &classID, &ellipseFactory.classID )) {
       sprintf( shape->name, "Ellipse %03u", ++g_rank );
    }
    else {
@@ -220,60 +221,36 @@ static collMap * createShapes( dcrudIParticipant participant, collMap args ) {
    return 0;
 }
 
-int shapesPublisherTests( int argc, char * argv[] ) {
-   int               pubId       = 0;
-   const char *      intrfc      = NULL;
-   dcrudIParticipant participant = NULL;
-   int               i;
-
-   for( i = 2; i < argc; ++i ) {
-      if( 0 == strcmp( argv[i], "--pub-id" )) {
-         pubId = (unsigned short)atoi( argv[++i] );
-      }
-      else if( 0 == strcmp( argv[i], "--interface" )) {
-         intrfc = argv[++i];
-      }
-   }
-   if( pubId < 1 ) {
-      fprintf( stderr, "%s --pub-id <publisher-id> is mandatory\n", argv[0] );
-      exit(-1);
-   }
-   if( !intrfc ) {
-      fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
-      exit(-1);
-   }
-   participant = dcrudNetwork_join( "network.cfg", intrfc, (unsigned short)pubId );
+void test_008( void ) {
+   dcrudIParticipant participant = dcrudNetwork_join( 2, "224.0.0.3", 2417, "192.168.1.7" );
    if( participant ) {
+      int              i;
 #ifdef PRINT_TIMING
-      static uint64_t prev = osSystem_nanotime();
+      uint64_t         prev          = osSystem_nanotime();
 #endif
       dcrudICache      cache         = NULL;
       dcrudIDispatcher dispatcher    = NULL;
       dcrudIProvided   shapesFactory = NULL;
 
-      rectangleClassID = dcrudClassID_new( 1, 1, 1, 1 );
-      ellipseClassID   = dcrudClassID_new( 1, 1, 1, 2 );
-      dcrudIParticipant_registerClass(
-         participant,
-         rectangleClassID,
-         sizeof( ShareableShape ),
-         (dcrudShareable_Initialize )ShareableShape_init,
-         (dcrudShareable_Set        )ShareableShape_set,
-         (dcrudShareable_Serialize  )ShareableShape_serialize,
-         (dcrudShareable_Unserialize)ShareableShape_unserialize );
-      dcrudIParticipant_registerClass(
-         participant,
-         ellipseClassID,
-         sizeof( ShareableShape ),
-         (dcrudShareable_Initialize )ShareableShape_init,
-         (dcrudShareable_Set        )ShareableShape_set,
-         (dcrudShareable_Serialize  )ShareableShape_serialize,
-         (dcrudShareable_Unserialize)ShareableShape_unserialize );
+      rectangleFactory.classID     = dcrudClassID_new( 1, 1, 1, 1 );
+      rectangleFactory.size        = sizeof( ShareableShape );
+      rectangleFactory.initialize  = (dcrudShareable_Initialize )ShareableShape_init;
+      rectangleFactory.set         = (dcrudShareable_Set        )ShareableShape_set;
+      rectangleFactory.serialize   = (dcrudShareable_Serialize  )ShareableShape_serialize;
+      rectangleFactory.unserialize = (dcrudShareable_Unserialize)ShareableShape_unserialize;
+      ellipseFactory  .classID     = dcrudClassID_new( 1, 1, 1, 2 );
+      ellipseFactory  .size        = sizeof( ShareableShape );
+      ellipseFactory  .initialize  = (dcrudShareable_Initialize )ShareableShape_init;
+      ellipseFactory  .set         = (dcrudShareable_Set        )ShareableShape_set;
+      ellipseFactory  .serialize   = (dcrudShareable_Serialize  )ShareableShape_serialize;
+      ellipseFactory  .unserialize = (dcrudShareable_Unserialize)ShareableShape_unserialize;
+      dcrudIParticipant_registerFactory( participant, &rectangleFactory );
+      dcrudIParticipant_registerFactory( participant, &ellipseFactory );
       dcrudIParticipant_createCache( participant, &cache );
-      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleClassID ));
-      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseClassID ));
-      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleClassID ));
-      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseClassID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleFactory.classID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseFactory  .classID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleFactory.classID ));
+      dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseFactory  .classID ));
       dispatcher    = dcrudIParticipant_getDispatcher( participant );
       shapesFactory = dcrudIDispatcher_provide( dispatcher, "IShapesFactory" );
       dcrudIProvided_addOperation(
@@ -294,13 +271,12 @@ int shapesPublisherTests( int argc, char * argv[] ) {
       dcrudICache_foreach( cache, removeFromCache, cache );
       dcrudICache_publish( cache );
       dcrudICache_foreach( cache, deleteShape, NULL );
-      dcrudClassID_delete( &rectangleClassID );
-      dcrudClassID_delete( &ellipseClassID );
-      dcrudNetwork_leave( &participant );
+      dcrudClassID_delete( &rectangleFactory.classID );
+      dcrudClassID_delete( &ellipseFactory  .classID );
+      dcrudIParticipant_delete( &participant );
       printf( "Well done.\n" );
    }
    else {
       fprintf( stderr, "Unable to join network.\n" );
    }
-   return 0;
 }

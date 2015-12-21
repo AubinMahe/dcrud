@@ -6,11 +6,10 @@ extern "C" {
 #include <dcrud/IParticipant.h>
 
 dcrudIParticipant dcrudNetwork_join(
-   const char *   networkConfFile,
-   const char *   intrfc,
-   unsigned short id       );
-
-void dcrudNetwork_leave( dcrudIParticipant * This );
+   byte           id,
+   const char *   mcastAddr,
+   unsigned short port,
+   const char *   intrfc );
 
 #ifdef __cplusplus
 }
