@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud.samples;
+package tests;
 
 import javafx.application.Application.Parameters;
 import javafx.stage.Stage;

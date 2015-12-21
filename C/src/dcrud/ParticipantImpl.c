@@ -294,36 +294,11 @@ void ParticipantImpl_publishDeleted( ParticipantImpl * This, collSet deleted ) {
    osMutex_release( This->outMutex );
 }
 
-static bool serializeArgument( collForeach * context ) {
-   ParticipantImpl * This = (ParticipantImpl *)context->user;
-   collMapPair *     pair = (collMapPair *    )context->item;
-   const char *      name = (const char *     )pair->key;
-
-   ioByteBuffer_clear( This->payload );
-   ioByteBuffer_putString( This->message, name );
-   if( 0 == strcmp( name, "@queue" )) {
-      byte * value = (byte *)pair->value;
-      ioByteBuffer_putByte( This->payload, *value );
-   }
-   else if( 0 == strcmp( name, "@mode" )) {
-      byte * value = (byte *)pair->value;
-      ioByteBuffer_putByte( This->payload, *value );
-   }
-   else {
-      dcrudShareableImpl * item = (dcrudShareableImpl *)pair->value;
-      dcrudClassID_serialize( item->classID, This->payload );
-      item->serialize((dcrudShareable)item, This->payload );
-   }
-   ioByteBuffer_flip( This->payload );
-   ioByteBuffer_putBuffer( This->message, This->payload );
-   return true;
-}
-
 void ParticipantImpl_sendCall(
    ParticipantImpl * This,
    const char *      intrfcName,
    const char *      opName,
-   collMap           in,
+   dcrudArguments    args,
    int               callId )
 {
    osMutex_take( This->outMutex );
@@ -331,29 +306,49 @@ void ParticipantImpl_sendCall(
    ioByteBuffer_clear    ( This->header );
    ioByteBuffer_put      ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    ioByteBuffer_putByte  ( This->header, FRAMETYPE_OPERATION );
-   ioByteBuffer_putInt   ( This->header, collMap_size( in ));
+   ioByteBuffer_putInt   ( This->header, args ? dcrudArguments_getCount( args ) : 0 );
    ioByteBuffer_flip     ( This->header );
    ioByteBuffer_putBuffer( This->message, This->header );
    ioByteBuffer_putString( This->message, intrfcName );
    ioByteBuffer_putString( This->message, opName );
    ioByteBuffer_putInt   ( This->message, (unsigned int)callId );
-   collMap_foreach( in, serializeArgument, This );
+   if( args ) {
+      dcrudArguments_serialize( args, This->message );
+   }
    ioByteBuffer_flip     ( This->message );
    ioByteBuffer_send     ( This->message, This->out, &This->target );
    osMutex_release( This->outMutex );
 }
 
-int ParticipantImpl_call(
+void ParticipantImpl_call(
    ParticipantImpl * This,
    const char *      intrfcName,
    const char *      opName,
-   collMap           in,
+   dcrudArguments    args,
    dcrudICallback    callback )
 {
-   ParticipantImpl_sendCall( This, intrfcName, opName, in, This->callId );
    if( callback ) {
+      ParticipantImpl_sendCall( This, intrfcName, opName, args, This->callId );
       collMap_put( This->callbacks, &This->callId, callback, NULL );
-      return This->callId++;
+      This->callId++;
    }
-   return 0;
+   else {
+      ParticipantImpl_sendCall( This, intrfcName, opName, args, 0 );
+   }
+}
+
+bool ParticipantImpl_callback(
+   ParticipantImpl * This,
+   const char *      intrfcName,
+   const char *      opName,
+   dcrudArguments    args,
+   int               callId )
+{
+   dcrudICallback callback = collMap_get( This->callbacks, &callId );
+   if( callback == NULL ) {
+      fprintf( stderr, "Unknown Callback received: %s.%s, id: %d\n", intrfcName, opName, -callId );
+      return false;
+   }
+   dcrudICallback_callback( callback, intrfcName, opName, args );
+   return true;
 }

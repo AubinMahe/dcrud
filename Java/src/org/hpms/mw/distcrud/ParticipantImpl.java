@@ -10,12 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
-
-import org.hpms.mw.distcrud.IRequired.CallMode;
 
 enum FrameType {
 
@@ -31,7 +28,7 @@ final class ParticipantImpl implements IParticipant {
 
    public static final int FRAME_TYPE_SIZE = 1;
    public static final int SIZE_SIZE       = 4;
-   public static final int GUID_SIZE       = 1 + 1 + 1 + 4;
+   public static final int GUID_SIZE       = 4 + 4;
    public static final int CLASS_ID_SIZE   = 1 + 1 + 1 + 1;
    public static final int HEADER_SIZE     =
       SIGNATURE.length
@@ -41,18 +38,19 @@ final class ParticipantImpl implements IParticipant {
       + CLASS_ID_SIZE;
    public static final int PAYLOAD_SIZE  =  ( 64*1024 ) - HEADER_SIZE;
 
-   private final ByteBuffer              _header     = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer              _payload    = ByteBuffer.allocate( PAYLOAD_SIZE );
-   private final ByteBuffer              _message    = ByteBuffer.allocate( 64*1024 );
-   private final Cache[]                 _caches     = new Cache[256];
-   private final Dispatcher              _dispatcher = new Dispatcher( this );
-   private final Map<Integer, ICallback> _callbacks  = new HashMap<>();
-   private final byte                    _publisherId;
-   private final Map<ClassID,
-      Supplier<Shareable>>               _factories  = new TreeMap<>();
-   private final InetSocketAddress       _target;
-   private final DatagramChannel         _out;
-   private /* */ int                     _callId = 1;
+   private final ByteBuffer                        _header     = ByteBuffer.allocate( HEADER_SIZE );
+   private final ByteBuffer                        _payload    = ByteBuffer.allocate( PAYLOAD_SIZE );
+   private final ByteBuffer                        _message    = ByteBuffer.allocate( 64*1024 );
+   private final Cache[]                           _caches     = new Cache[256];
+   private final Dispatcher                        _dispatcher = new Dispatcher( this );
+   private final Map<ClassID, Supplier<Shareable>> _factories  = new TreeMap<>();
+   private final Map<ClassID, ICRUD >              _publishers = new TreeMap<>();
+   private final Map<Integer, ICallback>           _callbacks  = new HashMap<>();
+   private final byte                              _publisherId;
+   private final InetSocketAddress                 _target;
+   private final DatagramChannel                   _out;
+   private /* */ int                               _callId     = 1;
+   private /* */ byte                              _cacheCount = 0;
 
    ParticipantImpl( byte publisherId, InetSocketAddress group, NetworkInterface  intrfc ) throws IOException {
       final ProtocolFamily family =
@@ -67,7 +65,15 @@ final class ParticipantImpl implements IParticipant {
 //         .bind     ( group )
          .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc )
       ;
+      createCache();
       System.out.printf( "Sending to %s via interface %s\n", group, intrfc );
+   }
+
+   @Override
+   public void listen( NetworkInterface via, InetSocketAddress...others ) throws IOException {
+      for( final InetSocketAddress other : others ) {
+         new NetworkReceiver( this, other, via );
+      }
    }
 
    short getPublisherId() {
@@ -87,25 +93,37 @@ final class ParticipantImpl implements IParticipant {
    }
 
    @Override
-   public void registerClass( ClassID id, Supplier<Shareable> factory ) {
+   public void registerFactory( ClassID id, Supplier<Shareable> factory ) {
       synchronized( _factories ) {
          _factories.put( id, factory );
       }
    }
 
    @Override
-   public ICache createCache() {
-      synchronized( _caches ) {
-         final Cache cache = new Cache( this );
-         return _caches[cache.getCacheId()-1] = cache;
+   public void registerPublisher( ClassID id, ICRUD publisher ) {
+      synchronized( _publishers ) {
+         _publishers.put( id, publisher );
       }
    }
 
    @Override
-   public ICache getCache( byte cacheId ) {
-      assert cacheId > 0;
+   public ICache getDefaultCache() {
       synchronized( _caches ) {
-         return _caches[cacheId-1];
+         return _caches[0];
+      }
+   }
+
+   @Override
+   public ICache createCache() {
+      synchronized( _caches ) {
+         return _caches[_cacheCount++] = new Cache( this );
+      }
+   }
+
+   @Override
+   public ICache getCache( byte cacheIndex ) {
+      synchronized( _caches ) {
+         return _caches[cacheIndex];
       }
    }
 
@@ -143,6 +161,7 @@ final class ParticipantImpl implements IParticipant {
 
    private void pushDeleteItem( Shareable item ) throws IOException {
       synchronized( _out ){
+         _header.clear();
          _header.put( SIGNATURE );
          _header.put((byte)FrameType.DATA_DELETE.ordinal());
          item._id.serialize( _header );
@@ -157,93 +176,30 @@ final class ParticipantImpl implements IParticipant {
       }
    }
 
-   void call( String intrfcName, String opName, Map<String, Object> in, int callId ) throws IOException {
+   void call( String intrfcName, String opName, Arguments args, int callId ) throws IOException {
       synchronized( _out ){
          _message.clear();
          _header.clear();
          _header.put( SIGNATURE );
          _header.put((byte)FrameType.OPERATION.ordinal());
-         _header.put((byte)in.size());
+         _header.put( args == null ? 0 : (byte)args.getCount());
          _header.flip();
          _message.put( _header );
          SerializerHelper.putString( intrfcName, _message );
          SerializerHelper.putString( opName    , _message );
          _message.putInt( callId );
-         for( final Entry<String, Object> e : in.entrySet()) {
-            _payload.clear();
-            final String name  = e.getKey();
-            final Object value = e.getValue();
-            SerializerHelper.putString( name, _payload );
-            switch( name ) {
-            case "@queue":
-               _payload.put(((Integer)value ).byteValue());
-               break;
-            case "@mode":
-               _payload.put((byte)((IRequired.CallMode)value ).ordinal());
-               break;
-            default:
-               if( value == null ) {
-                  ClassID.NullClassID.serialize( _payload );
-               }
-               else if( value instanceof Shareable ) {
-                  final Shareable item = (Shareable)value;
-                  item._class.serialize( _payload );
-                  item.serialize( _payload );
-               }
-               else if( value instanceof Byte ) {
-                  ClassID.ByteClassID.serialize( _payload );
-                  _payload.put((Byte)value );
-               }
-               else if( value instanceof Short ) {
-                  ClassID.ShortClassID.serialize( _payload );
-                  _payload.putShort((Short)value );
-               }
-               else if( value instanceof Integer ) {
-                  ClassID.IntegerClassID.serialize( _payload );
-                  _payload.putInt((Integer)value );
-               }
-               else if( value instanceof Long ) {
-                  ClassID.LongClassID.serialize( _payload );
-                  _payload.putLong((Long)value );
-               }
-               else if( value instanceof Float ) {
-                  ClassID.FloatClassID.serialize( _payload );
-                  _payload.putFloat((Float)value );
-               }
-               else if( value instanceof Double ) {
-                  ClassID.DoubleClassID.serialize( _payload );
-                  _payload.putDouble((Double)value );
-               }
-               else if( value instanceof ClassID ) {
-                  ClassID.ClassIDClassID.serialize( _payload );
-                  ((ClassID)value).serialize( _payload );
-               }
-               else if( value instanceof GUID ) {
-                  ClassID.GUIDClassID.serialize( _payload );
-                  ((GUID)value).serialize( _payload );
-               }
-               else {
-                  throw new IllegalArgumentException(
-                     name + " is of type " + value.getClass().getName() +
-                     " which isn't null, primitive nor derived from " + Shareable.class.getName());
-               }
-               break;
-            }
-            _payload.flip();
-            _message.put( _payload );
+         if( args != null ) {
+            args.serialize( _message );
          }
          _message.flip();
          _out.send( _message, _target );
       }
    }
 
-   int call( String intrfcName, String opName, Map<String, Object> in, ICallback callback ) throws IOException {
-      call( intrfcName, opName, in, _callId );
-      if( callback != null ) {
-         _callbacks.put( _callId, callback );
-         return _callId++;
-      }
-      return 0;
+   void call( String intrfcName, String opName, Arguments args, ICallback callback ) throws IOException {
+      assert callback != null;
+      call( intrfcName, opName, args, _callId );
+      _callbacks.put( _callId++, callback );
    }
 
    void dataDelete( GUID id ) {
@@ -272,18 +228,7 @@ final class ParticipantImpl implements IParticipant {
       }
    }
 
-   void execute(
-      String               intrfcName,
-      String               opName,
-      Map<String, Object>  arguments,
-      Map<String, Object>  results,
-      int                  queueNdx,
-      CallMode             callMode )
-   {
-      _dispatcher.execute( intrfcName, opName, arguments, results, queueNdx, callMode );
-   }
-
-   void callback( String intrfcName, String opName, Map<String, Object> args, int callId ) {
+   void callback( String intrfcName, String opName, Arguments args, int callId ) {
       final ICallback callback = _callbacks.get( callId );
       if( callback == null ) {
          System.err.printf( "Unknown Callback received: %s.%s, id: %d\n",
@@ -292,5 +237,53 @@ final class ParticipantImpl implements IParticipant {
       else {
          callback.callback( intrfcName, opName, args );
       }
+   }
+
+   public boolean create( ClassID clsId, Arguments how ) throws IOException {
+      if( clsId == null ) {
+         return false;
+      }
+      final ICRUD publisher = _publishers.get( clsId );
+      if( publisher == null ) {
+         return false;
+      }
+      publisher.create( how );
+      return true;
+   }
+
+   public boolean update( GUID id, Arguments how ) throws IOException {
+      for( final Cache cache : _caches ) {
+         if( cache == null ) {
+            return false;
+         }
+         final Shareable item = cache.read( id );
+         if( item != null ) {
+            final ICRUD publisher = _publishers.get( item._class );
+            if( publisher == null ) {
+               return false;
+            }
+            publisher.update( item, how );
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public boolean delete( GUID id ) throws IOException {
+      for( final Cache cache : _caches ) {
+         if( cache == null ) {
+            return false;
+         }
+         final Shareable item = cache.read( id );
+         if( item != null ) {
+            final ICRUD publisher = _publishers.get( item._class );
+            if( publisher == null ) {
+               return false;
+            }
+            publisher.delete( item );
+            return true;
+         }
+      }
+      return false;
    }
 }

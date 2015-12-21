@@ -6,10 +6,9 @@
 dcrudIDispatcher dcrudIDispatcher_new    ( ParticipantImpl * participant );
 void             dcrudIDispatcher_delete ( dcrudIDispatcher * This );
 void             dcrudIDispatcher_execute( dcrudIDispatcher   This,
-   const char *     intrfcName,
-   const char *     opName,
-   collMap          arguments,
-   collMap          results,
-   int              callId,
-   unsigned         queueNdx,
-   dcrudCallMode    callMode );
+   const char *   intrfcName,
+   const char *   opName,
+   dcrudArguments args,
+   int            callId,
+   unsigned       queueNdx,
+   dcrudCallMode  callMode );

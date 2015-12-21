@@ -203,16 +203,12 @@ static bool deleteShape( collForeach * context ) {
    return true;
 }
 
-static void createShapes(
-   dcrudIParticipant participant,
-   collMap           in,
-   collMap           out )
-{
-   dcrudClassID     clazz     = collMap_get( in, "class" );
-   double *         x         = collMap_get( in, "x" );
-   double *         y         = collMap_get( in, "y" );
-   double *         w         = collMap_get( in, "w" );
-   double *         h         = collMap_get( in, "h" );
+static collMap * createShapes( dcrudIParticipant participant, collMap args ) {
+   dcrudClassID     clazz     = collMap_get( args, "class" );
+   double *         x         = collMap_get( args, "x" );
+   double *         y         = collMap_get( args, "y" );
+   double *         w         = collMap_get( args, "w" );
+   double *         h         = collMap_get( args, "h" );
    dcrudShareable   shareable = dcrudIParticipant_createShareable( participant, clazz );
    ShareableShape * shape     = (ShareableShape *)dcrudShareable_getUserData( shareable );
    dcrudICache      cache    = dcrudIParticipant_getCache( participant, 0 );
@@ -221,7 +217,7 @@ static void createShapes(
    shape->w = *w;
    shape->h = *h;
    dcrudICache_create( cache, shareable );
-   collMap_clear( out ); /* No out parameter */
+   return 0;
 }
 
 int shapesPublisherTests( int argc, char * argv[] ) {

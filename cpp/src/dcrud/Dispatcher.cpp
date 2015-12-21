@@ -20,10 +20,10 @@ IProvided & Dispatcher::provide( const char * interfaceName ) {
 bool Dispatcher::execute(
    const std::string & intrfcName,
    const std::string & opName,
-   const Arguments & arguments,
-   args_t &          results,
-   int               queueNdx,
-   byte              callMode )
+   const Arguments &   arguments,
+   int                 callId,
+   byte                queueNdx,
+   byte                callMode )
 {
    ProvidedImpl * provided = 0;
    {
@@ -34,19 +34,21 @@ bool Dispatcher::execute(
       }
       provided  = it->second;
    }
-   opsInOutIter_t it = provided->_opsInOut.find( opName );
-   if( it == provided->_opsInOut.end()) {
+   IOperation * operation = provided->getOperation( opName );
+   if( ! operation ) {
       return false;
    }
-   IOperation * operation = it->second;
    if( callMode == IRequired::SYNCHRONOUS ) {
-      operation->execute( _participant, arguments, results );
+      Arguments * results = operation->execute( _participant, arguments );
+      if( callId ) {
+         _participant.call( intrfcName, opName, results, -callId );
+      }
    }
    else {
       {
          os::Synchronized sync(_operationQueuesMutex);
          _operationQueues[queueNdx].push_back(
-            new Operation( _participant, *operation, arguments, results ));
+            new Operation( *operation, arguments, intrfcName, opName, callId ));
       }
       if( callMode == IRequired::ASYNCHRONOUS_IMMEDIATE ) {
          handleRequests();
@@ -58,10 +60,20 @@ bool Dispatcher::execute(
 void Dispatcher::handleRequests() {
    os::Synchronized sync(_operationQueuesMutex);
    for( unsigned i = 0; i < OPERATION_QUEUE_COUNT; ++i ) {
-      operations_t queue = _operationQueues[i];
+      operations_t & queue = _operationQueues[i];
       for( operationsIter_t it = queue.begin(); it != queue.end(); ++it ) {
-         Operation * operation = *it;
-         operation->run();
+         Operation *  op      = *it;
+         IOperation & iOp     = op->_operation;
+         Arguments *  results = iOp.execute( _participant, op->_arguments );
+         if( op->_callId > 0 ) {
+            try {
+               _participant.call( op->_intrfcName, op->_opName, results, -op->_callId );
+            }
+            catch( const std::exception & x ) {
+               fprintf( stderr, "%s\n", x.what());
+            }
+         }
+         delete op;
       }
       queue.clear();
    }

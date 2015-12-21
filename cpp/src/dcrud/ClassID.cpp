@@ -1,15 +1,15 @@
 #include <dcrud/ClassID.hpp>
-#include <io/ByteBuffer.hpp>
+
 #include <iomanip>
 #include <stdexcept>
 
 using namespace dcrud;
 
-void ClassID::serializePredefined( Predefined predefined, io::ByteBuffer & buffer ) {
+void ClassID::serialize( Type type, io::ByteBuffer & buffer ) {
    buffer.putByte( 0 );
    buffer.putByte( 0 );
    buffer.putByte( 0 );
-   buffer.putByte( predefined );
+   buffer.putByte( type );
 }
 
 int ClassID::compareTo( const ClassID & right ) const {
@@ -44,11 +44,14 @@ void ClassID::serialize( io::ByteBuffer & buffer ) const {
    buffer.putByte( _class );
 }
 
-ClassID::Predefined ClassID::getPredefined() const {
-   if( _class < LAST_TYPE ) {
-      return (Predefined)_class;
+ClassID::Type ClassID::getType() const {
+   if( _p1 > 0 || _p2 > 0 || _p3 > 0 ) {
+      return TYPE_SHAREABLE;
    }
-   throw std::out_of_range( "getPredefined()" );
+   if( _class < LAST_TYPE ) {
+      return (Type)_class;
+   }
+   throw std::out_of_range( "Bad kind of ClassID" );
 }
 
 std::string ClassID::toString( void ) const {

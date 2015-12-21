@@ -4,7 +4,8 @@
 
 namespace dcrud {
 
-   struct ICallback {
+   class ICallback {
+   public:
 
       virtual ~ ICallback(){}
 

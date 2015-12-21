@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud.samples;
+package tests;
 
 import java.net.URL;
 

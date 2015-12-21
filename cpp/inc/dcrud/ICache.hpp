@@ -7,16 +7,17 @@
 
 namespace dcrud {
 
-   struct ClassID;
-   struct GUID;
-   struct Shareable;
+   class ClassID;
+   class GUID;
+   class Shareable;
 
    typedef bool ( * shareablePredicate_t)( const Shareable & shareable );
 
    typedef std::set<Shareable *>  shareables_t;
    typedef shareables_t::iterator shareablesIter_t;
 
-   struct ICache {
+   class ICache {
+   public:
 
       virtual ~ ICache() {}
 

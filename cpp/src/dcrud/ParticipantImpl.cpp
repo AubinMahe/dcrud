@@ -150,7 +150,7 @@ void ParticipantImpl::publishDeleted( shareables_t & deleted ) {
 void ParticipantImpl::call(
    const std::string & intrfcName,
    const std::string & opName,
-   const Arguments &   in,
+   const Arguments *   args,
    int                 callId )
 {
    os::Synchronized sync( _outMutex );
@@ -158,76 +158,14 @@ void ParticipantImpl::call(
    _header.clear();
    _header.put( SIGNATURE, 0, SIGNATURE_SIZE );
    _header.putByte( OPERATION );
-   _header.putByte((byte)in._args.size());
+   _header.putByte( args ? (byte)args->getCount() : 0 );
    _header.flip();
    _message.put( _header );
    _message.putString( intrfcName );
    _message.putString( opName );
    _message.putInt( callId );
-   for( argsCstIter_t it = in._args.begin(); it != in._args.end(); ++it ) {
-      _payload.clear();
-      const std::string & name  = it->first;
-      const void *        value = it->second;
-      _payload.putString( name );
-      if( name == "@queue" ) {
-         const byte * queue = (const byte*)value;
-         _payload.putByte( *queue );
-      }
-      else if( name == "@mode" ) {
-         const byte * mode = (const byte*)value;
-         _payload.putByte( *mode );
-      }
-      else {
-         if( ! value ) {
-            ClassID::serializePredefined( ClassID::NullType, _payload );
-         }
-         /* TODO how to serialize primitive arguments without meta data?
-         else if( value instanceof Shareable ) {
-            Shareable item = (Shareable)value;
-            item._class.serialize( _payload );
-            item.serialize( _payload );
-         }
-         else if( value instanceof Byte ) {
-            ClassID.ByteClassID.serialize( _payload );
-            _payload.put((Byte)value );
-         }
-         else if( value instanceof Short ) {
-            ClassID.ShortClassID.serialize( _payload );
-            _payload.putShort((Short)value );
-         }
-         else if( value instanceof Integer ) {
-            ClassID.IntegerClassID.serialize( _payload );
-            _payload.putInt((Integer)value );
-         }
-         else if( value instanceof Long ) {
-            ClassID.LongClassID.serialize( _payload );
-            _payload.putLong((Long)value );
-         }
-         else if( value instanceof Float ) {
-            ClassID.FloatClassID.serialize( _payload );
-            _payload.putFloat((Float)value );
-         }
-         else if( value instanceof Double ) {
-            ClassID.DoubleClassID.serialize( _payload );
-            _payload.putDouble((Double)value );
-         }
-         else if( value instanceof ClassID ) {
-            ClassID.ClassIDClassID.serialize( _payload );
-            ((ClassID)value).serialize( _payload );
-         }
-         else if( value instanceof GUID ) {
-            ClassID.GUIDClassID.serialize( _payload );
-            ((GUID)value).serialize( _payload );
-         }
-         else {
-            throw std::out_of_range(
-               name + " is of type " + value.getClass().getName() +
-               " which isn't null, primitive nor derived from " + Shareable.class.getName());
-         }*/
-         break;
-      }
-      _payload.flip();
-      _message.put( _payload );
+   if( args ) {
+      args->serialize( _message );
    }
    _message.flip();
    _message.send( _out, _target );
@@ -236,15 +174,12 @@ void ParticipantImpl::call(
 int ParticipantImpl::call(
    const std::string & intrfcName,
    const std::string & opName,
-   const Arguments &   in,
-   ICallback *         callback )
+   const Arguments *   args,
+   ICallback &         callback )
 {
-   call( intrfcName, opName, in, callback ? _callId : 0 );
-   if( callback ) {
-      _callbacks[_callId] = callback;
-      return _callId++;
-   }
-   return 0;
+   call( intrfcName, opName, args, _callId );
+   _callbacks[_callId] = &callback;
+   return _callId++;
 }
 
 Shareable * ParticipantImpl::newInstance( const ClassID & classId, io::ByteBuffer & frame ) {
@@ -286,17 +221,6 @@ void ParticipantImpl::dataUpdate( io::ByteBuffer & frame, int payloadSize ) {
          break;
       }
    }
-}
-
-void ParticipantImpl::execute(
-   const std::string & intrfcName,
-   const std::string & opName,
-   const Arguments &   arguments,
-   args_t &            results,
-   byte                queueNdx,
-   byte                callMode )
-{
-   _dispatcher->execute( intrfcName, opName, arguments, results, queueNdx, callMode );
 }
 
 void ParticipantImpl::callback(

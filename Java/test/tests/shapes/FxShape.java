@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud.samples.shapes;
+package tests.shapes;
 
 import org.hpms.mw.distcrud.GUID;
 

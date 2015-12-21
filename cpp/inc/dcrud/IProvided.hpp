@@ -2,9 +2,10 @@
 
 namespace dcrud {
 
-   struct IOperation;
+   class IOperation;
 
-   struct IProvided {
+   class IProvided {
+   public:
 
       virtual ~ IProvided() {}
 

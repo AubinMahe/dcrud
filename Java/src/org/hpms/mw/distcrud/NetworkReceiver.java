@@ -9,17 +9,15 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.hpms.dbg.Performance;
-import org.hpms.mw.distcrud.ClassID.PredefinedType;
+import org.hpms.mw.distcrud.ClassID.Type;
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
 final class NetworkReceiver extends Thread {
 
    private final ParticipantImpl _participant;
-   private final ByteBuffer      _inBuf = ByteBuffer.allocate( 64*1024 );
+   private final Dispatcher      _dispatcher;
    private final DatagramChannel _in;
 
    NetworkReceiver(
@@ -28,6 +26,7 @@ final class NetworkReceiver extends Thread {
       NetworkInterface  intrfc ) throws IOException
    {
       _participant = participant;
+      _dispatcher  = (Dispatcher)participant.getDispatcher();
       final ProtocolFamily family =
          ( source.getAddress().getAddress().length > 4 )
             ? StandardProtocolFamily.INET6
@@ -45,67 +44,50 @@ final class NetworkReceiver extends Thread {
       start();
    }
 
-   private void dataUpdate() {
+   private void dataUpdate( ByteBuffer b ) {
       final int payloadSize =
-         ParticipantImpl.GUID_SIZE + ParticipantImpl.CLASS_ID_SIZE + _inBuf.getInt();
-      _participant.dataUpdate( _inBuf, payloadSize );
-      _inBuf.position( _inBuf.position() + payloadSize );
+         ParticipantImpl.GUID_SIZE + ParticipantImpl.CLASS_ID_SIZE + b.getInt();
+      _participant.dataUpdate( b, payloadSize );
+      b.position( b.position() + payloadSize );
    }
 
-   private void dataDelete() {
-      _participant.dataDelete( GUID.unserialize( _inBuf ));
+   private void dataDelete( ByteBuffer b ) {
+      _participant.dataDelete( GUID.unserialize( b ));
    }
 
-   private void operation() throws IOException {
-      final Map<String, Object> args       = new HashMap<>();
-      /* */ int                 queueNdx   = IRequired.DEFAULT_QUEUE;
-      /* */ CallMode            callMode   = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
-      final int                 count      = _inBuf.getInt();
-      final String              intrfcName = SerializerHelper.getString( _inBuf );
-      final String              opName     = SerializerHelper.getString( _inBuf );
-      final int                 callId     = _inBuf.getInt();
+   private void operation( ByteBuffer b ) throws IOException {
+      final Arguments args       = new Arguments();
+      final int       queueNdx   = IRequired.DEFAULT_QUEUE;
+      final CallMode  callMode   = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
+      final int       count      = b.get();
+      final String    intrfcName = SerializerHelper.getString( b );
+      final String    opName     = SerializerHelper.getString( b );
+      final int       callId     = b.getInt();
       for( int i = 0; i < count; ++i ) {
-         final String argName = SerializerHelper.getString( _inBuf );
-         if( argName.equals("@queue")) {
-            queueNdx = _inBuf.get();
-            if( queueNdx < 0 ) {
-               queueNdx += 256;
-            }
-         }
-         else if( argName.equals("@mode")) {
-            callMode = CallMode.values()[_inBuf.get()];
-         }
-         else {
-            final ClassID classId = ClassID.unserialize( _inBuf );
-            if( classId.isPredefined()) {
-               final PredefinedType predef = classId.getPredefinedTypeID();
-               switch( predef ) {
-               case NullType   : args.put( argName, null               ); break;
-               case ByteType   : args.put( argName, _inBuf.get       ()); break;
-               case BooleanType: args.put( argName, SerializerHelper.getBoolean( _inBuf )); break;
-               case ShortType  : args.put( argName, _inBuf.getShort  ()); break;
-               case IntegerType: args.put( argName, _inBuf.getInt    ()); break;
-               case LongType   : args.put( argName, _inBuf.getLong   ()); break;
-               case FloatType  : args.put( argName, _inBuf.getFloat  ()); break;
-               case DoubleType : args.put( argName, _inBuf.getDouble ()); break;
-               case StringType : args.put( argName, SerializerHelper.getString ( _inBuf )); break;
-               case ClassIDType: args.put( argName, ClassID        .unserialize( _inBuf )); break;
-               case GUIDType   : args.put( argName, GUID           .unserialize( _inBuf )); break;
-               default: throw new IllegalStateException( "Unexpected " + predef );
-               }
-            }
-            else {
-               final Shareable item = _participant.newInstance( classId, _inBuf );
-               args.put( argName, item );
-            }
+         final String  name    = SerializerHelper.getString( b );
+         final ClassID classId = ClassID.unserialize( b );
+         final Type    type    = classId.getType();
+         switch( type ) {
+         case NULL       : args.putNull( name );                                    break;
+         case BYTE       : args.put( name, b.get());                                break;
+         case BOOLEAN    : args.put( name, SerializerHelper.getBoolean( b ));       break;
+         case SHORT      : args.put( name, b.getShort ());                          break;
+         case INTEGER    : args.put( name, b.getInt   ());                          break;
+         case LONG       : args.put( name, b.getLong  ());                          break;
+         case FLOAT      : args.put( name, b.getFloat ());                          break;
+         case DOUBLE     : args.put( name, b.getDouble());                          break;
+         case STRING     : args.put( name, SerializerHelper.getString ( b ));       break;
+         case CLASS_ID   : args.put( name, ClassID        .unserialize( b ));       break;
+         case GUID       : args.put( name, GUID           .unserialize( b ));       break;
+         case CALL_MODE  : args.setMode ( CallMode.values()[b.get()]);              break;
+         case QUEUE_INDEX: args.setQueue( b.get());                                 break;
+         case SHAREABLE  : args.put( name, _participant.newInstance( classId, b )); break;
+         default:
+            throw new IllegalStateException( "Unexpected type " + type + " for argument " + name );
          }
       }
-      if( callId > 0 ) {
-         final Map<String, Object> out = new HashMap<>();
-         _participant.execute( intrfcName, opName, args, out, queueNdx, callMode );
-         if( ! out.isEmpty()) {
-            _participant.call( intrfcName, opName, out, -callId );
-         }
+      if( callId >= 0 ) {
+         _dispatcher.execute( intrfcName, opName, callId, args, queueNdx, callMode );
       }
       else if( callId < 0 ) {
          _participant.callback( intrfcName, opName, args, -callId );
@@ -114,30 +96,33 @@ final class NetworkReceiver extends Thread {
 
    @Override
    public void run() {
-      final byte[] signa = new byte[ParticipantImpl.SIGNATURE.length];
+      final byte[]     signa = new byte[ParticipantImpl.SIGNATURE.length];
+      final ByteBuffer inBuf = ByteBuffer.allocate( 64*1024 );
       for( long atStart = 0;;) {
          try {
             if( atStart > 0 ) {
                Performance.record( "network", System.nanoTime() - atStart );
             }
-            _inBuf.clear();
-            _in.receive( _inBuf );
+            inBuf.clear();
+            _in.receive( inBuf );
             atStart = System.nanoTime();
-            _inBuf.flip();
-//            Dump.dump( frame );
-            _inBuf.get( signa );
+            inBuf.flip();
+//          Dump.dump( inBuf );
+            inBuf.get( signa );
             if( Arrays.equals( signa, ParticipantImpl.SIGNATURE )) {
-               final FrameType frameType = FrameType.values()[_inBuf.get()];
+               final FrameType frameType = FrameType.values()[inBuf.get()];
                switch( frameType ) {
-               case DATA_CREATE_OR_UPDATE: dataUpdate(); break;
-               case DATA_DELETE          : dataDelete(); break;
-               case OPERATION            : operation (); break;
-               default: throw new IllegalStateException();
+               case DATA_CREATE_OR_UPDATE: dataUpdate( inBuf ); break;
+               case DATA_DELETE          : dataDelete( inBuf ); break;
+               case OPERATION            : operation ( inBuf ); break;
+               case NO_OP:
+               default   :
+                  throw new IllegalStateException();
                }
-               assert _inBuf.remaining() == 0;
+               assert inBuf.remaining() == 0;
             }
             else {
-               System.err.printf( "Garbage received, %d bytes discarded!\n", _inBuf.limit());
+               System.err.printf( "Garbage received, %d bytes discarded!\n", inBuf.limit());
             }
          }
          catch( final Throwable t ){

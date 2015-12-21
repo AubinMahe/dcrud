@@ -22,18 +22,15 @@
 #  include <mswsock.h>
 #endif
 
-struct ShapesSample {
+class ShapesSample {
+public:
 
    static const unsigned int LOOP_COUNT = 10000U;
 
-   dcrud::IParticipant & _participant;
-   dcrud::ICache &       _cache;
-   dcrud::IDispatcher &  _dispatcher;
-
    ShapesSample( unsigned short publisherId, const char * intrfc ) :
-      _participant  ( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
-      _cache        ( _participant.createCache()),
-      _dispatcher   ( _participant.getDispatcher())
+      _participant( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
+      _cache      ( _participant.createCache()),
+      _dispatcher ( _participant.getDispatcher())
    {
       ShareableShape::registerClasses   ( _participant );
       ShareableShape::registerOperations( _dispatcher  );
@@ -71,6 +68,12 @@ struct ShapesSample {
          _dispatcher.handleRequests();
       }
    }
+
+private:
+
+   dcrud::IParticipant & _participant;
+   dcrud::ICache &       _cache;
+   dcrud::IDispatcher &  _dispatcher;
 };
 
 int main( int argc, char * argv[] ) {

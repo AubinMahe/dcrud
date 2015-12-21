@@ -12,31 +12,19 @@ const byte IRequired::SYNCHRONOUS;
 const byte IRequired::ASYNCHRONOUS_DEFERRED;
 const byte IRequired::ASYNCHRONOUS_IMMEDIATE;
 
-int RequiredImpl::call( const char * opName ) {
-   Arguments arguments;
-   arguments.put( "@mode" , IRequired::ASYNCHRONOUS_DEFERRED );
-   arguments.put( "@queue", IRequired::DEFAULT_QUEUE );
-   return _participant.call( _name, opName, arguments, (ICallback *)0 );
+RequiredImpl::RequiredImpl( const std::string & name, ParticipantImpl & participant ) :
+   _name       ( name        ),
+   _participant( participant )
+{}
+
+void RequiredImpl::call( const std::string & opName ) {
+   _participant.call( _name, opName, 0, 0 );
 }
 
-int RequiredImpl::call( const char * opName, Arguments & arguments ) {
-   byte v;
-   if( ! arguments.get( "@mode", v )) {
-      arguments.put( "@mode" , IRequired::ASYNCHRONOUS_DEFERRED );
-   }
-   if( ! arguments.get( "@queue", v )) {
-      arguments.put( "@queue", IRequired::DEFAULT_QUEUE );
-   }
-   return _participant.call( _name, opName, arguments, (ICallback *)0 );
+void RequiredImpl::call( const std::string & opName, const Arguments & arguments ) {
+   _participant.call( _name, opName, &arguments, 0 );
 }
 
-int RequiredImpl::call( const char * opName, Arguments & arguments, ICallback & callback ) {
-   byte v;
-   if( ! arguments.get( "@mode", v )) {
-      arguments.put( "@mode" , IRequired::ASYNCHRONOUS_DEFERRED );
-   }
-   if( ! arguments.get( "@queue", v )) {
-      arguments.put( "@queue", IRequired::DEFAULT_QUEUE );
-   }
-   return _participant.call( _name, opName, arguments, &callback );
+int RequiredImpl::call( const std::string & opName, const Arguments & arguments, ICallback & callback ) {
+   return _participant.call( _name, opName, &arguments, callback );
 }

@@ -16,6 +16,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>API-tests.xlsx</name>
+			<type>1</type>
+			<locationURI>DCRUD_ROOT/API-tests.xlsx</locationURI>
+		</link>
+		<link>
 			<name>Makefile</name>
 			<type>1</type>
 			<locationURI>DCRUD_ROOT/Makefile</locationURI>
@@ -24,6 +29,11 @@
 			<name>README.md</name>
 			<type>1</type>
 			<locationURI>DCRUD_ROOT/README.md</locationURI>
+		</link>
+		<link>
+			<name>flags.mak</name>
+			<type>1</type>
+			<locationURI>DCRUD_ROOT/flags.mak</locationURI>
 		</link>
 	</linkedResources>
 	<variableList>

@@ -22,6 +22,10 @@ void GUID::serialize( io::ByteBuffer & buffer ) const {
    buffer.putInt  ( _instance );
 }
 
+bool GUID::matches( short publisher, byte cacheId ) const {
+   return _publisher == publisher && _cache == cacheId;
+}
+
 int GUID::compareTo( const GUID & right ) const {
    int diff = 0;
    if( diff == 0 ) {

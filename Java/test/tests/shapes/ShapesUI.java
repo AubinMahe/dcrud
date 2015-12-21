@@ -1,8 +1,8 @@
-package org.hpms.mw.distcrud.samples.shapes;
+package tests.shapes;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -10,20 +10,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.hpms.dbg.Performance;
-import org.hpms.mw.distcrud.ClassID;
+import org.hpms.mw.distcrud.Arguments;
+import org.hpms.mw.distcrud.ICRUD;
 import org.hpms.mw.distcrud.ICache;
 import org.hpms.mw.distcrud.IDispatcher;
 import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.IRequired;
 import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
-import org.hpms.mw.distcrud.samples.App;
-import org.hpms.mw.distcrud.samples.Controller;
-import org.hpms.mw.distcrud.samples.QuadFunction;
-import org.xml.sax.SAXException;
 
 import javafx.application.Application.Parameters;
 import javafx.application.Platform;
@@ -44,23 +38,27 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import tests.App;
+import tests.Controller;
+import tests.QuadFunction;
 
 public class ShapesUI implements Controller {
 
    private final Random _random = new Random();
 
-   private ICache    _cache;
-   private int       _rank;
-   private Node      _dragged;
-   private double    _nodeX;
-   private double    _nodeY;
-   private double    _fromX;
-   private double    _fromY;
-   private boolean   _periodic;
-   private boolean   _moveThem;
-   private boolean   _readonly;
-   private IRequired _remoteShapesFactory;
-   private String    _window;
+   private ICache  _cache;
+   private int     _rank;
+   private Node    _dragged;
+   private double  _nodeX;
+   private double  _nodeY;
+   private double  _fromX;
+   private double  _fromY;
+   private boolean _periodic;
+   private boolean _moveThem;
+   private boolean _readonly;
+   private ICRUD   _remoteEllipseFactory;
+   private ICRUD   _remoteRectangleFactory;
+   private String  _window;
 
    @FXML private Menu               _publisherMnu;
    @FXML private CheckMenuItem      _periodicChkMnu;
@@ -109,33 +107,38 @@ public class ShapesUI implements Controller {
       });
    }
 
-   private void dcrudInitialize( Map<String, String> n ) throws IOException, SAXException, ParserConfigurationException {
-      _window   =                                     n.getOrDefault( "window"   , "left-top" );
-      _readonly =               Boolean.parseBoolean( n.getOrDefault( "readonly" , "false" ));
-      final boolean ownership = Boolean.parseBoolean( n.getOrDefault( "ownership", "false" ));
-      final boolean periodic  = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false" ));
-      final boolean move      = Boolean.parseBoolean( n.getOrDefault( "move"     , "false" ));
-      final boolean perf      = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false" ));
-      final boolean remote    = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false" ));
-      final String  name      =                       n.get         ( "publisher-name" );
-      final String  intrfc    =                       n.get         ( "interface" );
-      if( name == null ) {
-         throw new IllegalStateException( "--publisher-name=<string> missing" );
-      }
-      if( intrfc == null ) {
+   private void dcrudInitialize( Map<String, String> n ) throws IOException {
+      _window   =                                      n.getOrDefault( "window"   , "left-top" );
+      _readonly =                Boolean.parseBoolean( n.getOrDefault( "readonly" , "false"    ));
+      final boolean ownership  = Boolean.parseBoolean( n.getOrDefault( "ownership", "false"    ));
+      final boolean periodic   = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false"    ));
+      final boolean move       = Boolean.parseBoolean( n.getOrDefault( "move"     , "false"    ));
+      final boolean perf       = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false"    ));
+      final boolean remote     = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false"    ));
+      final String  intrfcName =                       n.getOrDefault( "interface", "eth0"     );
+      final short   port       = Short  .parseShort(   n.getOrDefault( "port"     , "2416"     ));
+      if( intrfcName == null ) {
          throw new IllegalStateException( "--interface=<string> missing" );
       }
+      final NetworkInterface  intrfc = NetworkInterface.getByName( intrfcName );
+      final InetSocketAddress addr = new InetSocketAddress( "224.0.0.3", port );
       Performance.enable( perf );
-      final IParticipant participant = Network.join( new File( "network.xml"), intrfc, name );
-      participant.registerClass( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
-      participant.registerClass( ShareableRect   .CLASS_ID, ShareableRect   ::new );
+      final IParticipant participant = Network.join((byte)( port - 2415 ), addr, intrfc );
+      for( short p = 0; p < 4; ++p ) {
+         if( ( p+2416 ) != port ) {
+            participant.listen( intrfc, new InetSocketAddress( "224.0.0.3", p+2416 ));
+         }
+      }
+      participant.registerFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
+      participant.registerFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
       _cache = participant.createCache();
       _cache.setOwnership( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
       if( remote ) {
          final IDispatcher dispatcher = participant.getDispatcher();
-         _remoteShapesFactory = dispatcher.require( "IShapesFactory" );
+         _remoteEllipseFactory   = dispatcher.requireCRUD( ShareableEllipse.CLASS_ID );
+         _remoteRectangleFactory = dispatcher.requireCRUD( ShareableRect   .CLASS_ID );
       }
       new Timer( "AnimationActivity", true ).schedule(
          new TimerTask() { @Override public void run() { animationActivity(); }}, 0, 40L );
@@ -209,15 +212,30 @@ public class ShapesUI implements Controller {
       _shapesArea.getChildren().add( shape );
    }
 
-   private void createShapeRemotely( ClassID classId ) {
+   private void createEllipseRemotely() {
       try {
-         final Map<String, Object> arguments = new HashMap<>();
-         arguments.put( "class", classId );
-         arguments.put( "x"    , nextDouble(  0, 540 ));
-         arguments.put( "y"    , nextDouble(  0, 400 ));
-         arguments.put( "w"    , nextDouble( 40, 100 ));
-         arguments.put( "h"    , nextDouble( 20,  80 ));
-         _remoteShapesFactory.call( "create", arguments );
+         final Arguments args = new Arguments();
+         args.put( "class", ShareableEllipse.CLASS_ID );
+         args.put( "x"    , nextDouble(  0, 540 ));
+         args.put( "y"    , nextDouble(  0, 400 ));
+         args.put( "w"    , nextDouble( 40, 100 ));
+         args.put( "h"    , nextDouble( 20,  80 ));
+         _remoteEllipseFactory.create( args );
+      }
+      catch( final Throwable t ) {
+         t.printStackTrace();
+      }
+   }
+
+   private void createRectangleRemotely() {
+      try {
+         final Arguments args = new Arguments();
+         args.put( "class", ShareableRect.CLASS_ID );
+         args.put( "x"    , nextDouble(  0, 540 ));
+         args.put( "y"    , nextDouble(  0, 400 ));
+         args.put( "w"    , nextDouble( 40, 100 ));
+         args.put( "h"    , nextDouble( 20,  80 ));
+         _remoteRectangleFactory.create( args );
       }
       catch( final Throwable t ) {
          t.printStackTrace();
@@ -226,8 +244,8 @@ public class ShapesUI implements Controller {
 
    @FXML
    private void createRectangle() {
-      if( _remoteShapesFactory != null ) {
-         createShapeRemotely( ShareableRect.CLASS_ID );
+      if( _remoteRectangleFactory != null ) {
+         createRectangleRemotely();
       }
       else {
          createShape(
@@ -239,8 +257,8 @@ public class ShapesUI implements Controller {
 
    @FXML
    private void createEllipse() {
-      if( _remoteShapesFactory != null ) {
-         createShapeRemotely( ShareableEllipse.CLASS_ID );
+      if( _remoteEllipseFactory != null ) {
+         createEllipseRemotely();
       }
       else {
          createShape(

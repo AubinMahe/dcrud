@@ -48,5 +48,6 @@ unsigned int   ParticipantImpl_getMCastAddress( ParticipantImpl *   This );
 void           ParticipantImpl_publishUpdated ( ParticipantImpl *   This, collSet updated );
 void           ParticipantImpl_publishDeleted ( ParticipantImpl *   This, collSet deleted );
 dcrudShareable ParticipantImpl_newInstance    ( ParticipantImpl *   This, ioByteBuffer frame );
-void           ParticipantImpl_sendCall       ( ParticipantImpl *   This, const char * intrfcName, const char * opName, collMap in, int callId );
-int            ParticipantImpl_call           ( ParticipantImpl *   This, const char * intrfcName, const char * opName, collMap in, dcrudICallback callback );
+void           ParticipantImpl_sendCall       ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId );
+void           ParticipantImpl_call           ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, dcrudICallback callback );
+bool           ParticipantImpl_callback       ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId );

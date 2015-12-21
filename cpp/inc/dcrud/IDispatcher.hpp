@@ -2,10 +2,11 @@
 
 namespace dcrud {
 
-   struct IProvided;
-   struct IRequired;
+   class IProvided;
+   class IRequired;
 
-   struct IDispatcher {
+   class IDispatcher {
+   public:
 
       virtual ~ IDispatcher() {}
 

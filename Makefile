@@ -1,4 +1,10 @@
-all: C/test/Debug/dcrud-c-test cpp/test/Debug/dcrud-cpp-test Java/dcrud.jar Java/dcrud-ui.jar
+all:\
+ C/test/Debug/dcrud-c-test\
+ C/test/Release/dcrud-c-test\
+ cpp/test/Debug/dcrud-cpp-test\
+ cpp/test/Release/dcrud-cpp-test\
+ Java/dcrud.jar\
+ Java/dcrud-ui.jar
 
 clean:
 	rm -fr C/Debug
@@ -18,21 +24,20 @@ clean:
 	rm -fr VisualStudioProject/test-cpp/x64
 	rm -f  VisualStudioProject/dcrud.sdf
 
-C/test/Debug/dcrud-c-test: C/Debug/libdcrud-c-lib.so
-	cd C/test ; make Debug
+C/test/Debug/dcrud-c-test:
+	cd C ; make Debug/dcrud-c-test
 
-C/Debug/libdcrud-c-lib.so:
-	cd C ; make Debug
+C/test/Release/dcrud-c-test:
+	cd C ; make Release/dcrud-c-test
 
-cpp/test/Debug/dcrud-cpp-test: cpp/Debug/libdcrud-cpp-lib.so
-	cd cpp/test ; make Debug
+cpp/test/Debug/dcrud-cpp-test:
+	cd cpp ; make Debug/dcrud-cpp-test
 
-cpp/Debug/libdcrud-cpp-lib.so:
-	cd cpp ; make Debug
+cpp/test/Release/dcrud-cpp-test:
+	cd cpp ; make Release/dcrud-cpp-test
 
 Java/dcrud.jar:
 	cd Java ; ant jar-lib
 
 Java/dcrud-ui.jar:
 	cd Java ; ant jar-test
-

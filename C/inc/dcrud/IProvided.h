@@ -3,9 +3,11 @@
 extern "C" {
 #endif
 
+#include <dcrud/Arguments.h>
+
 UTIL_ADT( dcrudIProvided );
 
-typedef void (* dcrudIOperation)( void * context, collMap in, collMap out );
+typedef dcrudArguments (* dcrudIOperation)( void * context, dcrudArguments args );
 
 bool dcrudIProvided_addOperation(
    dcrudIProvided  provided,

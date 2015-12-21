@@ -1,10 +1,9 @@
-package org.hpms.mw.distcrud.samples.shapes;
+package tests.shapes;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
 import org.hpms.mw.distcrud.ClassID;
-import org.hpms.mw.distcrud.SerializerHelper;
 import org.hpms.mw.distcrud.Shareable;
 
 import javafx.geometry.Bounds;
@@ -66,19 +65,19 @@ final class ShareableRect extends ShareableShape {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      SerializerHelper.putString( _name, target );
+      org.hpms.mw.distcrud.SerializerHelper.putString( _name, target );
       final Rectangle r = getShape();
       target.putDouble( r.getX());
       target.putDouble( r.getY());
       target.putDouble( r.getWidth());
       target.putDouble( r.getHeight());
-      SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
-      SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
+      tests.SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
+      tests.SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
    }
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _name = SerializerHelper.getString( source );
+      _name = org.hpms.mw.distcrud.SerializerHelper.getString( source );
       final Rectangle r = getShape();
       r.setUserData( this );
       final double x = source.getDouble();
@@ -89,8 +88,8 @@ final class ShareableRect extends ShareableShape {
       r.setY     ( y );
       r.setWidth ( w );
       r.setHeight( h );
-      r.setFill  ( SerializerHelper.getFxColor( source ));
-      r.setStroke( SerializerHelper.getFxColor( source ));
+      r.setFill  ( tests.SerializerHelper.getFxColor( source ));
+      r.setStroke( tests.SerializerHelper.getFxColor( source ));
    }
 
    @Override
@@ -143,19 +142,19 @@ final class ShareableEllipse extends ShareableShape {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      SerializerHelper.putString( _name, target );
+      org.hpms.mw.distcrud.SerializerHelper.putString( _name, target );
       final Ellipse e = getShape();
       target.putDouble( e.getCenterX());
       target.putDouble( e.getCenterY());
       target.putDouble( e.getRadiusX());
       target.putDouble( e.getRadiusY());
-      SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
-      SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
+      tests.SerializerHelper.putFxColor((Color)_shape.getFill()  , target, Color.WHITESMOKE );
+      tests.SerializerHelper.putFxColor((Color)_shape.getStroke(), target, Color.DARKGRAY );
    }
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _name  = SerializerHelper.getString( source );
+      _name  = org.hpms.mw.distcrud.SerializerHelper.getString( source );
       final Ellipse e = getShape();
       e.setUserData( this );
       final double x  = source.getDouble();
@@ -166,8 +165,8 @@ final class ShareableEllipse extends ShareableShape {
       e.setCenterY( y );
       e.setRadiusX( rx );
       e.setRadiusY( ry );
-      e.setFill   ( SerializerHelper.getFxColor( source ));
-      e.setStroke ( SerializerHelper.getFxColor( source ));
+      e.setFill   ( tests.SerializerHelper.getFxColor( source ));
+      e.setStroke ( tests.SerializerHelper.getFxColor( source ));
    }
 
    @Override

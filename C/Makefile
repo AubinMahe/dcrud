@@ -1,11 +1,9 @@
-CC             = gcc
-CFLAGS_RELEASE = -Iinc -Wno-long-long -pthread -O3 -fPIC
-CFLAGS_DEBUG   = -Iinc -Wno-long-long -pthread -O0 -fPIC\
- -g3 -pedantic -pedantic-errors -Wall -Wextra -Werror -Wconversion
+include ../flags.mak
 
 LIB_SRCS =\
  src/os/System.c\
  src/os/Mutex.c\
+ src/dcrud/Arguments.c\
  src/dcrud/ParticipantImpl.c\
  src/dcrud/Network.c\
  src/dcrud/Dispatcher.c\
@@ -56,10 +54,10 @@ clean:
 coll: Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test coll
 
-io:
+io: Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test io
 
-shapes:
+shapes: Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test shapes --pub-id 1 --interface 192.168.1.7
 
 Debug/dcrud-c-test: Debug/libdcrud-c-lib.so $(EXE_OBJS_DEBUG)

@@ -25,12 +25,7 @@ typedef enum dcrudCallMode_e {
 
 UTIL_ADT( dcrudIRequired );
 
-dcrudStatus dcrudIRequired_call(
-   dcrudIRequired This,
-   const char *   opName,
-   collMap        arguments,
-   dcrudICallback callback,
-   int *          callId    );
+void dcrudIRequired_call( dcrudIRequired This, const char * op, dcrudArguments args, dcrudICallback callback );
 
 #ifdef __cplusplus
 }

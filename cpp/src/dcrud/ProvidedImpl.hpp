@@ -8,13 +8,30 @@ namespace dcrud {
    typedef std::map<std::string, IOperation *> opsInOut_t;
    typedef opsInOut_t::iterator                opsInOutIter_t;
 
-   struct ProvidedImpl : public IProvided {
+   class ProvidedImpl : public IProvided {
+   public:
 
-      opsInOut_t _opsInOut;
+      ProvidedImpl( void ) {}
 
       IProvided & addOperation( const char * opName, IOperation & executor ) {
          _opsInOut[opName] = &executor;
          return *this;
       }
+
+      IOperation * getOperation( const std::string & opName ) {
+         opsInOutIter_t it = _opsInOut.find( opName );
+         if( it == _opsInOut.end()) {
+            return 0;
+         }
+         return it->second;
+      }
+
+   private:
+
+      opsInOut_t _opsInOut;
+
+   private:
+      ProvidedImpl( const ProvidedImpl & );
+      ProvidedImpl & operator = ( const ProvidedImpl & );
    };
 }

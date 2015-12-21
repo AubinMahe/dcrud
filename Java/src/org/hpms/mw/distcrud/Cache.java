@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -15,8 +16,6 @@ import org.hpms.dbg.Performance;
 
 final class Cache implements ICache {
 
-   private static byte _NextCacheId = 1;
-
    private final Set<ClassID>         _classes        = new HashSet<>();
    private final Set<Shareable>       _updated        = new HashSet<>();
    private final Set<Shareable>       _deleted        = new HashSet<>();
@@ -26,27 +25,16 @@ final class Cache implements ICache {
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
    private final ParticipantImpl      _participant;
-   private final short                _publisherId;
-   private final byte                 _cacheId;
+   private final int                  _publisherId;
 
    Cache( ParticipantImpl participant ) {
       _participant = participant;
       _publisherId = participant.getPublisherId();
-      _cacheId     = _NextCacheId++;
-      assert _cacheId > 0;
-   }
-
-   public int getCacheId() {
-      return _cacheId;
-   }
-
-   boolean matches( short publisherId, byte cacheId ) {
-      return( publisherId == _publisherId ) && ( cacheId == _cacheId );
    }
 
    @Override
    public boolean owns( GUID id ) {
-      return matches( id._publisher, id._cache );
+      return id._publisher == _publisherId ;
    }
 
    @Override
@@ -60,7 +48,6 @@ final class Cache implements ICache {
          return Status.ALREADY_CREATED;
       }
       item._id._publisher = _publisherId;
-      item._id._cache     = _cacheId;
       item._id._instance  = _nextInstance++;
       synchronized( _local ) {
          _local.put( item._id, item );
@@ -112,15 +99,16 @@ final class Cache implements ICache {
 
    @Override
    public Collection<Shareable> values() {
-      return _local.values();
+      return new LinkedList<>( _local.values());
    }
 
    @Override
    public Set<Shareable> select( Predicate<Shareable> query ) {
-      return _local.values()
-         .parallelStream()
-         .filter( query )
-         .collect( Collectors.toSet());
+      return new HashSet<>(
+         _local.values()
+            .parallelStream()
+            .filter( query )
+            .collect( Collectors.toSet()));
    }
 
    @Override
@@ -158,7 +146,7 @@ final class Cache implements ICache {
                      _local.put( id, item );
                   }
                   else {
-                     System.err.printf( "Unknown %s of %s\n", classId, id );
+                     System.err.printf( "Cache.refresh item %s of unknown class %s\n", id, classId );
                   }
                }
                else if( ! _ownershipCheck || ! owns( id )) {

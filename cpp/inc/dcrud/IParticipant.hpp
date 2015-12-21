@@ -5,14 +5,15 @@
 
 namespace dcrud {
 
-   struct ClassID;
-   struct ICache;
-   struct IDispatcher;
-   struct Shareable;
+   class ClassID;
+   class ICache;
+   class IDispatcher;
+   class Shareable;
 
    typedef Shareable * (* factory_t )( void );
 
-   struct IParticipant {
+   class IParticipant {
+   public:
 
       virtual ~ IParticipant() {}
 

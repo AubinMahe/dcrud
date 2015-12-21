@@ -29,16 +29,8 @@
 
 namespace dcrud {
 
-   struct NetworkReceiver {
-
-      ParticipantImpl & _participant;
-      io::ByteBuffer    _inBuf;
-      SOCKET            _in;
-#ifdef WIN32
-      HANDLE            _thread;
-#else
-      pthread_t         _thread;
-#endif
+   class NetworkReceiver {
+   public:
 
       NetworkReceiver(
          ParticipantImpl & participant,
@@ -52,6 +44,18 @@ namespace dcrud {
       void dataUpdate( void );
       void operation ( void );
       void run       ( void );
+
+   private:
+
+      ParticipantImpl & _participant;
+      Dispatcher      & _dispatcher;
+      io::ByteBuffer    _inBuf;
+      SOCKET            _in;
+#ifdef WIN32
+      HANDLE            _thread;
+#else
+      pthread_t         _thread;
+#endif
    };
 
    NetworkReceiver * createNetworkReceiver(
@@ -71,7 +75,7 @@ namespace dcrud {
 using namespace dcrud;
 
 static void * run( void * This ) {
-   ((NetworkReceiver *)This)->run();
+   static_cast<NetworkReceiver *>( This )->run();
    return 0;
 }
 
@@ -82,6 +86,7 @@ NetworkReceiver::NetworkReceiver(
    const char *      intrfc )
  :
    _participant( participant ),
+   _dispatcher ((Dispatcher &)participant.getDispatcher()),
    _inBuf      ( 64*1024 ),
    _in         ( socket( AF_INET, SOCK_DGRAM, 0 ))
 {
@@ -164,46 +169,31 @@ void NetworkReceiver::operation() {
    std::string opName     = _inBuf.getString();
    int         callId     = _inBuf.getInt();
    for( unsigned i = 0; i < count; ++i ) {
-      std::string argName = _inBuf.getString();
-      if( argName == "@queue" ) {
-         queueNdx = _inBuf.getByte();
-      }
-      else if( argName == "@mode" ) {
-         callMode = _inBuf.getByte();
-      }
-      else {
-         ClassID classID = ClassID::unserialize( _inBuf );
-         if( classID.isPredefined()) {
-            ClassID::Predefined predef = classID.getPredefined();
-            switch( predef ) {
-            case ClassID::NullType   : args.put( argName, (void *)0 );          break;
-            case ClassID::ByteType   : args.put( argName, _inBuf.getByte   ()); break;
-            case ClassID::BooleanType: args.put( argName, _inBuf.getBoolean()); break;
-            case ClassID::ShortType  : args.put( argName, _inBuf.getShort  ()); break;
-            case ClassID::IntegerType: args.put( argName, _inBuf.getInt    ()); break;
-            case ClassID::LongType   : args.put( argName, _inBuf.getLong   ()); break;
-            case ClassID::FloatType  : args.put( argName, _inBuf.getFloat  ()); break;
-            case ClassID::DoubleType : args.put( argName, _inBuf.getDouble ()); break;
-            case ClassID::StringType : args.put( argName, _inBuf.getString ()); break;
-            case ClassID::ClassIDType: args.put( argName, ClassID::unserialize( _inBuf )); break;
-            case ClassID::GUIDType   : args.put( argName, GUID   ::unserialize( _inBuf )); break;
-            default:
-               fprintf( stderr, "%s:%d: Unexpected class ID: %d\n",
-                  __FILE__, __LINE__, (int)predef );
-            break;
-            }
-         }
-         else {
-            args._args[argName] = _participant.newInstance( classID, _inBuf );
-         }
+      std::string   name    = _inBuf.getString();
+      ClassID       classID = ClassID::unserialize( _inBuf );
+      ClassID::Type type    = classID.getType();
+      switch( type ) {
+      case ClassID::TYPE_NULL       : args.putNull( name ); break;
+      case ClassID::TYPE_BYTE       : args.put( name, _inBuf.getByte   ()); break;
+      case ClassID::TYPE_BOOLEAN    : args.put( name, _inBuf.getBoolean()); break;
+      case ClassID::TYPE_SHORT      : args.put( name, _inBuf.getShort  ()); break;
+      case ClassID::TYPE_INTEGER    : args.put( name, _inBuf.getInt    ()); break;
+      case ClassID::TYPE_LONG       : args.put( name, _inBuf.getLong   ()); break;
+      case ClassID::TYPE_FLOAT      : args.put( name, _inBuf.getFloat  ()); break;
+      case ClassID::TYPE_DOUBLE     : args.put( name, _inBuf.getDouble ()); break;
+      case ClassID::TYPE_STRING     : args.put( name, _inBuf.getString ()); break;
+      case ClassID::TYPE_CLASS_ID   : args.put( name, ClassID::unserialize( _inBuf )); break;
+      case ClassID::TYPE_GUID       : args.put( name, GUID   ::unserialize( _inBuf )); break;
+      case ClassID::TYPE_CALL_MODE  : args.setMode ( _inBuf.getByte()); break;
+      case ClassID::TYPE_QUEUE_INDEX: args.setQueue( _inBuf.getByte()); break;
+      case ClassID::TYPE_SHAREABLE  : args.put( name, _participant.newInstance( classID, _inBuf )); break;
+      default:
+         fprintf( stderr, "%s:%d: Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
+      break;
       }
    }
    if( callId > 0 ) {
-      args_t results;
-      _participant.execute( intrfcName, opName, args, results, queueNdx, callMode );
-      if( ! results.empty()) {
-         _participant.call( intrfcName, opName, Arguments( results ), -callId );
-      }
+      _dispatcher.execute( intrfcName, opName, args, callId, queueNdx, callMode );
    }
    else if( callId < 0 ) {
       _participant.callback( intrfcName, opName, Arguments( args ), -callId );

@@ -2,9 +2,10 @@
 
 namespace dcrud {
 
-   struct IParticipant;
+   class IParticipant;
 
-   struct Network {
+   class Network {
+   public:
 
       static IParticipant & join(
          const char *   networkConfFile,

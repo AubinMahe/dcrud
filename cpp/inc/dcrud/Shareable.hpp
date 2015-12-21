@@ -2,18 +2,16 @@
 
 #include <dcrud/GUID.hpp>
 #include <dcrud/ClassID.hpp>
+#include <io/ByteBuffer.hpp>
 #include <util/types.h>
-
-namespace io {
-   struct ByteBuffer;
-}
 
 namespace dcrud {
 
-   struct Shareable {
+   class Cache;
+   class ParticipantImpl;
 
-      GUID          _id;
-      const ClassID _class;
+   class Shareable {
+   public:
 
       Shareable( const ClassID & classId ) :
          _class( classId )
@@ -27,6 +25,18 @@ namespace dcrud {
 
       virtual void serialize( io::ByteBuffer & target ) const = 0;
 
+      virtual void serializeClass( io::ByteBuffer & target ) const {
+         _class.serialize( target );
+      }
+
       virtual void unserialize( io::ByteBuffer & source ) = 0;
+
+   private:
+
+      GUID          _id;
+      const ClassID _class;
+
+      friend class Cache;
+      friend class ParticipantImpl;
    };
 }

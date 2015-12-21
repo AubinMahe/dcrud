@@ -7,25 +7,28 @@ namespace dcrud {
 
    struct Operation {
 
-      IParticipant &    _participant;
       IOperation &      _operation;
       const Arguments & _arguments;
-      args_t &          _results;
+      std::string       _intrfcName;
+      std::string       _opName;
+      int               _callId;
 
       Operation(
-         IParticipant &    participant,
-         IOperation &      operation,
-         const Arguments & arguments,
-         args_t &          results   )
+         IOperation &        operation,
+         const Arguments &   arguments,
+         const std::string & intrfcName,
+         const std::string & opName,
+         int                 callId  )
        :
-         _participant( participant ),
-         _operation  ( operation   ),
-         _arguments  ( arguments   ),
-         _results    ( results     )
+         _operation ( operation  ),
+         _arguments ( arguments  ),
+         _intrfcName( intrfcName ),
+         _opName    ( opName     ),
+         _callId    ( callId     )
       {}
 
-      void run() {
-         _operation.execute( _participant, _arguments, _results );
-      }
+   private:
+      Operation( const Operation & );
+      Operation & operator = ( const Operation & );
    };
 }

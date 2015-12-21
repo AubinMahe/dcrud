@@ -17,10 +17,8 @@ namespace io {
       ioByteOrder_LITTLE_ENDIAN
    };
 
-   struct ByteBuffer {
+   class ByteBuffer {
    private:
-      ByteBuffer( const ByteBuffer & right );
-      ByteBuffer & operator = ( const ByteBuffer & );
 
       ByteBuffer( ioByteBuffer buffer ) {
          _buffer = buffer;
@@ -125,7 +123,7 @@ namespace io {
          ioByteBuffer_putIntAt( _buffer, value, index );
       }
 
-      int getInt( void ) {
+      unsigned int getInt( void ) {
          unsigned int value = 0;
          ioByteBuffer_getInt( _buffer, &value );
          return value;
@@ -201,5 +199,9 @@ namespace io {
       void dump( FILE * target ) const {
          ioByteBuffer_dump( _buffer, target );
       }
+
+   private:
+      ByteBuffer( const ByteBuffer & right );
+      ByteBuffer & operator = ( const ByteBuffer & );
    };
 }

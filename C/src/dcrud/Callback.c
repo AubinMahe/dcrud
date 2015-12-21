@@ -26,7 +26,7 @@ void dcrudICallback_callback(
    dcrudICallback self,
    const char *   intrfc,
    const char *   operation,
-   collMap        results   )
+   dcrudArguments results   )
 {
    dcrudICallbackImpl * This = (dcrudICallbackImpl *)self;
    This->callback( self, intrfc, operation, results );

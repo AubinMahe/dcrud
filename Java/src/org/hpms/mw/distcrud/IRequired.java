@@ -1,14 +1,12 @@
 package org.hpms.mw.distcrud;
 
 import java.io.IOException;
-import java.util.Map;
 
 public interface IRequired {
 
-   int VERY_URGENT_QUEUE =   0;
-   int URGENT_QUEUE      =  50;
-   int DEFAULT_QUEUE     = 100;
-   int NON_URGENT_QUEUE  = 255;
+   byte URGENT_QUEUE     =    0; // 0x00
+   byte NORMAL_QUEUE     =  127; // 0x7F
+   byte NON_URGENT_QUEUE = -128; // 0xFF
 
    enum CallMode {
       SYNCHRONOUS,
@@ -16,9 +14,12 @@ public interface IRequired {
       ASYNCHRONOUS_IMMEDIATE,
    }
 
-   int call( String opName ) throws IOException;
+   byte     DEFAULT_QUEUE     =  NORMAL_QUEUE;
+   CallMode DEFAULT_CALL_MODE = CallMode.ASYNCHRONOUS_DEFERRED;
 
-   int call( String opName, Map<String, Object> arguments ) throws IOException;
+   void call( String opName ) throws IOException;
 
-   int call( String opName, Map<String, Object> arguments, ICallback callback ) throws IOException;
+   void call( String opName, Arguments arguments ) throws IOException;
+
+   void call( String opName, Arguments arguments, ICallback callback ) throws IOException;
 }

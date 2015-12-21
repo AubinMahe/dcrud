@@ -3,7 +3,7 @@
 extern "C" {
 #endif
 
-#include <coll/Map.h>
+#include <dcrud/Arguments.h>
 
 UTIL_ADT( dcrudICallback );
 
@@ -11,12 +11,12 @@ typedef void (* dcrudICallback_function)(
    dcrudICallback This,
    const char *   intrfc,
    const char *   operation,
-   collMap        results   );
+   dcrudArguments results   );
 
-dcrudICallback dcrudICallback_new( dcrudICallback_function callback, void * userData );
-void   dcrudICallback_delete     ( dcrudICallback * This );
-void   dcrudICallback_callback   ( dcrudICallback   This, const char * intrfc, const char * operation, collMap results );
-void * dcrudICallback_getUserData( dcrudICallback   This );
+dcrudICallback dcrudICallback_new        ( dcrudICallback_function callback, void * userData );
+void           dcrudICallback_delete     ( dcrudICallback * This );
+void           dcrudICallback_callback   ( dcrudICallback   This, const char * intrfc, const char * operation, dcrudArguments results );
+void *         dcrudICallback_getUserData( dcrudICallback   This );
 
 #ifdef __cplusplus
 }

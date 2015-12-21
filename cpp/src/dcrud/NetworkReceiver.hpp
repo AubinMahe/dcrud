@@ -4,8 +4,8 @@
 
 namespace dcrud {
 
-   struct NetworkReceiver;
-   struct ParticipantImpl;
+   class NetworkReceiver;
+   class ParticipantImpl;
 
    NetworkReceiver * createNetworkReceiver(
          ParticipantImpl & participant,

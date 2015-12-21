@@ -11,11 +11,32 @@
 
 namespace dcrud {
 
-   struct ParticipantImpl;
-   struct ProvidedImpl;
-   struct Operation;
+   class ParticipantImpl;
+   class ProvidedImpl;
+   class Operation;
 
-   struct Dispatcher : public IDispatcher {
+   class Dispatcher : public IDispatcher {
+   public:
+
+      Dispatcher( ParticipantImpl & participant ) :
+         _participant( participant )
+      {}
+
+      IProvided & provide( const char * interfaceName );
+
+      bool execute(
+         const std::string & intrfcName,
+         const std::string & opName,
+         const Arguments &   arguments,
+         int                 callId,
+         byte                queueNdx,
+         byte                callMode );
+
+      void handleRequests();
+
+      IRequired & require( const char * name );
+
+   private:
 
       typedef std::map<std::string, ProvidedImpl *> provided_t;
       typedef provided_t::iterator                  providedIter_t;
@@ -30,23 +51,5 @@ namespace dcrud {
       provided_t        _provided;
       operations_t      _operationQueues[OPERATION_QUEUE_COUNT];
       os::Mutex         _operationQueuesMutex;
-
-      Dispatcher( ParticipantImpl & participant ) :
-         _participant( participant )
-      {}
-
-      IProvided & provide( const char * interfaceName );
-
-      bool execute(
-         const std::string & intrfcName,
-         const std::string & opName,
-         const Arguments &   arguments,
-         args_t &            results,
-         int                 queueNdx,
-         byte                callMode );
-
-      void handleRequests();
-
-      IRequired & require( const char * name );
    };
 }

@@ -1,49 +1,79 @@
 #pragma once
 
+#include <dcrud/ClassID.hpp>
+#include <dcrud/GUID.hpp>
+
 #include <map>
 #include <string>
 #include <stdexcept>
 
 namespace dcrud {
 
-   typedef std::map<std::string, const void *> args_t;
-   typedef args_t::iterator                    argsIter_t;
-   typedef args_t::const_iterator              argsCstIter_t;
+   class Shareable;
+   class ParticipantImpl;
 
-   struct Arguments {
+   class Arguments {
+   public:
 
-      args_t _args;
+      Arguments( void );
 
-      Arguments() {}
+      ~ Arguments();
 
-      Arguments( const args_t & args ) :
-         _args( args )
-      {}
+      void clear();
 
-      template<class T> void put( const std::string & key, const T & value ) {
-         _args[key] = new T( value );
+      bool isEmpty() const {
+         return _args.empty();
       }
 
-      template<class T> bool get( const std::string & name, const T * & target ) const {
-         argsCstIter_t it = _args.find( name );
-         if( it == _args.end()) {
-            return false;
-         }
-         target = static_cast<const T *>( it->second );
-         return true;
+      size_t getCount() const {
+         return _args.size();
       }
 
-      template<class T> bool get( const std::string & name, T & target ) const {
-         argsCstIter_t it = _args.find( name );
-         if( it == _args.end()) {
-            return false;
-         }
-         const T * ptr = static_cast<const T *>( it->second );
-         if( ! ptr ) {
-            return false;
-         }
-         target = *ptr;
-         return true;
-      }
+      void putNull( const std::string & key );
+      void put    ( const std::string & key, const byte &           value );
+      void put    ( const std::string & key, const bool &           value );
+      void put    ( const std::string & key, const unsigned short & value );
+      void put    ( const std::string & key, const unsigned int &   value );
+      void put    ( const std::string & key, const uint64_t &       value );
+      void put    ( const std::string & key, const float &          value );
+      void put    ( const std::string & key, const double &         value );
+      void put    ( const std::string & key, const std::string &    value );
+      void put    ( const std::string & key, const ClassID &        value );
+      void put    ( const std::string & key, const GUID &           value );
+      void put    ( const std::string & key, const Shareable *      value );
+
+      bool isNull ( const std::string & key ) const;
+      bool get    ( const std::string & key, byte &           value ) const;
+      bool get    ( const std::string & key, bool &           value ) const;
+      bool get    ( const std::string & key, unsigned short & value ) const;
+      bool get    ( const std::string & key, unsigned int &   value ) const;
+      bool get    ( const std::string & key, uint64_t &       value ) const;
+      bool get    ( const std::string & key, float &          value ) const;
+      bool get    ( const std::string & key, double &         value ) const;
+      bool get    ( const std::string & key, std::string &    value ) const;
+      bool get    ( const std::string & key, ClassID &        value ) const;
+      bool get    ( const std::string & key, GUID &           value ) const;
+      bool get    ( const std::string & key, Shareable * &    value ) const;
+
+      void setMode ( byte mode );
+
+      void setQueue( byte queue );
+
+      ClassID::Type getType( const std::string & key ) const;
+
+      void serialize( io::ByteBuffer & message ) const;
+
+   private:
+
+      typedef std::map<std::string, void *> args_t;
+      typedef args_t::iterator              argsIter_t;
+      typedef args_t::const_iterator        argsCstIter_t;
+
+      typedef std::map<std::string, ClassID::Type> types_t;
+      typedef types_t::iterator                    typesIter_t;
+      typedef types_t::const_iterator              typesCstIter_t;
+
+      args_t  _args;
+      types_t _types;
    };
 }

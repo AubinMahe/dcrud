@@ -10,30 +10,33 @@ import org.hpms.mw.distcrud.IRequired.CallMode;
 
 class Dispatcher implements IDispatcher {
 
-   private final ParticipantImpl           _participant;
-   private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
-   @SuppressWarnings("unchecked")
-   private final List<Runnable>[]          _operationQueues = new List[256];
+   public static final String ICRUD_INTERFACE_NAME    = "dcrud.ICRUD";
+   public static final String ICRUD_INTERFACE_CREATE  = "create";
+   public static final String ICRUD_INTERFACE_UPDATE  = "update";
+   public static final String ICRUD_INTERFACE_DELETE  = "delete";
+   public static final String ICRUD_INTERFACE_CLASSID = "class-id";
+   public static final String ICRUD_INTERFACE_GUID    = "guid";
 
-   private static class Operation implements Runnable {
+   private static class Operation {
 
-      private final IOperation          _operation;
-      private final Map<String, Object> _arguments;
-      private final Map<String, Object> _results;
+      final IOperation _operation;
+      final Arguments  _arguments;
+      final String     _intrfcName;
+      final String     _opName;
+      final int        _callId;
 
       public Operation(
-         IOperation          operation,
-         Map<String, Object> arguments,
-         Map<String, Object> results    )
+         IOperation operation,
+         Arguments  arguments,
+         String     intrfcName,
+         String     opName,
+         int        callId )
       {
-         _operation = operation;
-         _arguments = arguments;
-         _results   = results;
-      }
-
-      @Override
-      public void run() {
-         _operation.execute( _arguments, _results );
+         _operation  = operation;
+         _arguments  = arguments;
+         _intrfcName = intrfcName;
+         _opName     = opName;
+         _callId     = callId;
       }
    }
 
@@ -46,6 +49,11 @@ class Dispatcher implements IDispatcher {
          return _opsInOut.put( opName, executor ) == null;
       }
    }
+
+   private final ParticipantImpl           _participant;
+   private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
+   @SuppressWarnings("unchecked")
+   private final List<Operation>[]         _operationQueues = new List[256];
 
    public Dispatcher( ParticipantImpl participant ) {
       _participant = participant;
@@ -61,36 +69,66 @@ class Dispatcher implements IDispatcher {
       return provided;
    }
 
-   void execute(
-      String              intrfcName,
-      String              opName,
-      Map<String, Object> arguments,
-      Map<String, Object> results,
-      int                 queueNdx,
-      CallMode            callMode )
+   boolean execute(
+      String    intrfcName,
+      String    opName,
+      int       callId,
+      Arguments arguments,
+      int       queueNdx,
+      CallMode  callMode ) throws IOException
    {
-      final ProvidedImpl provided  = _provided.get( intrfcName );
-      final IOperation   operation = provided._opsInOut.get( opName );
+      if( intrfcName.equals( ICRUD_INTERFACE_NAME )) {
+         switch( opName ) {
+         case ICRUD_INTERFACE_CREATE:
+            return _participant.create( arguments.get( ICRUD_INTERFACE_CLASSID ), arguments );
+         case ICRUD_INTERFACE_UPDATE:
+            return _participant.update( arguments.get( ICRUD_INTERFACE_GUID ), arguments );
+         case ICRUD_INTERFACE_DELETE:
+            return _participant.delete( arguments.get( ICRUD_INTERFACE_GUID ));
+         default:
+            System.err.printf( "Unexpected Publisher operation '%s'\n", opName );
+            break;
+         }
+         return false;
+      }
+      final ProvidedImpl provided = _provided.get( intrfcName );
+      if( provided == null ) {
+         System.err.printf( "Interface '%s' isn't registered yet, call ignored\n", intrfcName );
+         return false;
+      }
+      final IOperation operation = provided._opsInOut.get( opName );
       if( callMode == CallMode.SYNCHRONOUS ) {
-         operation.execute( arguments, results );
-      }
-      else {
-         synchronized( _operationQueues ) {
-            _operationQueues[queueNdx].add(
-               new Operation( operation, arguments, results ));
+         final Arguments results = operation.execute( arguments );
+         if( callId > 0 ) {
+            _participant.call( intrfcName, opName, results, -callId );
          }
-         if( callMode == CallMode.ASYNCHRONOUS_IMMEDIATE ) {
-            handleRequests();
-         }
+         return true;
       }
+      synchronized( _operationQueues ) {
+         _operationQueues[queueNdx].add(
+            new Operation( operation, arguments, intrfcName, opName, callId ));
+      }
+      if( callMode == CallMode.ASYNCHRONOUS_IMMEDIATE ) {
+         handleRequests();
+      }
+      return true;
    }
 
    @Override
    public void handleRequests() {
       synchronized( _operationQueues ) {
-         for( final List<Runnable> queue : _operationQueues ) {
-            for( final Runnable operation : queue ) {
-               operation.run();
+         for( final List<Operation> queue : _operationQueues ) {
+            for( final Operation op : queue ) {
+               final IOperation iOp     = op._operation;
+               final Arguments  results = iOp.execute( op._arguments );
+               if( op._callId > 0 ) {
+                  try {
+                     _participant.call( op._intrfcName, op._opName, results, -op._callId );
+                  }
+                  catch( final IOException e ) {
+                     e.printStackTrace();
+                  }
+               }
             }
             queue.clear();
          }
@@ -100,35 +138,39 @@ class Dispatcher implements IDispatcher {
    @Override
    public IRequired require( String name ) {
       return new IRequired() {
-
          @Override
-         public int call( String opName ) throws IOException {
-            final Map<String, Object> arguments = new HashMap<>();
-            arguments.put( "@mode" , CallMode.ASYNCHRONOUS_DEFERRED );
-            arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
-            return _participant.call( name, opName, arguments, null );
+         public void call( String opName ) throws IOException {
+            _participant.call( name, opName, null, 0 );
          }
-
          @Override
-         public int call( String opName, Map<String, Object> arguments ) throws IOException {
-            if( ! arguments.containsKey( "@mode" )) {
-               arguments.put( "@mode", CallMode.ASYNCHRONOUS_DEFERRED );
-            }
-            if( ! arguments.containsKey( "@queue" )) {
-               arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
-            }
-            return _participant.call( name, opName, arguments, null );
+         public void call( String opName, Arguments arguments ) throws IOException {
+            _participant.call( name, opName, arguments, 0 );
          }
-
          @Override
-         public int call( String opName, Map<String, Object> arguments, ICallback callback ) throws IOException {
-            if( ! arguments.containsKey( "@mode" )) {
-               arguments.put( "@mode", CallMode.ASYNCHRONOUS_DEFERRED );
-            }
-            if( ! arguments.containsKey( "@queue" )) {
-               arguments.put( "@queue", IRequired.DEFAULT_QUEUE );
-            }
-            return _participant.call( name, opName, arguments, callback );
+         public void call( String opName, Arguments arguments, ICallback callback ) throws IOException {
+            _participant.call( name, opName, arguments, callback );
+         }
+      };
+   }
+
+   @Override
+   public ICRUD requireCRUD( ClassID classId ) {
+      return new ICRUD(){
+         @Override
+         public void create( Arguments how ) throws IOException {
+            how.put( ICRUD_INTERFACE_CLASSID, classId );
+            _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_CREATE, how, 0 );
+         }
+         @Override
+         public void update( Shareable what, Arguments how ) throws IOException {
+            how.put( ICRUD_INTERFACE_GUID, what._id );
+            _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_UPDATE, how, 0 );
+         }
+         @Override
+         public void delete( Shareable what ) throws IOException {
+            final Arguments how = new Arguments();
+            how.put( ICRUD_INTERFACE_GUID, what._id );
+            _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_DELETE, how, 0 );
          }
       };
    }

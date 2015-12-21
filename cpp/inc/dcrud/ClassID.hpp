@@ -1,40 +1,35 @@
 #pragma once
 
-#include <iostream>
-#include <util/types.h>
-
-namespace io {
-   struct ByteBuffer;
-}
+#include <io/ByteBuffer.hpp>
 
 namespace dcrud {
 
-   struct ClassID {
+   class ClassID {
+   public:
 
-      enum Predefined {
-         NullType,
-         ByteType,
-         BooleanType,
-         ShortType,
-         IntegerType,
-         LongType,
-         FloatType,
-         DoubleType,
-         StringType,
-         ClassIDType,
-         GUIDType,
+      enum Type {
+
+         TYPE_NULL,
+         TYPE_BYTE,
+         TYPE_BOOLEAN,
+         TYPE_SHORT,
+         TYPE_INTEGER,
+         TYPE_LONG,
+         TYPE_FLOAT,
+         TYPE_DOUBLE,
+         TYPE_STRING,
+         TYPE_CLASS_ID,
+         TYPE_GUID,
+         TYPE_CALL_MODE,
+         TYPE_QUEUE_INDEX,
+         TYPE_SHAREABLE,
 
          LAST_TYPE
       };
 
       static const unsigned int SIZE = 4;
 
-      const byte _p1;
-      const byte _p2;
-      const byte _p3;
-      const byte _class;
-
-      ClassID( byte p1, byte p2, byte p3, byte clazz ) :
+      ClassID( byte p1 = 0, byte p2 = 0, byte p3 = 0, byte clazz = 0 ) :
          _p1   ( p1    ),
          _p2   ( p2    ),
          _p3   ( p3    ),
@@ -48,7 +43,15 @@ namespace dcrud {
          _class( right._class )
       {}
 
-      static void serializePredefined( Predefined predefined, io::ByteBuffer & buffer );
+      ClassID & operator = ( const ClassID & right ) {
+         _p1    = right._p1;
+         _p2    = right._p2;
+         _p3    = right._p3;
+         _class = right._class;
+         return *this;
+      }
+
+      static void serialize( Type type, io::ByteBuffer & buffer );
 
       static ClassID unserialize( io::ByteBuffer & buffer );
 
@@ -60,19 +63,19 @@ namespace dcrud {
          return compareTo( right ) < 0;
       }
 
-      bool isPredefined() const {
-         return ( _p1 == 0 ) && ( _p2 == 0 ) && ( _p3 == 0 );
-      }
-
       int compareTo( const ClassID & right ) const;
 
-      Predefined getPredefined() const;
+      Type getType() const;
 
       void serialize( io::ByteBuffer & buffer ) const;
 
       std::string toString( void ) const;
 
    private:
-      ClassID & operator = ( const ClassID & right );
+
+      byte _p1;
+      byte _p2;
+      byte _p3;
+      byte _class;
    };
 }

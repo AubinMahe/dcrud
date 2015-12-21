@@ -5,22 +5,26 @@
 
 namespace dcrud {
 
-   struct ParticipantImpl;
+   class ParticipantImpl;
 
-   struct RequiredImpl : public IRequired {
+   class RequiredImpl : public IRequired {
+   public:
+
+      RequiredImpl( const std::string & name, ParticipantImpl & participant );
+
+      void call( const std::string & opName );
+
+      void call( const std::string & opName, const Arguments & arguments );
+
+      int  call( const std::string & opName, const Arguments & arguments, ICallback & callback );
+
+   private:
 
       std::string       _name;
       ParticipantImpl & _participant;
 
-      RequiredImpl( const char * name, ParticipantImpl & participant ) :
-         _name       ( name        ),
-         _participant( participant )
-      {}
-
-      int call( const char * opName );
-
-      int call( const char * opName, Arguments & arguments );
-
-      int call( const char * opName, Arguments & arguments, ICallback & callback );
+   private:
+      RequiredImpl( const RequiredImpl & );
+      RequiredImpl & operator = ( const RequiredImpl & );
    };
 }

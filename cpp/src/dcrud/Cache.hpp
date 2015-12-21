@@ -11,7 +11,45 @@
 
 namespace dcrud {
 
-   struct Cache : public ICache {
+   class Cache : public ICache {
+   public:
+
+      Cache( ParticipantImpl & participant );
+
+      virtual ~ Cache();
+
+      bool matches( short publisherId, byte cacheId ) const;
+
+      unsigned getId() const {
+         return _cacheId;
+      }
+
+      void updateFromNetwork( io::ByteBuffer * item );
+
+      void deleteFromNetwork( const GUID & id );
+
+      virtual void setOwnership( bool enabled ) {
+         _ownershipCheck = enabled;
+      }
+
+      virtual bool owns( const GUID & id ) const;
+
+      virtual Status      create( Shareable & item );
+      virtual Shareable * read  ( const GUID & id ) const;
+      virtual Status      update( Shareable & item );
+      virtual Status      deleTe( Shareable & item );
+
+      virtual void values( shareables_t & snapshot ) const;
+
+      virtual bool select( shareablePredicate_t query, shareables_t & snapshot ) const;
+
+      virtual void publish( void );
+
+      virtual void subscribe( const ClassID & id );
+
+      virtual void refresh( void );
+
+   private:
 
       static byte _NextCacheId;
 
@@ -41,45 +79,6 @@ namespace dcrud {
       int                   _nextInstance;
       bool                  _ownershipCheck;
       ParticipantImpl &     _participant;
-      short                 _publisherId;
       byte                  _cacheId;
-
-
-      Cache( ParticipantImpl & participant );
-      ~ Cache();
-
-      bool matches( short publisherId, byte cacheId ) const{
-         return( publisherId == _publisherId ) && ( cacheId == _cacheId );
-      }
-
-      unsigned getId() const {
-         return _cacheId;
-      }
-
-      void updateFromNetwork( io::ByteBuffer * item );
-
-      void deleteFromNetwork( const GUID & id );
-
-      virtual void setOwnership( bool enabled ) {
-         _ownershipCheck = enabled;
-      }
-
-      virtual bool owns( const GUID & id ) const {
-         return matches( id._publisher, id._cache );
-      }
-
-      virtual Status      create( Shareable & item );
-      virtual Shareable * read  ( const GUID & id ) const;
-      virtual Status      update( Shareable & item );
-      virtual Status      deleTe( Shareable & item );
-
-      virtual void values( shareables_t & snapshot ) const;
-      virtual bool select( shareablePredicate_t query, shareables_t & snapshot ) const;
-
-      virtual void publish( void );
-
-      virtual void subscribe( const ClassID & id );
-
-      virtual void refresh( void );
    };
 }

@@ -23,61 +23,64 @@ static ShareableShape * createEllipse() {
 
 static struct OpCreateShape : public dcrud::IOperation {
 
-   virtual void execute(
+   virtual dcrud::Arguments * execute(
       dcrud::IParticipant &    participant,
-      const dcrud::Arguments & in,
-      dcrud::args_t &          out )
+      const dcrud::Arguments & args         )
    {
-      const dcrud::ClassID * clazz;
-      if( in.get( "class", clazz )) {
-         ShareableShape * shape = new ShareableShape( *clazz );
-         in.get( "x", shape->x );
-         in.get( "y", shape->y );
-         in.get( "w", shape->w );
-         in.get( "h", shape->h );
+      dcrud::ClassID clazz;
+      if( args.get( "class", clazz )) {
+         ShareableShape * shape = new ShareableShape( clazz );
+         shape->set( args );
          dcrud::ICache & cache = participant.getCache( 0 );
          cache.create( *shape );
       }
-      out.clear();
+      return 0;
    }
 
 } opCreateShape;
 
 struct OpUpdateShape : public dcrud::IOperation {
 
-   virtual void execute(
+   virtual dcrud::Arguments * execute(
       dcrud::IParticipant &    participant,
-      const dcrud::Arguments & in,
-      dcrud::args_t &          out )
+      const dcrud::Arguments & args         )
    {
-      ShareableShape * shape = 0;
-      if( in.get( "shape", shape )) {
+      dcrud::Shareable * shareable = 0;
+      if( args.get( "shape", shareable )) {
+         ShareableShape * shape = dynamic_cast<ShareableShape *>( shareable );
          shape->move();
          dcrud::ICache & cache = participant.getCache( 0 );
          cache.update( *shape );
       }
-      out.clear();
+      return 0;
    }
 
 } opUpdateShape;
 
 static struct OpDeleteShape : public dcrud::IOperation {
 
-   virtual void execute(
+   virtual dcrud::Arguments * execute(
       dcrud::IParticipant &    participant,
-      const dcrud::Arguments & in,
-      dcrud::args_t &          out )
+      const dcrud::Arguments & args         )
    {
-      ShareableShape * shape = 0;
-      if( in.get( "shape", shape )) {
-         dcrud::ICache & cache = participant.getCache( 0 );
+      dcrud::Shareable * shareable = 0;
+      if( args.get( "shape", shareable )) {
+         ShareableShape * shape = dynamic_cast<ShareableShape *>( shareable );
+         dcrud::ICache &  cache = participant.getCache( 0 );
          cache.deleTe( *shape );
          cache.publish();
       }
-      out.clear();
+      return 0;
    }
 
 } opDeleteShape;
+
+void ShareableShape::set( const dcrud::Arguments & args ) {
+   args.get( "x", x );
+   args.get( "y", y );
+   args.get( "w", w );
+   args.get( "h", h );
+}
 
 void ShareableShape::registerClasses( dcrud::IParticipant & participant ) {
    participant.registerClass( RectangleClassID, (dcrud::factory_t)&createRectangle );

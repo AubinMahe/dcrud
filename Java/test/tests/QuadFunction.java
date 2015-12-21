@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud.samples;
+package tests;
 
 @FunctionalInterface
 public interface QuadFunction<T1, T2, T3, T4, T> {

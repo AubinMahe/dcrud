@@ -13,14 +13,13 @@ using namespace dcrud;
 
 #define STRING_SIZE 100
 
-typedef struct Participant_s {
+struct Participant {
 
    unsigned short id;
    char           address[16];
    unsigned short port;
    char           subscriptions[STRING_SIZE];
-
-} Participant;
+};
 
 typedef std::vector<NetworkReceiver *> networkReceiver_t;
 typedef networkReceiver_t::iterator    networkReceiverIter_t;

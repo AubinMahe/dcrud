@@ -13,9 +13,9 @@
 
 namespace dcrud {
 
-   struct ICallback;
-   struct Cache;
-   struct Dispatcher;
+   class ICallback;
+   class Cache;
+   class Dispatcher;
 
    typedef std::set<Shareable *>        shareables_t;
    typedef shareables_t::iterator       shareablesIter_t;
@@ -26,7 +26,8 @@ namespace dcrud {
    typedef std::map<int, ICallback *>   callbacks_t;
    typedef callbacks_t::iterator        callbacksIter_t;
 
-   struct ParticipantImpl : public IParticipant {
+   class ParticipantImpl : public IParticipant {
+   public:
 
       static const byte NO_OP                 = 0;
       static const byte DATA_CREATE_OR_UPDATE = 1;
@@ -36,23 +37,7 @@ namespace dcrud {
       static const unsigned SIGNATURE_SIZE = 5U;
       static const byte     SIGNATURE[SIGNATURE_SIZE];
 
-      static const unsigned CACHE_COUNT = 256;
-
-      unsigned short     _publisherId;
-      io::ByteBuffer     _header;
-      io::ByteBuffer     _payload;
-      io::ByteBuffer     _message;
-      os::Mutex          _outMutex;
-      SOCKET             _out;
-      os::Mutex          _cachesMutex;
-      Cache *            _caches[CACHE_COUNT];
-      os::Mutex          _factoriesMutex;
-      factories_t        _factories;
-      callbacks_t        _callbacks;
-      struct sockaddr_in _target;
-      Dispatcher *       _dispatcher;
-      unsigned int       _itemCount;
-      int                _callId;
+   public:
 
       ParticipantImpl(
          unsigned short publisherId,
@@ -70,31 +55,23 @@ namespace dcrud {
 
       virtual IDispatcher & getDispatcher();
 
-      virtual void call(
+      void call(
          const std::string & intrfcName,
          const std::string & opName,
-         const Arguments &   in,
+         const Arguments *   args,
          int                 callId );
 
-      virtual int call(
+      int call(
          const std::string & intrfcName,
          const std::string & opName,
-         const Arguments &   in,
-         ICallback *         callback );
+         const Arguments *   in,
+         ICallback &         callback );
 
       short getPublisherId() const {
          return _publisherId;
       }
 
       Shareable * newInstance( const ClassID & classId, io::ByteBuffer & frame );
-
-      void execute(
-         const std::string & intrfcName,
-         const std::string & opName,
-         const Arguments &   arguments,
-         args_t &            results,
-         byte                queueNdx,
-         byte                callMode );
 
       void callback(
          const std::string & intrfcName,
@@ -113,5 +90,25 @@ namespace dcrud {
       void pushCreateOrUpdateItem( Shareable * item );
 
       void pushDeleteItem( Shareable * item );
+
+   private:
+
+      static const unsigned CACHE_COUNT = 256;
+
+      unsigned short     _publisherId;
+      io::ByteBuffer     _header;
+      io::ByteBuffer     _payload;
+      io::ByteBuffer     _message;
+      os::Mutex          _outMutex;
+      SOCKET             _out;
+      os::Mutex          _cachesMutex;
+      Cache *            _caches[CACHE_COUNT];
+      os::Mutex          _factoriesMutex;
+      factories_t        _factories;
+      callbacks_t        _callbacks;
+      struct sockaddr_in _target;
+      Dispatcher *       _dispatcher;
+      unsigned int       _itemCount;
+      int                _callId;
    };
 }

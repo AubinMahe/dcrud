@@ -33,9 +33,8 @@ namespace os {
       }
    };
 
-   struct Synchronized {
-
-      Mutex & _mutex;
+   class Synchronized {
+   public:
 
       Synchronized( Mutex & mutex ) :
          _mutex( mutex )
@@ -46,5 +45,13 @@ namespace os {
       ~ Synchronized() {
          _mutex.release();
       }
+
+   private:
+
+      Mutex & _mutex;
+
+   private:
+      Synchronized( const Synchronized & );
+      Synchronized & operator = ( const Synchronized & );
    };
 }

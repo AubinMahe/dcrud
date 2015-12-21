@@ -2,6 +2,7 @@
 
 #include <dcrud/Shareable.hpp>
 #include <dcrud/IParticipant.hpp>
+#include <dcrud/Arguments.hpp>
 
 struct FxColor {
 
@@ -18,14 +19,30 @@ struct FxColor {
    }
 };
 
-struct ShareableShape : public dcrud::Shareable {
+class ShareableShape : public dcrud::Shareable {
+public:
 
    static const dcrud::ClassID RectangleClassID;
    static const dcrud::ClassID EllipseClassID;
-   static unsigned int         Rank;
 
    static void registerClasses   ( dcrud::IParticipant & participant );
    static void registerOperations( dcrud::IDispatcher &  dispatcher  );
+
+public:
+
+   ShareableShape( const dcrud::ClassID & classID );
+
+   void set( const dcrud::Arguments & args );
+
+   void move();
+
+   virtual void serialize( io::ByteBuffer & target ) const;
+
+   virtual void unserialize( io::ByteBuffer & source );
+
+private:
+
+   static unsigned int Rank;
 
    std::string name;
    double      x;
@@ -36,14 +53,4 @@ struct ShareableShape : public dcrud::Shareable {
    FxColor     stroke;
    double      dx;
    double      dy;
-
-public:
-
-   ShareableShape( const dcrud::ClassID & classID );
-
-   void move();
-
-   virtual void serialize( io::ByteBuffer & target ) const;
-
-   virtual void unserialize( io::ByteBuffer & source );
 };

@@ -72,129 +72,104 @@ static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
 }
 
 static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
-   byte          count = 0;
-   char          intrfcName[1000];
-   char          opName[1000];
-   int           callId;
-   unsigned int  i;
-   byte          queueNdx  = DCRUD_DEFAULT_QUEUE;
-   dcrudCallMode callMode  = DCRUD_ASYNCHRONOUS_DEFERRED;
-   collMap       arguments = collMap_new((collComparator)collStringComparator );
+   byte           count = 0;
+   char           intrfcName[1000];
+   char           opName[1000];
+   int            callId;
+   unsigned int   i;
+   byte           queueNdx = DCRUD_DEFAULT_QUEUE;
+   dcrudCallMode  callMode = DCRUD_ASYNCHRONOUS_DEFERRED;
+   dcrudArguments args     = dcrudArguments_new();
 
    ioByteBuffer_getByte  ( frame, &count );
    ioByteBuffer_getString( frame, intrfcName, sizeof( intrfcName ));
    ioByteBuffer_getString( frame, opName    , sizeof( opName     ));
    ioByteBuffer_getInt   ( frame, (unsigned int *)&callId );
    for( i = 0; i < count; ++i ) {
-      char argName[1000];
-      ioByteBuffer_getString( frame, argName, sizeof( argName ));
-      if( 0 == strcmp( argName, "@queue" )) {
-         ioByteBuffer_getByte( frame, &queueNdx );
-      }
-      else if( 0 == strcmp( argName, "@mode" )) {
-         ioByteBuffer_getByte( frame, (byte *)&callMode );
-      }
-      else {
-         dcrudClassID classID;
-         byte         pckg1, pckg2, pckg3, clazz;
-         dcrudClassID_unserialize( frame, &classID );
-         dcrudClassID_get( classID, &pckg1, &pckg2, &pckg3, &clazz );
-         if(( pckg1 == 0 )&&( pckg2 == 0 )&&( pckg3 == 0 )) {
-            switch( clazz ) {
-            case 0: {
-               dcrudClassID item;
-               dcrudClassID_unserialize( frame, &item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 1:  /* byte    */
-            case 2: {/* boolean */
-               byte * item = (byte *)malloc( 1 );
-               ioByteBuffer_getByte( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 3: {
-               unsigned short * item = (unsigned short *)malloc( sizeof( short ));
-               ioByteBuffer_getShort( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 4: {
-               unsigned int * item = (unsigned int *)malloc( sizeof( int ));
-               ioByteBuffer_getInt( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 5: {
-               uint64_t * item = (uint64_t *)malloc( sizeof( uint64_t ));
-               ioByteBuffer_getLong( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 6: {
-               float * item = (float *)malloc( sizeof( float ));
-               ioByteBuffer_getFloat( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 7: {
-               double * item = (double *)malloc( sizeof( double ));
-               ioByteBuffer_getDouble( frame, item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 8: {
-               char item[64*1024];
-               ioByteBuffer_getString( frame, item, sizeof( item ));
-               collMap_put( arguments, strdup( argName ), strdup( item ), NULL );
-            }
-            break;
-            case 9: {
-               dcrudClassID item;
-               dcrudClassID_unserialize( frame, &item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            case 10: {
-               dcrudGUID item;
-               dcrudGUID_unserialize( frame, &item );
-               collMap_put( arguments, strdup( argName ), item, NULL );
-            }
-            break;
-            default:
-               fprintf( stderr, "%s:%d: Unexpected class ID: %d\n", __FILE__, __LINE__, clazz );
-            break;
-            }
-         }
-         else {
-            dcrudShareable item = ParticipantImpl_newInstance( This->participant, frame );
-            collMap_put( arguments, strdup( argName ), item, NULL );
-         }
+      char         name[1000];
+      dcrudClassID classID;
+      dcrudType    type;
+
+      ioByteBuffer_getString( frame, name, sizeof( name ));
+      dcrudClassID_unserialize( frame, &classID );
+      type = dcrudClassID_getType( classID );
+      switch( type ) {
+      case dcrudTYPE_NULL: dcrudArguments_putNull( args, name ); break;
+      case dcrudTYPE_BYTE:{
+         byte item;
+         ioByteBuffer_getByte( frame, &item );
+         dcrudArguments_putByte( args, name, item );
+      }break;
+      case dcrudTYPE_BOOLEAN:{
+         byte item;
+         ioByteBuffer_getByte( frame, &item );
+         dcrudArguments_putBoolean( args, name, item );
+      }break;
+      case dcrudTYPE_SHORT:{
+         unsigned short item;
+         ioByteBuffer_getShort( frame, &item );
+         dcrudArguments_putShort( args, name, item );
+      }break;
+      case dcrudTYPE_INTEGER:{
+         unsigned int item;
+         ioByteBuffer_getInt( frame, &item );
+         dcrudArguments_putInt( args, name, item );
+      }break;
+      case dcrudTYPE_LONG:{
+         uint64_t item;
+         ioByteBuffer_getLong( frame, &item );
+         dcrudArguments_putLong( args, name, item );
+      }break;
+      case dcrudTYPE_FLOAT:{
+         float item;
+         ioByteBuffer_getFloat( frame, &item );
+         dcrudArguments_putFloat( args, name, item );
+      }break;
+      case dcrudTYPE_DOUBLE:{
+         double item;
+         ioByteBuffer_getDouble( frame, &item );
+         dcrudArguments_putDouble( args, name, item );
+      }break;
+      case dcrudTYPE_STRING:{
+         char item[64*1024];
+         ioByteBuffer_getString( frame, item, sizeof( item ));
+         dcrudArguments_putString( args, name, item );
+      }break;
+      case dcrudTYPE_CLASS_ID:{
+         dcrudClassID item;
+         dcrudClassID_unserialize( frame, &item );
+         dcrudArguments_putClassID( args, name, item );
+      }break;
+      case dcrudTYPE_GUID:{
+         dcrudGUID item;
+         dcrudGUID_unserialize( frame, &item );
+         dcrudArguments_putGUID( args, name, item );
+      }break;
+      case dcrudTYPE_CALL_MODE:{
+         byte item;
+         ioByteBuffer_getByte( frame, &item );
+         dcrudArguments_setMode( args, item );
+      }break;
+      case dcrudTYPE_QUEUE_INDEX:{
+         byte item;
+         ioByteBuffer_getByte( frame, &item );
+         dcrudArguments_setQueue( args, item );
+      }break;
+      case dcrudTYPE_SHAREABLE:{
+         dcrudShareable item = ParticipantImpl_newInstance( This->participant, frame );
+         dcrudArguments_putShareable( args, name, item );
+      }break;
+      default:
+         fprintf( stderr, "%s:%d: Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
+      break;
       }
    }
-   if( callId > 0 ) {
-      collMap out = collMap_new((collComparator)collStringComparator );
-      dcrudIDispatcher_execute(
-         This->participant->dispatcher,
-         intrfcName,
-         opName,
-         arguments,
-         out,
-         callId,
-         queueNdx,
-         callMode );
+   if( callId >= 0 ) {
+      dcrudIDispatcher_execute( This->participant->dispatcher,
+         intrfcName, opName, args, callId, queueNdx, callMode );
    }
    else if( callId < 0 ) {
-      int            key      = -callId;
-      dcrudICallback callback = collMap_get( This->participant->callbacks, &key );
-      if( callback == NULL ) {
-         fprintf( stderr, "Unknown Callback received: %s.%s, id: %d\n",
-            intrfcName, opName, -callId );
-      }
-      else {
-         dcrudICallback_callback( callback, intrfcName, opName, arguments );
-      }
+      ParticipantImpl_callback( This->participant, intrfcName, opName, args, -callId );
    }
 }
 

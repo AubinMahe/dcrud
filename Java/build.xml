@@ -40,22 +40,7 @@
    </target>
 
    <target name="jar-lib" description="" depends="javac-lib">
-      <jar
-         destfile="${jar-lib}"
-         basedir ="${build-lib}">
-         <manifest>
-            <attribute
-               name ="Main-Class"
-               value="org.hpms.mw.distcrud.tooling.XML2CfgConverter" />
-         </manifest>
-      </jar>
-   </target>
-
-   <target name="convert-config-file" depends="jar-lib" description="">
-      <java fork="true" jar="${jar-lib}">
-         <arg value="network.xml" />
-         <arg value="network.cfg" />
-      </java>
+      <jar destfile="${jar-lib}" basedir ="${build-lib}" />
    </target>
 
    <target name="javac-test" description="">
@@ -86,20 +71,33 @@
                value="${jar-lib}" />
             <attribute
                name ="Main-Class"
-               value="org.hpms.mw.distcrud.samples.shapes.ShapesUI" />
+               value="tests.shapes.ShapesUI" />
          </manifest>
       </jar>
    </target>
 
-   <target name="run-only-java" depends="jar-lib,jar-test"
+   <target name="Test_001" depends="jar-lib,jar-test"
+      description="Java publisher and subcriber in a single jar">
+      <java fork="true" classpath="${jar-test}" classname="tests.person.Test_001" />
+   </target>
+
+   <target name="Test_002" depends="jar-lib,jar-test"
+      description="C publisher, Java subscrber">
+      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.person.Test_002" />
+      <exec executable="gnome-terminal" spawn="true">
+         <arg value="-t" /><arg value="dcrud-c-test" />
+         <arg value="-x" /><arg value="../C/Debug/" />
+         <arg value="Test_002" />
+      </exec>
+   </target>
+
+   <target name="Test_003" depends="jar-lib,jar-test"
       description="
 &#10;&#9;Launch 4 Java writters which create some coloured rectangles and ellipses.
 &#10;&#9;Each of them moves and publishes the shapes every 40 ms.
 &#10;&#9;All of them display all the shapes published.">
       <java fork="true" spawn="true" jar="${jar-test}">
-         <arg value="--conf-file=Network.xml" />
-         <arg value="--interface=eth1" />
-         <arg value="--publisher-name=Shapes-1" />
+         <arg value="--port=2416" />
          <arg value="--window=left-top" />
          <arg value="--periodic=true" />
          <arg value="--move=true" />
@@ -107,9 +105,7 @@
          <arg value="--fill=FF0000" />
       </java>
       <java fork="true" spawn="true" jar="${jar-test}">
-         <arg value="--conf-file=Network.xml" />
-         <arg value="--interface=eth1" />
-         <arg value="--publisher-name=Shapes-2" />
+         <arg value="--port=2417" />
          <arg value="--window=right-top" />
          <arg value="--periodic=true" />
          <arg value="--move=true" />
@@ -117,9 +113,7 @@
          <arg value="--fill=00FF00" />
       </java>
       <java fork="true" spawn="true" jar="${jar-test}">
-         <arg value="--conf-file=Network.xml" />
-         <arg value="--interface=eth1" />
-         <arg value="--publisher-name=Shapes-3" />
+         <arg value="--port=2418" />
          <arg value="--window=right-bottom" />
          <arg value="--periodic=true" />
          <arg value="--move=true" />
@@ -127,9 +121,7 @@
          <arg value="--fill=0000FF" />
       </java>
       <java fork="true" spawn="true" jar="${jar-test}">
-         <arg value="--conf-file=Network.xml" />
-         <arg value="--interface=eth1" />
-         <arg value="--publisher-name=Shapes-4" />
+         <arg value="--port=2419" />
          <arg value="--window=left-bottom" />
          <arg value="--periodic=true" />
          <arg value="--move=true" />
@@ -138,7 +130,7 @@
       </java>
    </target>
 
-   <target name="run-java-and-C" depends="jar-test,convert-config-file"
+   <target name="Test_004" depends="jar-test"
       description="
 &#10;&#9;Launch a server - written in C - and a client - written in Java - which call
 &#10;&#9;the server to create some coloured rectangles and ellipses.
@@ -147,17 +139,8 @@
       <exec executable="gnome-terminal" spawn="true">
          <arg value="-t" /><arg value="dcrud-c-test" />
          <arg value="-x" /><arg value="../C/Debug/" />
-         <arg value="shapes" />
-         <arg value="--pub-id" /><arg value="1" />
-         <arg value="--interface" /><arg value="192.168.1.5" />
+         <arg value="Test_001" />
       </exec>
-      <java fork="true" spawn="true" jar="${jar-test}">
-         <arg value="--conf-file=Network.xml" />
-         <arg value="--interface=eth1" />
-         <arg value="--publisher-name=Shapes-3" />
-         <arg value="--window=right-bottom" />
-         <arg value="--periodic=true" />
-         <arg value="--readonly=true" />
-      </java>
+      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
    </target>
 </project>

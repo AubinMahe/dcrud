@@ -76,6 +76,23 @@ ioStatus dcrudClassID_serialize( const dcrudClassID self, ioByteBuffer target ) 
    return ioStatus;
 }
 
+ioStatus dcrudClassID_serializeType( dcrudType type, ioByteBuffer target ) {
+   ioStatus ioStatus = IO_STATUS_NO_ERROR;
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, 0 );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, 0 );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, 0 );
+   }
+   if( IO_STATUS_NO_ERROR == ioStatus ) {
+      ioStatus = ioByteBuffer_putByte( target, type );
+   }
+   return ioStatus;
+}
+
 bool dcrudClassID_toString( const dcrudClassID self, char * target, size_t targetSize ) {
    dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
    int                ret  =
@@ -101,4 +118,12 @@ int dcrudClassID_compareTo( const dcrudClassID * l, const dcrudClassID * r ) {
       diff = left->clazz     - right->clazz;
    }
    return diff;
+}
+
+dcrudType dcrudClassID_getType( const dcrudClassID self ) {
+   dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
+   if( This->package_1 != 0 || This->package_2 != 0 || This->package_3 != 0 ) {
+      return dcrudLAST_TYPE;
+   }
+   return (dcrudType)This->clazz;
 }

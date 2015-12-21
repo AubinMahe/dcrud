@@ -6,13 +6,12 @@
 
 namespace dcrud {
 
-   struct GUID {
+   class Cache;
+
+   class GUID {
+   public:
 
       static const unsigned int SIZE = 2 + 1 + 4;
-
-      short _publisher;
-      byte  _cache;
-      int   _instance;
 
       static GUID unserialize( io::ByteBuffer & buffer );
 
@@ -43,6 +42,8 @@ namespace dcrud {
          return _instance != 0;
       }
 
+      bool matches( short publisher, byte cacheId ) const;
+
       int compareTo( const GUID & right ) const;
 
       void set( const GUID & id );
@@ -50,5 +51,13 @@ namespace dcrud {
       void serialize( io::ByteBuffer & buffer ) const;
 
       std::string toString( void ) const;
+
+   private:
+
+      short _publisher;
+      byte  _cache;
+      int   _instance;
+
+      friend class Cache;
    };
 }

@@ -5,9 +5,10 @@
 
 namespace dcrud {
 
-   struct ICallback;
+   class ICallback;
 
-   struct IRequired {
+   class IRequired {
+   public:
 
       static const byte VERY_URGENT_QUEUE      =   0;
       static const byte URGENT_QUEUE           =  50;
@@ -20,10 +21,10 @@ namespace dcrud {
 
       virtual ~ IRequired() {}
 
-      virtual int call( const char * opName ) = 0;
+      virtual void call( const std::string & opName ) = 0;
 
-      virtual int call( const char * opName, Arguments & arguments ) = 0;
+      virtual void call( const std::string & opName, const Arguments & arguments ) = 0;
 
-      virtual int call( const char * opName, Arguments & arguments, ICallback & callback ) = 0;
+      virtual int  call( const std::string & opName, const Arguments & arguments, ICallback & callback ) = 0;
    };
 }
