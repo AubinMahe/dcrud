@@ -24,8 +24,8 @@
 #define PRINT_TIMING
 */
 
-static dcrudIFactory rectangleFactory;
-static dcrudIFactory ellipseFactory;
+static dcrudLocalFactory rectangleFactory;
+static dcrudLocalFactory ellipseFactory;
 
 typedef struct FxColor_s {
 
@@ -234,18 +234,18 @@ void test_008( void ) {
 
       rectangleFactory.classID     = dcrudClassID_new( 1, 1, 1, 1 );
       rectangleFactory.size        = sizeof( ShareableShape );
-      rectangleFactory.initialize  = (dcrudShareable_Initialize )ShareableShape_init;
-      rectangleFactory.set         = (dcrudShareable_Set        )ShareableShape_set;
-      rectangleFactory.serialize   = (dcrudShareable_Serialize  )ShareableShape_serialize;
-      rectangleFactory.unserialize = (dcrudShareable_Unserialize)ShareableShape_unserialize;
+      rectangleFactory.initialize  = (dcrudLocalFactory_Initialize )ShareableShape_init;
+      rectangleFactory.set         = (dcrudLocalFactory_Set        )ShareableShape_set;
+      rectangleFactory.serialize   = (dcrudLocalFactory_Serialize  )ShareableShape_serialize;
+      rectangleFactory.unserialize = (dcrudLocalFactory_Unserialize)ShareableShape_unserialize;
       ellipseFactory  .classID     = dcrudClassID_new( 1, 1, 1, 2 );
       ellipseFactory  .size        = sizeof( ShareableShape );
-      ellipseFactory  .initialize  = (dcrudShareable_Initialize )ShareableShape_init;
-      ellipseFactory  .set         = (dcrudShareable_Set        )ShareableShape_set;
-      ellipseFactory  .serialize   = (dcrudShareable_Serialize  )ShareableShape_serialize;
-      ellipseFactory  .unserialize = (dcrudShareable_Unserialize)ShareableShape_unserialize;
-      dcrudIParticipant_registerFactory( participant, &rectangleFactory );
-      dcrudIParticipant_registerFactory( participant, &ellipseFactory );
+      ellipseFactory  .initialize  = (dcrudLocalFactory_Initialize )ShareableShape_init;
+      ellipseFactory  .set         = (dcrudLocalFactory_Set        )ShareableShape_set;
+      ellipseFactory  .serialize   = (dcrudLocalFactory_Serialize  )ShareableShape_serialize;
+      ellipseFactory  .unserialize = (dcrudLocalFactory_Unserialize)ShareableShape_unserialize;
+      dcrudIParticipant_registerLocalFactory( participant, &rectangleFactory );
+      dcrudIParticipant_registerLocalFactory( participant, &ellipseFactory );
       dcrudIParticipant_createCache( participant, &cache );
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleFactory.classID ));
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseFactory  .classID ));

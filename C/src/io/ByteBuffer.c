@@ -98,7 +98,7 @@ unsigned int ioByteBuffer_getPosition( ioByteBuffer self ) {
 ioStatus ioByteBuffer_setPosition( ioByteBuffer self, unsigned int position ) {
    ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
    ioStatus           status = IO_STATUS_NO_ERROR;
-   if( position < This->limit ) {
+   if( position <= This->limit ) {
       This->position = position;
    }
    else {

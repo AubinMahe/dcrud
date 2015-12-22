@@ -17,61 +17,47 @@ typedef struct dcrudCounterpart_s {
 
 } dcrudCounterpart;
 
-void dcrudIParticipant_listen(
-   dcrudIParticipant  This,
-   const char *       networkInterface,
-   dcrudCounterpart * others[]         );
+typedef void     (* dcrudLocalFactory_Set         )( dcrudShareableData This, const dcrudShareableData source );
+typedef ioStatus (* dcrudLocalFactory_Serialize   )( dcrudShareableData This, ioByteBuffer target );
+typedef ioStatus (* dcrudLocalFactory_Unserialize )( dcrudShareableData This, ioByteBuffer source );
+typedef bool     (* dcrudLocalFactory_Initialize  )( dcrudShareableData This );
+struct dcrudRemoteFactory_s;
+typedef void     (* dcrudRemoteFactory_create     )( struct dcrudRemoteFactory_s * This, dcrudArguments how );
+typedef void     (* dcrudRemoteFactory_update     )( struct dcrudRemoteFactory_s * This, dcrudShareable what, dcrudArguments how );
+typedef void     (* dcrudRemoteFactory_delete     )( struct dcrudRemoteFactory_s * This, dcrudShareable what );
 
-typedef void (* dcrudShareable_Set )( dcrudShareableData This, const dcrudShareableData source );
-typedef ioStatus (* dcrudShareable_Serialize )( dcrudShareableData This, ioByteBuffer target );
-typedef ioStatus (* dcrudShareable_Unserialize )( dcrudShareableData This, ioByteBuffer source );
-typedef bool (* dcrudShareable_Initialize )( dcrudShareableData This );
+typedef struct dcrudLocalFactory_s {
 
-typedef struct dcrudIFactory_s {
+   dcrudClassID                  classID;
+   size_t                        size;
+   dcrudLocalFactory_Initialize  initialize;
+   dcrudLocalFactory_Set         set;
+   dcrudLocalFactory_Serialize   serialize;
+   dcrudLocalFactory_Unserialize unserialize;
 
-   dcrudClassID               classID;
-   size_t                     size;
-   dcrudShareable_Initialize  initialize;
-   dcrudShareable_Set         set;
-   dcrudShareable_Serialize   serialize;
-   dcrudShareable_Unserialize unserialize;
+} dcrudLocalFactory;
 
-} dcrudIFactory;
+typedef struct dcrudRemoteFactory_s {
 
-bool dcrudIParticipant_registerFactory( dcrudIParticipant This, dcrudIFactory * factory );
+   dcrudClassID              classID;
+   void *                    userContext;
+   dcrudIParticipant         participant;
+   dcrudRemoteFactory_create create;
+   dcrudRemoteFactory_update update;
+   dcrudRemoteFactory_delete delete;
 
-typedef void (* dcrudICRUDSrvc_create )( dcrudArguments how );
-typedef void (* dcrudICRUDSrvc_update )( dcrudShareable what, dcrudArguments how );
-typedef void (* dcrudICRUDSrvc_delete )( dcrudShareable what );
+} dcrudRemoteFactory;
 
-typedef struct dcrudICRUDSrvc_s {
-
-   dcrudICRUDSrvc_create create;
-   dcrudICRUDSrvc_update update;
-   dcrudICRUDSrvc_delete delete;
-
-} dcrudICRUDSrvc;
-
-bool dcrudIParticipant_registerPublisher(
-   dcrudIParticipant This,
-   dcrudClassID      id,
-   dcrudICRUDSrvc *  publisher );
-
-dcrudICache dcrudIParticipant_getDefaultCache( dcrudIParticipant This );
-
-dcrudStatus dcrudIParticipant_createCache(
-   dcrudIParticipant This,
-   dcrudICache *     target );
-
-dcrudICache dcrudIParticipant_getCache( dcrudIParticipant This, byte ID );
-
-dcrudIDispatcher dcrudIParticipant_getDispatcher( dcrudIParticipant This );
-
-dcrudShareable dcrudIParticipant_createShareable( dcrudIParticipant This, dcrudClassID classID );
-
-void dcrudIParticipant_run( dcrudIParticipant This );
-
-void dcrudIParticipant_delete( dcrudIParticipant * This );
+void             dcrudIParticipant_listen               ( dcrudIParticipant   This, const char * networkInterface, dcrudCounterpart * others[] );
+bool             dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
+bool             dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
+dcrudICache      dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This );
+dcrudStatus      dcrudIParticipant_createCache          ( dcrudIParticipant   This, dcrudICache * target );
+dcrudICache      dcrudIParticipant_getCache             ( dcrudIParticipant   This, byte ID );
+dcrudIDispatcher dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This );
+dcrudShareable   dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID );
+void             dcrudIParticipant_run                  ( dcrudIParticipant   This );
+void             dcrudIParticipant_delete               ( dcrudIParticipant * This );
 
 #ifdef __cplusplus
 }

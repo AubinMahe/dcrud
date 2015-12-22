@@ -2,6 +2,9 @@
 #include <coll/Map.h>
 #include <coll/Comparator.h>
 #include "Shareable_private.h"
+#ifdef linux
+#  include <inttypes.h>
+#endif
 
 typedef struct Arguments_t {
 
@@ -73,6 +76,8 @@ dcrudArguments dcrudArguments_new( void ) {
    memset( This, 0, sizeof( Arguments ));
    This->args  = collMap_new((collComparator)collStringComparator );
    This->types = collMap_new((collComparator)collStringComparator );
+   dcrudArguments_setMode ((dcrudArguments)This, DCRUD_ASYNCHRONOUS_DEFERRED );
+   dcrudArguments_setQueue((dcrudArguments)This, DCRUD_DEFAULT_QUEUE );
    return (dcrudArguments)This;
 }
 
@@ -261,14 +266,15 @@ dcrudType dcrudArguments_getType( dcrudArguments self, const char * key ) {
 typedef struct Context_t {
 
    Arguments *  source;
-   ioByteBuffer target;
+   ioByteBuffer buffer;
+   FILE *       file;
 
 } Context;
 
 static bool serializePair( collForeach * context ) {
    Context *         ctxt   = (Context *  )context->user;
    Arguments *       source = ctxt->source;
-   ioByteBuffer      target = ctxt->target;
+   ioByteBuffer      target = ctxt->buffer;
    collMapPair *     pair   = (collMapPair *)context->item;
    const char *      name   = (const char * )pair->key;
    const void *      value  = (const void * )pair->value;
@@ -276,10 +282,11 @@ static bool serializePair( collForeach * context ) {
 
    if( ! type ) {
       fprintf( stderr, "%s:%d: No type for %s\n", __FILE__, __LINE__, name );
+      context->retVal = __FILE__;
       return false;
    }
+   ioByteBuffer_putString( target, name );
    if( value ) {
-      ioByteBuffer_putString( target, name );
       if( *type == dcrudTYPE_SHAREABLE ) {
          dcrudShareableImpl * item = (dcrudShareableImpl *)value;
          dcrudClassID_serialize( item->classID, target );
@@ -306,6 +313,12 @@ static bool serializePair( collForeach * context ) {
          }
       }
    }
+   else {
+      fprintf( stderr, "%s:%d: No value for %s\n", __FILE__, __LINE__, name );
+      context->retVal = __FILE__;
+      return false;
+   }
+   context->retVal = NULL;
    return true;
 }
 
@@ -314,9 +327,76 @@ bool dcrudArguments_serialize( dcrudArguments self, ioByteBuffer target ) {
    if( This ) {
       Context   ctxt;
       ctxt.source = This;
-      ctxt.target = target;
-      collMap_foreach( This->args, serializePair, &ctxt );
-      return true;
+      ctxt.buffer = target;
+      ctxt.file   = 0;
+      return collMap_foreach( This->args, serializePair, &ctxt ) == NULL;
    }
-   return false;
+   return true;
+}
+
+static bool printPair( collForeach * context ) {
+   Context *         ctxt   = (Context *  )context->user;
+   Arguments *       source = ctxt->source;
+   FILE *            target = ctxt->file;
+   collMapPair *     pair   = (collMapPair *)context->item;
+   const char *      name   = (const char * )pair->key;
+   const void *      value  = (const void * )pair->value;
+   const dcrudType * type   = (const dcrudType *)collMap_get( source->types, (collMapKey)name );
+
+   if( ! type ) {
+      fprintf( target, "ERROR:%s:%d: No type for %s\n", __FILE__, __LINE__, name );
+      return false;
+   }
+   fprintf( target, "%20s => ", name );
+   if( value ) {
+      if( *type == dcrudTYPE_SHAREABLE ) {
+         dcrudShareableImpl * item = (dcrudShareableImpl *)value;
+         char cs[20];
+         char id[20];
+         dcrudClassID_toString( item->classID, cs, sizeof( cs ));
+         dcrudGUID_toString   ( item->id     , id, sizeof( id ));
+         fprintf( target, "%s, %s\n", cs, id );
+      }
+      else {
+         char cs[20];
+         char id[20];
+         switch( *type ) {
+         case dcrudTYPE_NULL       : fprintf( target, "null\n" ); break;
+         case dcrudTYPE_BYTE       : fprintf( target, "byte      : %d\n", *(byte *)value ); break;
+         case dcrudTYPE_BOOLEAN    : fprintf( target, "boolean   : %s\n", (*(byte *)value) ? "true" : "false" ); break;
+         case dcrudTYPE_SHORT      : fprintf( target, "short     : %d\n", *(unsigned short *)value ); break;
+         case dcrudTYPE_INTEGER    : fprintf( target, "integer   : %d\n", *(unsigned int *)value ); break;
+         case dcrudTYPE_LONG       : fprintf( target, "long      : %"PRIu64"\n", *(uint64_t *)value ); break;
+         case dcrudTYPE_FLOAT      : fprintf( target, "float     : %f\n", *(float *)value ); break;
+         case dcrudTYPE_DOUBLE     : fprintf( target, "double    : %f\n", *(double *)value ); break;
+         case dcrudTYPE_STRING     : fprintf( target, "string    : %s\n", (const char *)value ); break;
+         case dcrudTYPE_CLASS_ID   : dcrudClassID_toString((const dcrudClassID)value, cs, sizeof( cs ));
+                                     fprintf( target, "ClassID   : %s\n", cs ); break;
+         case dcrudTYPE_GUID       : dcrudGUID_toString   ((const dcrudGUID   )value, id, sizeof( id ));
+                                     fprintf( target, "GUID      : %s\n", id ); break;
+         case dcrudTYPE_CALL_MODE  : fprintf( target, "CallMode  : %d\n", *(byte *)value ); break;
+         case dcrudTYPE_QUEUE_INDEX: fprintf( target, "QueueIndex: %d\n", *(byte *)value ); break;
+         case dcrudTYPE_SHAREABLE  : /* Already handled before this switch. */
+         case dcrudLAST_TYPE       : break;
+         }
+      }
+   }
+   else {
+      fprintf( target, "???       : null\n" );
+   }
+   return true;
+}
+
+void dcrudArguments_dump( dcrudArguments self, FILE * target ) {
+   Arguments * This = (Arguments *)self;
+   if( This ) {
+      Context      ctxt;
+      unsigned int count = dcrudArguments_getCount( self );
+
+      ctxt.source = This;
+      ctxt.buffer = 0;
+      ctxt.file   = target;
+      fprintf( target, "#%d\n", count );
+      collMap_foreach( This->args, printPair, &ctxt );
+   }
 }

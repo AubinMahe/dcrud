@@ -15,7 +15,7 @@ import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.ClassID.Type;
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
-final class NetworkReceiver extends Thread {
+final class NetworkReceiver extends Thread implements IProtocol {
 
    private final ParticipantImpl _participant;
    private final Dispatcher      _dispatcher;
@@ -46,8 +46,7 @@ final class NetworkReceiver extends Thread {
    }
 
    private void dataUpdate( ByteBuffer b ) {
-      final int payloadSize =
-         ParticipantImpl.GUID_SIZE + ParticipantImpl.CLASS_ID_SIZE + b.getInt();
+      final int payloadSize = GUID_SIZE + CLASS_ID_SIZE + b.getInt();
       _participant.dataUpdate( b, payloadSize );
       b.position( b.position() + payloadSize );
    }
@@ -60,10 +59,10 @@ final class NetworkReceiver extends Thread {
       final Arguments args       = new Arguments();
       final int       queueNdx   = IRequired.DEFAULT_QUEUE;
       final CallMode  callMode   = IRequired.CallMode.ASYNCHRONOUS_DEFERRED;
-      final int       count      = b.get();
       final String    intrfcName = SerializerHelper.getString( b );
       final String    opName     = SerializerHelper.getString( b );
       final int       callId     = b.getInt();
+      final int       count      = b.get();
       for( int i = 0; i < count; ++i ) {
          final String  name    = SerializerHelper.getString( b );
          final ClassID classId = ClassID.unserialize( b );
@@ -87,6 +86,23 @@ final class NetworkReceiver extends Thread {
             throw new IllegalStateException( "Unexpected type " + type + " for argument " + name );
          }
       }
+      if( intrfcName.equals( ICRUD_INTERFACE_NAME )) {
+         switch( opName ) {
+         case ICRUD_INTERFACE_CREATE:
+             _participant.create( args.get( ICRUD_INTERFACE_CLASSID ), args );
+             break;
+         case ICRUD_INTERFACE_UPDATE:
+            _participant.update( args.get( ICRUD_INTERFACE_GUID ), args );
+            break;
+         case ICRUD_INTERFACE_DELETE:
+            _participant.delete( args.get( ICRUD_INTERFACE_GUID ));
+            break;
+         default:
+            System.err.printf( "Unexpected Publisher operation '%s'\n", opName );
+            break;
+         }
+         return;
+      }
       if( callId >= 0 ) {
          _dispatcher.execute( intrfcName, opName, callId, args, queueNdx, callMode );
       }
@@ -97,7 +113,7 @@ final class NetworkReceiver extends Thread {
 
    @Override
    public void run() {
-      final byte[]     signa = new byte[ParticipantImpl.SIGNATURE.length];
+      final byte[]     signa = new byte[SIGNATURE.length];
       final ByteBuffer inBuf = ByteBuffer.allocate( 64*1024 );
       for( long atStart = 0;;) {
          try {
@@ -110,7 +126,7 @@ final class NetworkReceiver extends Thread {
             inBuf.flip();
             Dump.dump( inBuf );
             inBuf.get( signa );
-            if( Arrays.equals( signa, ParticipantImpl.SIGNATURE )) {
+            if( Arrays.equals( signa, SIGNATURE )) {
                final FrameType frameType = FrameType.values()[inBuf.get()];
                switch( frameType ) {
                case DATA_CREATE_OR_UPDATE: dataUpdate( inBuf ); break;

@@ -9,7 +9,7 @@
 void test_002( void );
 void test_003( void );
 void test_004( void ){}
-void test_005( void ){}
+void test_005( void );
 void test_006( void );
 /*   test_007: Java only */
 void test_008( void );
@@ -55,5 +55,7 @@ int main( int argc, char * argv[] ) {
       test_008();
       break;
    }
+   printf( "Press enter to exit\n" );
+   fgetc( stdin );
    return 0;
 }

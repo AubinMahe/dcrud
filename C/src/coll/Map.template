@@ -184,7 +184,7 @@ collForeachResult COLL_MAP_NAME(_foreach)(
    context.user = userData;
    for( context.index = 0; context.index < This->count; ++context.index ) {
       context.item  = This->pairs + context.index;
-      if( !fn( &context ) ) {
+      if( ! fn( &context )) {
          break;
       }
    }

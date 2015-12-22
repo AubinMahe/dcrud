@@ -4,6 +4,7 @@
 #include "Dispatcher.h"
 #include "Shareable_private.h"
 #include "NetworkReceiver.h"
+#include "IProtocol.h"
 
 #include <coll/List.h>
 #include <coll/MapFuncPtr.h>
@@ -165,7 +166,7 @@ unsigned int ParticipantImpl_getMCastAddress( ParticipantImpl * This ) {
    return This->target.sin_addr.s_addr;
 }
 
-bool dcrudIParticipant_registerFactory( dcrudIParticipant self, dcrudIFactory * factory ) {
+bool dcrudIParticipant_registerLocalFactory( dcrudIParticipant self, dcrudLocalFactory * factory ) {
    ParticipantImpl * This = (ParticipantImpl *)self;
    collMapPair       previous;
    bool              known;
@@ -179,20 +180,17 @@ bool dcrudIParticipant_registerFactory( dcrudIParticipant self, dcrudIFactory * 
    return known;
 }
 
-bool dcrudIParticipant_registerPublisher(
-   dcrudIParticipant self,
-   dcrudClassID      id,
-   dcrudICRUDSrvc *  publisher )
-{
+bool dcrudIParticipant_registerRemoteFactory( dcrudIParticipant self, dcrudRemoteFactory * rf ) {
    ParticipantImpl * This = (ParticipantImpl *)self;
    collMapPair       previous;
    bool              known;
 
    osMutex_take( This->publishersMutex );
-   known = collMap_put( This->publishers, id, (collMapValue)publisher, &previous );
+   known = collMap_put( This->publishers, rf->classID, (collMapValue)rf, &previous );
    if( known ) {
       free( previous.value );
    }
+   rf->participant = self;
    osMutex_release( This->publishersMutex );
    return known;
 }
@@ -241,10 +239,10 @@ dcrudIDispatcher dcrudIParticipant_getDispatcher( dcrudIParticipant self ) {
 dcrudShareable dcrudIParticipant_createShareable( dcrudIParticipant self, dcrudClassID classID ) {
    ParticipantImpl * This    = (ParticipantImpl *)self;
    dcrudShareable    item    = NULL;
-   dcrudIFactory *   factory = NULL;
+   dcrudLocalFactory *   factory = NULL;
 
    osMutex_take( This->factoriesMutex );
-   factory = (dcrudIFactory *)collMap_get( This->factories, classID );
+   factory = (dcrudLocalFactory *)collMap_get( This->factories, classID );
    osMutex_release( This->factoriesMutex );
    if( factory ) {
       item = dcrudShareable_new( factory, classID );
@@ -262,12 +260,12 @@ dcrudShareable dcrudIParticipant_createShareable( dcrudIParticipant self, dcrudC
 
 dcrudShareable ParticipantImpl_newInstance( ParticipantImpl * This, ioByteBuffer frame ) {
    dcrudShareable  item    = NULL;
-   dcrudIFactory * factory = NULL;
+   dcrudLocalFactory * factory = NULL;
    dcrudClassID    classID = NULL;
 
    dcrudClassID_unserialize( frame, &classID );
    osMutex_take( This->factoriesMutex );
-   factory = (dcrudIFactory *)collMap_get( This->factories, classID );
+   factory = (dcrudLocalFactory *)collMap_get( This->factories, classID );
    osMutex_release( This->factoriesMutex );
    if( factory ) {
       dcrudShareableData data;
@@ -342,22 +340,20 @@ void ParticipantImpl_sendCall(
    dcrudArguments    args,
    int               callId )
 {
+   byte count = (byte)( args ? dcrudArguments_getCount( args ) : 0 );
+
    osMutex_take( This->outMutex );
    ioByteBuffer_clear    ( This->message );
-   ioByteBuffer_clear    ( This->header );
-   ioByteBuffer_put      ( This->header, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
-   ioByteBuffer_putByte  ( This->header, FRAMETYPE_OPERATION );
-   ioByteBuffer_putByte  ( This->header, (byte)( args ? dcrudArguments_getCount( args ) : 0 ));
-   ioByteBuffer_flip     ( This->header );
-   ioByteBuffer_putBuffer( This->message, This->header );
+   ioByteBuffer_put      ( This->message, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
+   ioByteBuffer_putByte  ( This->message, FRAMETYPE_OPERATION );
    ioByteBuffer_putString( This->message, intrfcName );
    ioByteBuffer_putString( This->message, opName );
    ioByteBuffer_putInt   ( This->message, (unsigned int)callId );
-   if( args ) {
-      dcrudArguments_serialize( args, This->message );
+   ioByteBuffer_putByte  ( This->message, count );
+   if( dcrudArguments_serialize( args, This->message )) {
+      ioByteBuffer_flip  ( This->message );
+      ioByteBuffer_send  ( This->message, This->out, &This->target );
    }
-   ioByteBuffer_flip     ( This->message );
-   ioByteBuffer_send     ( This->message, This->out, &This->target );
    osMutex_release( This->outMutex );
 }
 
@@ -393,4 +389,56 @@ bool ParticipantImpl_callback(
    }
    dcrudICallback_callback( callback, intrfcName, opName, args );
    return true;
+}
+
+bool ParticipantImpl_create( ParticipantImpl * This, dcrudClassID classId, dcrudArguments how ) {
+   dcrudRemoteFactory * icrud = collMap_get( This->publishers, classId );
+   if( ! icrud ) {
+      char buffer[100];
+      dcrudClassID_toString( classId, buffer, sizeof( buffer ));
+      fprintf( stderr, "No ICRUD publisher registered for %s\n", buffer );
+      return false;
+   }
+   icrud->create( icrud, how );
+   return true;
+}
+
+bool ParticipantImpl_update( ParticipantImpl * This, dcrudGUID id, dcrudArguments how ) {
+   unsigned int i;
+   for( i = 0; i < This->nextCacheID; ++i ) {
+      dcrudShareable what = dcrudICache_read( This->caches[i], id );
+      if( what ) {
+         dcrudClassID     classID = dcrudShareable_getClassID( what );
+         dcrudRemoteFactory * icrud   = collMap_get( This->publishers, classID );
+         if( ! icrud ) {
+            char buffer[100];
+            dcrudClassID_toString( classID, buffer, sizeof( buffer ));
+            fprintf( stderr, "No ICRUD publisher registered for %s\n", buffer );
+            return false;
+         }
+         icrud->update( icrud, what, how );
+         return true;
+      }
+   }
+   return false;
+}
+
+bool ParticipantImpl_delete( ParticipantImpl * This, dcrudGUID id ) {
+   unsigned int i;
+   for( i = 0; i < This->nextCacheID; ++i ) {
+      dcrudShareable what = dcrudICache_read( This->caches[i], id );
+      if( what ) {
+         dcrudClassID     classID = dcrudShareable_getClassID( what );
+         dcrudRemoteFactory * icrud   = collMap_get( This->publishers, classID );
+         if( ! icrud ) {
+            char buffer[100];
+            dcrudClassID_toString( classID, buffer, sizeof( buffer ));
+            fprintf( stderr, "No ICRUD publisher registered for %s\n", buffer );
+            return false;
+         }
+         icrud->delete( icrud, what );
+         return true;
+      }
+   }
+   return false;
 }

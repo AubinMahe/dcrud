@@ -4,28 +4,12 @@
 #include <io/socket.h>
 #include <os/Mutex.h>
 
-#define DCRUD_SIGNATURE_SIZE  5U
-extern const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE];
-#define FRAME_TYPE_SIZE 1U
-#define SIZE_SIZE       4U
-#define GUID_SIZE       ( 4U + 4U )
-#define CLASS_ID_SIZE   ( 1U + 1U + 1U + 1U )
-#define HEADER_SIZE     ( SIZE_SIZE + FRAME_TYPE_SIZE + SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE )
-#define PAYLOAD_SIZE    ( 64U*1024U - HEADER_SIZE )
-
-typedef enum FrameType_e {
-
-   FRAMETYPE_NO_OP,
-   FRAMETYPE_DATA_CREATE_OR_UPDATE,
-   FRAMETYPE_DATA_DELETE,
-   FRAMETYPE_OPERATION
-
-} FrameType;
+#define CACHES_COUNT    256
 
 typedef struct ParticipantImpl_s {
 
    osMutex            cachesMutex;
-   dcrudICache        caches[256];
+   dcrudICache        caches[CACHES_COUNT];
    unsigned int       nextCacheID;
    ioByteBuffer       header;
    ioByteBuffer       payload;
@@ -53,3 +37,6 @@ dcrudShareable ParticipantImpl_newInstance    ( ParticipantImpl *   This, ioByte
 void           ParticipantImpl_sendCall       ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId );
 void           ParticipantImpl_call           ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, dcrudICallback callback );
 bool           ParticipantImpl_callback       ( ParticipantImpl *   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId );
+bool           ParticipantImpl_create         ( ParticipantImpl *   This, dcrudClassID clsId, dcrudArguments how );
+bool           ParticipantImpl_update         ( ParticipantImpl *   This, dcrudGUID id, dcrudArguments how );
+bool           ParticipantImpl_delete         ( ParticipantImpl *   This, dcrudGUID id );

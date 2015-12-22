@@ -10,7 +10,6 @@ import org.hpms.mw.distcrud.ICRUD;
 import org.hpms.mw.distcrud.ICache;
 import org.hpms.mw.distcrud.IDispatcher;
 import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.IProvided;
 import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
 
@@ -69,8 +68,9 @@ public class Publisher extends Thread {
       final ICache          cache      = _participant.getDefaultCache();
       final IDispatcher     dispatcher = _participant.getDispatcher();
       final PersonPublisher publisher  = new PersonPublisher( cache );
-      final IProvided       iPerson    = dispatcher.provide( "IMonitor" );
-      iPerson.addOperation( "exit", args -> { System.exit(0); return null; });
+      dispatcher
+         .provide( "IMonitor" )
+            .addOperation( "exit", args -> { System.exit(0); return null; });
       _participant.registerFactory  ( Person.CLASS_ID, Person::new );
       _participant.registerPublisher( Person.CLASS_ID, publisher );
       for(;;) {

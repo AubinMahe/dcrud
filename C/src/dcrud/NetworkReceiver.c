@@ -2,6 +2,7 @@
 #include "Dispatcher.h"
 #include "Cache.h"
 #include "ParticipantImpl.h"
+#include "IProtocol.h"
 
 #include <io/ByteBuffer.h>
 
@@ -39,7 +40,7 @@ static void dataDelete( NetworkReceiver * This, ioByteBuffer frame ) {
 
    dcrudGUID_unserialize( frame, &id );
    osMutex_take( This->participant->cachesMutex );
-   for( c = 0; c < 256; ++c ) {
+   for( c = 0; c < CACHES_COUNT; ++c ) {
       if( This->participant->caches[c] ) {
          dcrudCache_deleteFromNetwork( This->participant->caches[c], &id );
       }
@@ -56,7 +57,7 @@ static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
 
    ioByteBuffer_getInt( frame, &size );
    osMutex_take( This->participant->cachesMutex );
-   for( c = 0; c < 256; ++c ) {
+   for( c = 0; c < CACHES_COUNT; ++c ) {
       if( This->participant->caches[c] ) {
          dcrudCache_updateFromNetwork(
             This->participant->caches[c],
@@ -73,20 +74,20 @@ static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
 
 static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
    byte           count = 0;
-   char           intrfcName[1000];
-   char           opName[1000];
+   char           intrfcName[INTERFACE_NAME_MAX_LENGTH];
+   char           opName    [OPERATION_NAME_MAX_LENGTH];
    int            callId;
    unsigned int   i;
    byte           queueNdx = DCRUD_DEFAULT_QUEUE;
    dcrudCallMode  callMode = DCRUD_ASYNCHRONOUS_DEFERRED;
    dcrudArguments args     = dcrudArguments_new();
 
-   ioByteBuffer_getByte  ( frame, &count );
    ioByteBuffer_getString( frame, intrfcName, sizeof( intrfcName ));
    ioByteBuffer_getString( frame, opName    , sizeof( opName     ));
    ioByteBuffer_getInt   ( frame, (unsigned int *)&callId );
+   ioByteBuffer_getByte  ( frame, &count );
    for( i = 0; i < count; ++i ) {
-      char         name[1000];
+      char         name[ARG_NAME_MAX_LENGTH];
       dcrudClassID classID;
       dcrudType    type;
 
@@ -163,6 +164,30 @@ static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
          fprintf( stderr, "%s:%d:Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
       break;
       }
+   }
+   if( 0 == strcmp( intrfcName, ICRUD_INTERFACE_NAME )) {
+      if( 0 == strcmp( opName, ICRUD_INTERFACE_CREATE )) {
+         dcrudClassID classID;
+         if( dcrudArguments_getClassID( args, ICRUD_INTERFACE_CLASSID, &classID )) {
+            ParticipantImpl_create( This->participant, classID, args );
+         }
+      }
+      else if( 0 == strcmp( opName, ICRUD_INTERFACE_UPDATE )) {
+         dcrudGUID id;
+         if( dcrudArguments_getGUID( args, ICRUD_INTERFACE_GUID, &id )) {
+            ParticipantImpl_update( This->participant, id, args );
+         }
+      }
+      else if( 0 == strcmp( opName, ICRUD_INTERFACE_DELETE )) {
+         dcrudGUID id;
+         if( dcrudArguments_getGUID( args, ICRUD_INTERFACE_GUID, &id )) {
+            ParticipantImpl_delete( This->participant, id );
+         }
+      }
+      else {
+         fprintf( stderr, "Unexpected Publisher operation '%s'\n", opName );
+      }
+      return;
    }
    if( callId >= 0 ) {
       dcrudIDispatcher_execute( This->participant->dispatcher,

@@ -71,13 +71,13 @@ static bool printPersonEntry2( collForeach * context ) {
 }
 
 void test_002( void ) {
-   Person *           aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
-   Person *           muriel = Person_create( "Le Nain", "Muriel", 42 );
-   Person *           eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
-   bool               add;
-   bool               removed;
-   Person *           person;
-   bool               alreadyExists;
+   Person *    aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
+   Person *    muriel = Person_create( "Le Nain", "Muriel", 42 );
+   Person *    eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
+   bool        add;
+   bool        removed;
+   Person *    person;
+   bool        alreadyExists;
    collMapPair previous;
    printf( "+----+----+----------------------------------------\n" );
    {

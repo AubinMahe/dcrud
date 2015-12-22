@@ -40,6 +40,7 @@ bool           dcrudArguments_getGUID     ( dcrudArguments This, const char * ke
 bool           dcrudArguments_getShareable( dcrudArguments This, const char * key, dcrudShareable * value );
 dcrudType      dcrudArguments_getType     ( dcrudArguments This, const char * key );
 bool           dcrudArguments_serialize   ( dcrudArguments This, ioByteBuffer target );
+void           dcrudArguments_dump        ( dcrudArguments This, FILE * target );
 
 #ifdef __cplusplus
 }

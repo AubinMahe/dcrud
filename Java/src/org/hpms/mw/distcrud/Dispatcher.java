@@ -8,14 +8,7 @@ import java.util.Map;
 
 import org.hpms.mw.distcrud.IRequired.CallMode;
 
-class Dispatcher implements IDispatcher {
-
-   public static final String ICRUD_INTERFACE_NAME    = "dcrud.ICRUD";
-   public static final String ICRUD_INTERFACE_CREATE  = "create";
-   public static final String ICRUD_INTERFACE_UPDATE  = "update";
-   public static final String ICRUD_INTERFACE_DELETE  = "delete";
-   public static final String ICRUD_INTERFACE_CLASSID = "class-id";
-   public static final String ICRUD_INTERFACE_GUID    = "guid";
+class Dispatcher implements IDispatcher, IProtocol {
 
    private static class Operation {
 
@@ -77,20 +70,6 @@ class Dispatcher implements IDispatcher {
       int       queueNdx,
       CallMode  callMode ) throws IOException
    {
-      if( intrfcName.equals( ICRUD_INTERFACE_NAME )) {
-         switch( opName ) {
-         case ICRUD_INTERFACE_CREATE:
-            return _participant.create( arguments.get( ICRUD_INTERFACE_CLASSID ), arguments );
-         case ICRUD_INTERFACE_UPDATE:
-            return _participant.update( arguments.get( ICRUD_INTERFACE_GUID ), arguments );
-         case ICRUD_INTERFACE_DELETE:
-            return _participant.delete( arguments.get( ICRUD_INTERFACE_GUID ));
-         default:
-            System.err.printf( "Unexpected Publisher operation '%s'\n", opName );
-            break;
-         }
-         return false;
-      }
       final ProvidedImpl provided = _provided.get( intrfcName );
       if( provided == null ) {
          System.err.printf( "Interface '%s' isn't registered yet, call ignored\n", intrfcName );

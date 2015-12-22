@@ -5,8 +5,9 @@
 #include <util/CheckSysCall.h>
 
 #include "ParticipantImpl.h"
+#include "IProtocol.h"
 
-#define OPERATION_QUEUE_COUNT 256
+#define OPERATION_QUEUE_COUNT    256
 
 typedef struct Dispatcher_s {
 
@@ -167,13 +168,6 @@ typedef struct CRUD_s {
    ParticipantImpl * participant;
 
 } CRUD;
-
-static const char * ICRUD_INTERFACE_NAME    = "dcrud.ICRUD";
-static const char * ICRUD_INTERFACE_CREATE  = "create";
-static const char * ICRUD_INTERFACE_UPDATE  = "update";
-static const char * ICRUD_INTERFACE_DELETE  = "delete";
-static const char * ICRUD_INTERFACE_CLASSID = "class-id";
-static const char * ICRUD_INTERFACE_GUID    = "guid";
 
 void dcrudICRUD_create( dcrudICRUD self, dcrudArguments how ) {
    CRUD * This = (CRUD *)self;
