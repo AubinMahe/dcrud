@@ -9,6 +9,7 @@
 
 #include <os/Mutex.hpp>
 
+#include <list>
 #include <set>
 
 namespace dcrud {
@@ -16,15 +17,22 @@ namespace dcrud {
    class ICallback;
    class Cache;
    class Dispatcher;
+   class NetworkReceiver;
 
-   typedef std::set<Shareable *>        shareables_t;
-   typedef shareables_t::iterator       shareablesIter_t;
+   typedef std::set<Shareable *>             shareables_t;
+   typedef shareables_t::iterator            shareablesIter_t;
 
-   typedef std::map<ClassID, factory_t> factories_t;
-   typedef factories_t::iterator        factoriesIter_t;
+   typedef std::map<ClassID, localFactory_t> localFactories_t;
+   typedef localFactories_t::iterator        localFactoriesIter_t;
 
-   typedef std::map<int, ICallback *>   callbacks_t;
-   typedef callbacks_t::iterator        callbacksIter_t;
+   typedef std::map<ClassID, ICRUD *>        remoteFactories_t;
+   typedef remoteFactories_t::iterator       remoteFactoriesIter_t;
+
+   typedef std::map<int, ICallback *>        callbacks_t;
+   typedef callbacks_t::iterator             callbacksIter_t;
+
+   typedef std::list<NetworkReceiver *>      networkReceivers_t;
+   typedef networkReceivers_t::iterator      networkReceiversIter_t;
 
    class ParticipantImpl : public IParticipant {
    public:
@@ -40,18 +48,27 @@ namespace dcrud {
    public:
 
       ParticipantImpl(
-         unsigned short publisherId,
-         const char *   address,
-         unsigned short port,
-         const char *   intrfc );
+         unsigned int        publisherId,
+         const std::string & address,
+         unsigned short      port,
+         const std::string & intrfc );
 
       ~ ParticipantImpl();
 
-      virtual void registerClass( const ClassID & id, factory_t factory );
+      virtual void listen(
+         const std::string & mcastAddr,
+         unsigned short      port,
+         const std::string & networkInterface );
 
-      virtual ICache & createCache();
+      virtual void registerLocalFactory( const ClassID & id, localFactory_t factory );
 
-      virtual ICache & getCache( byte ID );
+      virtual void registerRemoteFactory( const ClassID & id, ICRUD * factory );
+
+      virtual ICache & getDefaultCache();
+
+      virtual ICache & createCache( byte & id );
+
+      virtual ICache & getCache( byte id );
 
       virtual IDispatcher & getDispatcher();
 
@@ -67,7 +84,7 @@ namespace dcrud {
          const Arguments *   in,
          ICallback &         callback );
 
-      short getPublisherId() const {
+      unsigned int getPublisherId() const {
          return _publisherId;
       }
 
@@ -91,11 +108,17 @@ namespace dcrud {
 
       void pushDeleteItem( Shareable * item );
 
+      bool create( const ClassID & clsId, const Arguments & how );
+
+      bool update( const GUID & id, const Arguments & how );
+
+      bool deleTe( const GUID & id );
+
    private:
 
       static const unsigned CACHE_COUNT = 256;
 
-      unsigned short     _publisherId;
+      unsigned int       _publisherId;
       io::ByteBuffer     _header;
       io::ByteBuffer     _payload;
       io::ByteBuffer     _message;
@@ -104,11 +127,13 @@ namespace dcrud {
       os::Mutex          _cachesMutex;
       Cache *            _caches[CACHE_COUNT];
       os::Mutex          _factoriesMutex;
-      factories_t        _factories;
+      localFactories_t   _localFactories;
+      remoteFactories_t  _remoteFactories;
       callbacks_t        _callbacks;
       struct sockaddr_in _target;
       Dispatcher *       _dispatcher;
-      unsigned int       _itemCount;
+      byte               _cacheCount;
       int                _callId;
+      networkReceivers_t _receivers;
    };
 }

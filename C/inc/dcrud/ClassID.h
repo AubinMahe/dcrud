@@ -4,6 +4,7 @@ extern "C" {
 #endif
 
 #include <io/ByteBuffer.h>
+#include <coll/ForeachFunction.h>
 
 UTIL_ADT( dcrudClassID );
 
@@ -37,6 +38,7 @@ ioStatus     dcrudClassID_serializeType( dcrudType          type, ioByteBuffer t
 bool         dcrudClassID_toString     ( const dcrudClassID This, char * target, size_t targetSize );
 int          dcrudClassID_compareTo    ( const dcrudClassID * left, const dcrudClassID * right );
 dcrudType    dcrudClassID_getType      ( const dcrudClassID This );
+bool         dcrudClassID_printMapPair ( collForeach * context );
 
 #ifdef __cplusplus
 }

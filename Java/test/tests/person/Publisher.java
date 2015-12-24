@@ -56,7 +56,7 @@ public class Publisher extends Thread {
 
    private final IParticipant _participant;
 
-   Publisher( byte id, InetSocketAddress addr, NetworkInterface via, InetSocketAddress...others ) throws IOException {
+   Publisher( int id, InetSocketAddress addr, NetworkInterface via, InetSocketAddress...others ) throws IOException {
       super( Publisher.class.getName());
       _participant = Network.join( id, addr, via );
       _participant.listen( via, others );
@@ -71,16 +71,16 @@ public class Publisher extends Thread {
       dispatcher
          .provide( "IMonitor" )
             .addOperation( "exit", args -> { System.exit(0); return null; });
-      _participant.registerFactory  ( Person.CLASS_ID, Person::new );
-      _participant.registerPublisher( Person.CLASS_ID, publisher );
+      _participant.registerLocalFactory  ( Person.CLASS_ID, Person::new );
+      _participant.registerRemoteFactory( Person.CLASS_ID, publisher );
       for(;;) {
          try {
             Thread.sleep( 100 );
+            dispatcher.handleRequests();
          }
-         catch( final InterruptedException e ) {
-            e.printStackTrace();
+         catch( final Throwable t ) {
+            t.printStackTrace();
          }
-         dispatcher.handleRequests();
       }
    }
 }

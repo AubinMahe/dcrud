@@ -1,5 +1,7 @@
 package org.hpms.mw.distcrud;
 
+import java.io.IOException;
+
 public interface IDispatcher {
 
    IProvided provide( String name );
@@ -8,5 +10,5 @@ public interface IDispatcher {
 
    ICRUD requireCRUD( ClassID classId );
 
-   void handleRequests();
+   void handleRequests() throws IOException;
 }

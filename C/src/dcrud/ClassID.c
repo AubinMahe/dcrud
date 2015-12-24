@@ -1,4 +1,7 @@
 #include "ClassID_private.h"
+
+#include <coll/Map.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -106,7 +109,17 @@ bool dcrudClassID_toString( const dcrudClassID self, char * target, size_t targe
 int dcrudClassID_compareTo( const dcrudClassID * l, const dcrudClassID * r ) {
    dcrudClassIDImpl * left  = (dcrudClassIDImpl *)*l;
    dcrudClassIDImpl * right = (dcrudClassIDImpl *)*r;
-   int diff = 0;
+   int                diff  = 0;
+
+   if( left == NULL && right == NULL ) {
+      return 0;
+   }
+   if( left == NULL ) {
+      return -1;
+   }
+   if( right == NULL ) {
+      return +1;
+   }
    if( diff == 0 ) {
       diff = left->package_1 - right->package_1;
    }
@@ -128,4 +141,16 @@ dcrudType dcrudClassID_getType( const dcrudClassID self ) {
       return dcrudLAST_TYPE;
    }
    return (dcrudType)This->clazz;
+}
+
+bool dcrudClassID_printMapPair( collForeach * context ) {
+   FILE *             target = (FILE *            )context->user;
+   collMapPair *      pair   = (collMapPair *     )context->item;
+   const char *       name   = (const char *      )pair->key;
+   const dcrudClassID value  = (const dcrudClassID)pair->value;
+   char               buffer[40];
+
+   dcrudClassID_toString( value, buffer, sizeof( buffer ));
+   fprintf( target, "%s => %s\n", name, buffer );
+   return true;
 }

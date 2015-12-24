@@ -33,28 +33,36 @@ void test_006( void ) {
       dcrudIDispatcher     dispatcher;
       dcrudICRUD           personCRUD;
       dcrudIRequired       monitor;
-      dcrudCounterpart     firstCounterpart = { MCAST_ADDRESS, 2416 };
-      dcrudCounterpart *   counterparts[] = { &firstCounterpart, NULL };
       dcrudLocalFactory *  localFactory;
       dcrudRemoteFactory * remoteFactory;
+      char                 c;
+      int                  i;
 
       Person_initFactories( participant, &localFactory, &remoteFactory );
 
-      dcrudIParticipant_listen( participant, NETWORK_INTERFACE, counterparts );
+      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
 
       cache      = dcrudIParticipant_getDefaultCache( participant );
       dispatcher = dcrudIParticipant_getDispatcher( participant );
       personCRUD = dcrudIDispatcher_requireCRUD( dispatcher, localFactory->classID );
       monitor    = dcrudIDispatcher_require( dispatcher, "IMonitor" );
 
-      printf( "Ready to ask Java process for a Person creation, press <enter> please...\n" );
-      fgetc( stdin );
-      remotelyCreatePerson( personCRUD, "Aubin", "Mahé", "1966-01-24" );
-      osSystem_sleep( 1000U );
-      dcrudIDispatcher_handleRequests( dispatcher );
-      dcrudICache_refresh( cache );
-      printf( "Cache content:\n" );
-      dcrudICache_foreach( cache, Person_print, NULL );
+      for( i = 0; c != 'Q'; ++i ) {
+         printf( "Ready to ask Java process for a Person creation, press <enter> please, 'Q' to quit...\n" );
+         c = (char)fgetc( stdin );
+         if( c != 'Q' ) {
+            dcrudIDispatcher_handleRequests( dispatcher );
+            dcrudICache_refresh( cache );
+            printf( "Cache content:\n" );
+            dcrudICache_foreach( cache, Person_print, NULL );
+            if( i % 2 ) {
+               remotelyCreatePerson( personCRUD, "Aubin", "Mahé", "1966-01-24" );
+            }
+            else {
+               remotelyCreatePerson( personCRUD, "Muriel", "Le Nain", "1973-01-26" );
+            }
+         }
+      }
       printf( "Press <enter> to terminate Java counterpart\n" );
       fgetc( stdin );
       dcrudIRequired_call( monitor, "exit", NULL, NULL );

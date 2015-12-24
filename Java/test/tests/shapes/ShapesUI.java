@@ -123,14 +123,14 @@ public class ShapesUI implements Controller {
       final NetworkInterface  intrfc = NetworkInterface.getByName( intrfcName );
       final InetSocketAddress addr = new InetSocketAddress( "224.0.0.3", port );
       Performance.enable( perf );
-      final IParticipant participant = Network.join((byte)( port - 2415 ), addr, intrfc );
+      final IParticipant participant = Network.join( port - 2415, addr, intrfc );
       for( short p = 0; p < 4; ++p ) {
          if( ( p+2416 ) != port ) {
             participant.listen( intrfc, new InetSocketAddress( "224.0.0.3", p+2416 ));
          }
       }
-      participant.registerFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
-      participant.registerFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
+      participant.registerLocalFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
+      participant.registerLocalFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
       _cache = participant.createCache();
       _cache.setOwnership( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );

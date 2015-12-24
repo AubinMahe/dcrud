@@ -9,9 +9,9 @@ public interface IParticipant {
 
    void listen( NetworkInterface via, InetSocketAddress...others ) throws IOException;
 
-   void registerFactory( ClassID id, Supplier<Shareable> factory );
+   void registerLocalFactory ( ClassID id, Supplier<Shareable> factory );
 
-   void registerPublisher( ClassID id, ICRUD publisher );
+   void registerRemoteFactory( ClassID id, ICRUD factory );
 
    ICache getDefaultCache();
 

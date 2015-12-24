@@ -83,8 +83,8 @@ void ShareableShape::set( const dcrud::Arguments & args ) {
 }
 
 void ShareableShape::registerClasses( dcrud::IParticipant & participant ) {
-   participant.registerClass( RectangleClassID, (dcrud::factory_t)&createRectangle );
-   participant.registerClass( EllipseClassID  , (dcrud::factory_t)&createEllipse );
+   participant.registerLocalFactory( RectangleClassID, (dcrud::localFactory_t)&createRectangle );
+   participant.registerLocalFactory( EllipseClassID  , (dcrud::localFactory_t)&createEllipse );
 }
 
 void ShareableShape::registerOperations( dcrud::IDispatcher &  dispatcher ) {

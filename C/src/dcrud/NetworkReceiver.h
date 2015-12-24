@@ -2,12 +2,12 @@
 
 #include "ParticipantImpl.h"
 
-struct NetworkReceiver_s;
+UTIL_ADT( NetworkReceiver );
 
-struct NetworkReceiver_s * createNetworkReceiver(
+NetworkReceiver NetworkReceiver_new(
    ParticipantImpl * participant,
    const char *      address,
    unsigned short    port,
    const char *      intrfc );
 
-void deleteNetworkReceiver( struct NetworkReceiver_s * This );
+void NetworkReceiver_delete( NetworkReceiver * This );

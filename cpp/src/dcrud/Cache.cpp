@@ -6,25 +6,17 @@
 
 using namespace dcrud;
 
-byte Cache::_NextCacheId = 1;
-
 Cache::Cache( ParticipantImpl & participant ) :
-   _nextInstance  ( 1              ),
-   _ownershipCheck( false          ),
-   _participant   ( participant    ),
-   _cacheId       ( _NextCacheId++ )
+   _nextInstance  ( 1U          ),
+   _ownershipCheck( false       ),
+   _participant   ( participant )
 {}
 
 Cache::~ Cache() {
 }
 
-bool Cache::matches( short publisherId, byte cacheId ) const {
-   return( publisherId == _participant.getPublisherId())
-      && ( cacheId     == _cacheId );
-}
-
 bool Cache::owns( const GUID & id ) const {
-   return id.matches( _participant.getPublisherId(), _cacheId );
+   return _participant.getPublisherId() == id._publisher;
 }
 
 Status Cache::create( Shareable & item ) {
@@ -32,7 +24,6 @@ Status Cache::create( Shareable & item ) {
       return ALREADY_CREATED;
    }
    item._id._publisher = _participant.getPublisherId();
-   item._id._cache     = _cacheId;
    item._id._instance  = _nextInstance++;
    {
       os::Synchronized sync( _localMutex );

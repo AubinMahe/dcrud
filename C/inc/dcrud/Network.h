@@ -6,7 +6,7 @@ extern "C" {
 #include <dcrud/IParticipant.h>
 
 dcrudIParticipant dcrudNetwork_join(
-   byte           id,
+   unsigned int   publisherId,
    const char *   mcastAddr,
    unsigned short port,
    const char *   intrfc );

@@ -1,9 +1,12 @@
 #include "ParticipantImpl.hpp"
 #include "Dispatcher.hpp"
 #include "Cache.hpp"
+#include "IProtocol.hpp"
+#include "NetworkReceiver.hpp"
 
 #include <dcrud/Shareable.hpp>
 #include <dcrud/ICallback.hpp>
+#include <dcrud/ICRUD.hpp>
 
 #include <util/CheckSysCall.h>
 
@@ -14,26 +17,19 @@
 
 using namespace dcrud;
 
-const byte ParticipantImpl::SIGNATURE[] = { 'H','P','M','S'};
-
-#define FRAME_TYPE_SIZE 1U
-#define SIZE_SIZE       4U
-#define GUID_SIZE       ( 1U + 1U + 1U + 4U )
-#define CLASS_ID_SIZE   ( 1U + 1U + 1U + 1U )
-#define HEADER_SIZE     ( SIZE_SIZE + FRAME_TYPE_SIZE + SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE )
-#define PAYLOAD_SIZE    ( 64U*1024U - HEADER_SIZE )
+const byte ParticipantImpl::SIGNATURE[] = {'D','C','R','U','D'};
 
 ParticipantImpl::ParticipantImpl(
-   unsigned short publisherId,
-   const char *   address,
-   unsigned short port,
-   const char *   intrfc )
+   unsigned int        publisherId,
+   const std::string & address,
+   unsigned short      port,
+   const std::string & intrfc )
  :
-   _publisherId( publisherId ),
+   _publisherId( publisherId  ),
    _header     ( HEADER_SIZE  ),
    _payload    ( PAYLOAD_SIZE ),
    _message    ( 64*1024 ), // UDP MAX packet size
-   _itemCount  ( 0 ),
+   _cacheCount ( 0 ),
    _callId     ( 0 )
 {
 #ifdef _WIN32
@@ -52,7 +48,7 @@ ParticipantImpl::ParticipantImpl(
    memset( &_target, 0, sizeof( _target ));
    _target.sin_family      = AF_INET;
    _target.sin_port        = htons( port );
-   _target.sin_addr.s_addr = inet_addr( address );
+   _target.sin_addr.s_addr = inet_addr( address.c_str());
    int trueValue = 1;
    if( ! utilCheckSysCall( 0 ==
       setsockopt( _out, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
@@ -62,44 +58,62 @@ ParticipantImpl::ParticipantImpl(
    }
    struct in_addr lIntrfc;
    memset( &lIntrfc, 0, sizeof( lIntrfc ));
-   lIntrfc.s_addr = inet_addr( intrfc );
+   lIntrfc.s_addr = inet_addr( intrfc.c_str());
    if( ! utilCheckSysCall( 0 ==
       setsockopt( _out, IPPROTO_IP, IP_MULTICAST_IF, (char *)&lIntrfc, sizeof( lIntrfc )),
-      __FILE__, __LINE__, "setsockopt(IP_MULTICAST_IF,%s)", intrfc ))
+      __FILE__, __LINE__, "setsockopt(IP_MULTICAST_IF,%s)", intrfc.c_str()))
    {
       throw std::runtime_error( "setsockopt(IP_MULTICAST_IF)" );
    }
-   printf( "sending to %s:%d via interface %s\n", address, port, intrfc );
-   _dispatcher = new Dispatcher( *this );
+   printf( "sending to %s:%d via interface %s\n", address.c_str(), port, intrfc.c_str());
+   _dispatcher            = new Dispatcher( *this );
+   _caches[_cacheCount++] = new Cache( *this );
 }
 
 ParticipantImpl:: ~ ParticipantImpl() {
    delete _dispatcher;
-   for( unsigned i = 0U; i < CACHE_COUNT; ++i ) {
-      if( _caches[i] ) {
-         delete _caches[i];
-      }
-      else {
-         break;
-      }
+   for( byte i = 0U; i < _cacheCount; ++i ) {
+      delete _caches[i];
+   }
+   _cacheCount = 0;
+   for( networkReceiversIter_t it = _receivers.begin(); it != _receivers.end(); ++it ) {
+      delete *it;
    }
 }
 
-void ParticipantImpl::registerClass( const ClassID & id, factory_t factory ) {
+void ParticipantImpl::listen(
+   const std::string & mcastAddr,
+   unsigned short      port,
+   const std::string & networkInterface )
+{
+   _receivers.push_back( new NetworkReceiver( *this, mcastAddr, port, networkInterface ));
+}
+
+void ParticipantImpl::registerLocalFactory( const ClassID & id, localFactory_t factory ) {
    os::Synchronized sync( _factoriesMutex );
-   _factories[id] = factory;
+   _localFactories[id] = factory;
 }
 
-ICache & ParticipantImpl::createCache() {
-   os::Synchronized sync( _cachesMutex );
-   Cache * cache = new Cache( *this );
-   _caches[cache->getId()-1] = cache;
-   return *cache;
+void ParticipantImpl::registerRemoteFactory( const ClassID & id, ICRUD * factory ) {
+   os::Synchronized sync( _factoriesMutex );
+   _remoteFactories[id] = factory;
 }
 
-ICache & ParticipantImpl::getCache( byte cacheId ) {
+ICache & ParticipantImpl::getDefaultCache() {
    os::Synchronized sync( _cachesMutex );
-   return *_caches[cacheId-1];
+   return *_caches[0];
+}
+
+ICache & ParticipantImpl::createCache( byte & id ) {
+   os::Synchronized sync( _cachesMutex );
+   id = _cacheCount++;
+   _caches[id] = new Cache( *this );
+   return *_caches[id];
+}
+
+ICache & ParticipantImpl::getCache( byte id ) {
+   os::Synchronized sync( _cachesMutex );
+   return *_caches[id];
 }
 
 IDispatcher & ParticipantImpl::getDispatcher() {
@@ -184,11 +198,11 @@ int ParticipantImpl::call(
 
 Shareable * ParticipantImpl::newInstance( const ClassID & classId, io::ByteBuffer & frame ) {
    os::Synchronized sync( _factoriesMutex );
-   factoriesIter_t it = _factories.find( classId );
-   if( it == _factories.end()) {
+   localFactoriesIter_t it = _localFactories.find( classId );
+   if( it == _localFactories.end()) {
       return 0;
    }
-   factory_t factory = it->second;
+   localFactory_t factory = it->second;
    if( ! factory ) {
       return 0;
    }
@@ -244,4 +258,58 @@ void ParticipantImpl::callback(
             intrfcName.c_str(), opName.c_str(), -callId );
       }
    }
+}
+
+bool ParticipantImpl::create( const ClassID & clsId, const Arguments & how ) {
+   os::Synchronized sync( _factoriesMutex );
+   remoteFactoriesIter_t it = _remoteFactories.find( clsId );
+   if( it == _remoteFactories.end()) {
+      return false;
+   }
+   ICRUD * factory = it->second;
+   if( ! factory ) {
+      return false;
+   }
+   factory->create( how );
+   return true;
+}
+
+bool ParticipantImpl::update( const GUID & id, const Arguments & how ) {
+   os::Synchronized sync( _factoriesMutex );
+   for( int i = 0; i < _cacheCount; ++i ) {
+      Shareable * item = _caches[i]->read( id );
+      if( item ) {
+         remoteFactoriesIter_t it = _remoteFactories.find( item->_class );
+         if( it == _remoteFactories.end()) {
+            return false;
+         }
+         ICRUD * factory = it->second;
+         if( ! factory ) {
+            return false;
+         }
+         factory->update( *item, how );
+         return true;
+      }
+   }
+   return false;
+}
+
+bool ParticipantImpl::deleTe( const GUID & id ) {
+   os::Synchronized sync( _factoriesMutex );
+   for( int i = 0; i < _cacheCount; ++i ) {
+      Shareable * item = _caches[i]->read( id );
+      if( item ) {
+         remoteFactoriesIter_t it = _remoteFactories.find( item->_class );
+         if( it == _remoteFactories.end()) {
+            return false;
+         }
+         ICRUD * factory = it->second;
+         if( ! factory ) {
+            return false;
+         }
+         factory->deleTe( *item );
+         return true;
+      }
+   }
+   return false;
 }

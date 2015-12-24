@@ -22,7 +22,7 @@
 #endif
 #include <stdio.h>
 
-typedef struct NetworkReceiver_s {
+typedef struct NetworkReceiverImpl_s {
 
    ParticipantImpl * participant;
    SOCKET            in;
@@ -32,9 +32,9 @@ typedef struct NetworkReceiver_s {
 #else
    pthread_t         thread;
 #endif
-} NetworkReceiver;
+} NetworkReceiverImpl;
 
-static void dataDelete( NetworkReceiver * This, ioByteBuffer frame ) {
+static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
    dcrudGUID    id;
    unsigned int c;
 
@@ -51,7 +51,7 @@ static void dataDelete( NetworkReceiver * This, ioByteBuffer frame ) {
    osMutex_release( This->participant->cachesMutex );
 }
 
-static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
+static void dataUpdate( NetworkReceiverImpl * This, ioByteBuffer frame ) {
    unsigned int size = 0;
    unsigned int c;
 
@@ -72,7 +72,7 @@ static void dataUpdate( NetworkReceiver * This, ioByteBuffer frame ) {
       ioByteBuffer_getPosition( frame ) + GUID_SIZE + CLASS_ID_SIZE + size );
 }
 
-static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
+static void operation( NetworkReceiverImpl * This, ioByteBuffer frame ) {
    byte           count = 0;
    char           intrfcName[INTERFACE_NAME_MAX_LENGTH];
    char           opName    [OPERATION_NAME_MAX_LENGTH];
@@ -165,31 +165,10 @@ static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
       break;
       }
    }
-   if( 0 == strcmp( intrfcName, ICRUD_INTERFACE_NAME )) {
-      if( 0 == strcmp( opName, ICRUD_INTERFACE_CREATE )) {
-         dcrudClassID classID;
-         if( dcrudArguments_getClassID( args, ICRUD_INTERFACE_CLASSID, &classID )) {
-            ParticipantImpl_create( This->participant, classID, args );
-         }
-      }
-      else if( 0 == strcmp( opName, ICRUD_INTERFACE_UPDATE )) {
-         dcrudGUID id;
-         if( dcrudArguments_getGUID( args, ICRUD_INTERFACE_GUID, &id )) {
-            ParticipantImpl_update( This->participant, id, args );
-         }
-      }
-      else if( 0 == strcmp( opName, ICRUD_INTERFACE_DELETE )) {
-         dcrudGUID id;
-         if( dcrudArguments_getGUID( args, ICRUD_INTERFACE_GUID, &id )) {
-            ParticipantImpl_delete( This->participant, id );
-         }
-      }
-      else {
-         fprintf( stderr, "Unexpected Publisher operation '%s'\n", opName );
-      }
-      return;
+   if( 0 ==  strcmp( intrfcName, ICRUD_INTERFACE_NAME )) {
+      dcrudIDispatcher_executeCrud( This->participant->dispatcher, opName, args );
    }
-   if( callId >= 0 ) {
+   else if( callId >= 0 ) {
       dcrudIDispatcher_execute( This->participant->dispatcher,
          intrfcName, opName, args, callId, queueNdx, callMode );
    }
@@ -198,16 +177,22 @@ static void operation( NetworkReceiver * This, ioByteBuffer frame ) {
    }
 }
 
-static void * run( NetworkReceiver * This ) {
+static void * run( NetworkReceiverImpl * This ) {
    char     signa[DCRUD_SIGNATURE_SIZE];
+#ifdef PERFORMANCE
    uint64_t atStart = 0;
-
+#endif
    while( true ) {
+#ifdef PERFORMANCE
       if( atStart > 0 ) {
          dbgPerformance_record( "network", osSystem_nanotime() - atStart );
       }
+#endif
+      ioByteBuffer_clear( This->inBuf );
       if( IO_STATUS_NO_ERROR == ioByteBuffer_receive( This->inBuf, This->in )) {
+#ifdef PERFORMANCE
          atStart = osSystem_nanotime();
+#endif
          ioByteBuffer_flip( This->inBuf );
          /**/
          ioByteBuffer_dump( This->inBuf, stderr );
@@ -246,31 +231,31 @@ static void * run( NetworkReceiver * This ) {
 
 typedef void * ( * pthread_routine_t )( void * );
 
-struct NetworkReceiver_s * createNetworkReceiver(
+NetworkReceiver NetworkReceiver_new(
    ParticipantImpl * participant,
    const char *      address,
    unsigned short    port,
    const char *      intrfc )
 {
-   NetworkReceiver *  This = (NetworkReceiver *)malloc( sizeof( NetworkReceiver ));
-   int                trueValue = 1;
-   struct sockaddr_in local_sin;
-   struct ip_mreq     mreq;
+   NetworkReceiverImpl * This = (NetworkReceiverImpl *)malloc( sizeof( NetworkReceiverImpl ));
+   int                   trueValue = 1;
+   struct sockaddr_in    local_sin;
+   struct ip_mreq        mreq;
 
    memset( &local_sin, 0, sizeof( local_sin ));
    memset( &mreq     , 0, sizeof( mreq ));
-   memset( This, 0, sizeof( NetworkReceiver ));
+   memset( This, 0, sizeof( NetworkReceiverImpl ));
    This->participant = participant;
    This->inBuf       = ioByteBuffer_new( 64*1024 );
    This->in          = socket( AF_INET, SOCK_DGRAM, 0 );
    if( ! utilCheckSysCall( This->in != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
-      return This;
+      return (NetworkReceiver)This;
    }
    if( ! utilCheckSysCall( 0 ==
       setsockopt( This->in, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
       __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" ))
    {
-      return This;
+      return (NetworkReceiver)This;
    }
    local_sin.sin_family      = AF_INET;
    local_sin.sin_port        = htons( port );
@@ -279,7 +264,7 @@ struct NetworkReceiver_s * createNetworkReceiver(
       bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
       __FILE__, __LINE__, "bind(%s,%d)", intrfc, port ))
    {
-      return This;
+      return (NetworkReceiver)This;
    }
    mreq.imr_multiaddr.s_addr = inet_addr( address );
    mreq.imr_interface.s_addr = inet_addr( intrfc );
@@ -287,7 +272,7 @@ struct NetworkReceiver_s * createNetworkReceiver(
       setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
       __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address ))
    {
-      return This;
+      return (NetworkReceiver)This;
    }
    printf( "Receiving from %s, bound to %s:%d\n", address, intrfc, port );
 #ifdef WIN32
@@ -300,12 +285,13 @@ struct NetworkReceiver_s * createNetworkReceiver(
       __FILE__, __LINE__, "pthread_create" ))
 #endif
    {
-      return This;
+      return (NetworkReceiver)This;
    }
-   return This;
+   return (NetworkReceiver)This;
 }
 
-void deleteNetworkReceiver( struct NetworkReceiver_s * This ) {
+void NetworkReceiver_delete( NetworkReceiver * self ) {
+   NetworkReceiverImpl * This = *(NetworkReceiverImpl **)self;
    void * retVal = NULL;
 
 #ifdef WIN32
@@ -319,4 +305,5 @@ void deleteNetworkReceiver( struct NetworkReceiver_s * This ) {
 #endif
    ioByteBuffer_delete( &This->inBuf );
    free( This );
+   *self = 0;
 }

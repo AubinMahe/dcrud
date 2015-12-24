@@ -16,21 +16,21 @@ import java.util.function.Supplier;
 
 final class ParticipantImpl implements IParticipant, IProtocol {
 
-   private final ByteBuffer                        _header     = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer                        _payload    = ByteBuffer.allocate( PAYLOAD_SIZE );
-   private final ByteBuffer                        _message    = ByteBuffer.allocate( 64*1024 );
-   private final Cache[]                           _caches     = new Cache[256];
-   private final Dispatcher                        _dispatcher = new Dispatcher( this );
-   private final Map<ClassID, Supplier<Shareable>> _factories  = new TreeMap<>();
-   private final Map<ClassID, ICRUD >              _publishers = new TreeMap<>();
-   private final Map<Integer, ICallback>           _callbacks  = new HashMap<>();
-   private final byte                              _publisherId;
+   private final ByteBuffer                        _header          = ByteBuffer.allocate( HEADER_SIZE );
+   private final ByteBuffer                        _payload         = ByteBuffer.allocate( PAYLOAD_SIZE );
+   private final ByteBuffer                        _message         = ByteBuffer.allocate( 64*1024 );
+   private final Cache[]                           _caches          = new Cache[256];
+   private final Dispatcher                        _dispatcher      = new Dispatcher( this );
+   private final Map<ClassID, Supplier<Shareable>> _localFactories  = new TreeMap<>();
+   private final Map<ClassID, ICRUD >              _remoteFactories = new TreeMap<>();
+   private final Map<Integer, ICallback>           _callbacks       = new HashMap<>();
+   private final int                               _publisherId;
    private final InetSocketAddress                 _target;
    private final DatagramChannel                   _out;
    private /* */ int                               _callId     = 1;
    private /* */ byte                              _cacheCount = 0;
 
-   ParticipantImpl( byte publisherId, InetSocketAddress group, NetworkInterface  intrfc ) throws IOException {
+   ParticipantImpl( int publisherId, InetSocketAddress group, NetworkInterface  intrfc ) throws IOException {
       final ProtocolFamily family =
          ( group.getAddress().getAddress().length > 4 )
             ? StandardProtocolFamily.INET6
@@ -54,13 +54,13 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       }
    }
 
-   short getPublisherId() {
+   int getPublisherId() {
       return _publisherId;
    }
 
    Shareable newInstance( ClassID classId, ByteBuffer frame ) {
-      synchronized( _factories ) {
-         final Supplier<Shareable> factory = _factories.get( classId );
+      synchronized( _localFactories ) {
+         final Supplier<Shareable> factory = _localFactories.get( classId );
          if( factory == null ) {
             return null;
          }
@@ -71,16 +71,16 @@ final class ParticipantImpl implements IParticipant, IProtocol {
    }
 
    @Override
-   public void registerFactory( ClassID id, Supplier<Shareable> factory ) {
-      synchronized( _factories ) {
-         _factories.put( id, factory );
+   public void registerLocalFactory( ClassID id, Supplier<Shareable> factory ) {
+      synchronized( _localFactories ) {
+         _localFactories.put( id, factory );
       }
    }
 
    @Override
-   public void registerPublisher( ClassID id, ICRUD publisher ) {
-      synchronized( _publishers ) {
-         _publishers.put( id, publisher );
+   public void registerRemoteFactory( ClassID id, ICRUD publisher ) {
+      synchronized( _remoteFactories ) {
+         _remoteFactories.put( id, publisher );
       }
    }
 
@@ -212,7 +212,7 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       if( clsId == null ) {
          return false;
       }
-      final ICRUD publisher = _publishers.get( clsId );
+      final ICRUD publisher = _remoteFactories.get( clsId );
       if( publisher == null ) {
          return false;
       }
@@ -224,7 +224,7 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       for( int i = 0; i < _cacheCount; ++i ) {
          final Shareable item = _caches[i].read( id );
          if( item != null ) {
-            final ICRUD publisher = _publishers.get( item._class );
+            final ICRUD publisher = _remoteFactories.get( item._class );
             if( publisher == null ) {
                return false;
             }
@@ -239,7 +239,7 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       for( int i = 0; i < _cacheCount; ++i ) {
          final Shareable item = _caches[i].read( id );
          if( item != null ) {
-            final ICRUD publisher = _publishers.get( item._class );
+            final ICRUD publisher = _remoteFactories.get( item._class );
             if( publisher == null ) {
                return false;
             }

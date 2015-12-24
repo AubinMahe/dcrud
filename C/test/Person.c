@@ -1,9 +1,6 @@
 #include "Person.h"
 #include <coll/Map.h>
 
-static dcrudLocalFactory  PersonLocalFactory;
-static dcrudRemoteFactory PersonRemoteFactory;
-
 static void set( Person * This, const Person * source ) {
    strncpy( This->forname, source->forname, PERSON_NAME_MAX_LENGTH );
    strncpy( This->name   , source->name   , PERSON_NAME_MAX_LENGTH );
@@ -36,35 +33,57 @@ static bool init( dcrudShareable shareable ) {
 }
 
 static void create( dcrudRemoteFactory * This, dcrudArguments how ) {
-   char forname  [40];
-   char name     [40];
-   char birthdate[40];
-   dcrudArguments_getString( how, "forname"  , forname  , sizeof( forname   ));
-   dcrudArguments_getString( how, "name"     , name     , sizeof( name      ));
-   dcrudArguments_getString( how, "birthdate", birthdate, sizeof( birthdate ));
-//   Person * person    = new Person( forname, name, LocalDate.parse( birthdate ));
-//   _cache.create( person );
-//   _cache.publish();
-   printf( "create Person %s %s\n", forname, name );
-}
-
-static void update( dcrudRemoteFactory * This, dcrudShareable what, dcrudArguments how ) {
-   char   birthdate[40];
+   char   birthdate[12];
    char * s;
 
    if( dcrudArguments_getString( how, "birthdate", birthdate, sizeof( birthdate ))) {
       s = strtok( birthdate, "-" );
       if( s ) {
-         unsigned short year = atoi( s );
+         unsigned short year = (unsigned short)atoi( s );
          s = strtok( NULL, "-" );
          if( s ) {
-            byte month = atoi( s );
+            byte month = (byte)atoi( s );
+            s = strtok( NULL, "-" );
+            if( s ) {
+               dcrudShareable shareable =
+                  dcrudIParticipant_createShareable( This->participant, This->classID );
+               Person *       person    = (Person *)dcrudShareable_getUserData( shareable );
+               if(   dcrudArguments_getString( how, "forname", person->forname, PERSON_NAME_MAX_LENGTH )
+                  && dcrudArguments_getString( how, "name"   , person->name   , PERSON_NAME_MAX_LENGTH ))
+               {
+                  dcrudICache cache = dcrudIParticipant_getDefaultCache( This->participant );
+                  person->birthdate_day   = (byte)atoi( s );
+                  person->birthdate_month = month;
+                  person->birthdate_year  = year;
+                  dcrudICache_create( cache, shareable );
+                  dcrudICache_publish( cache );
+                  printf( "Person remotely created: %s %s %02d/%02d/%4d\n",
+                     person->forname, person->name,
+                     person->birthdate_day, person->birthdate_month, person->birthdate_year );
+               }
+            }
+         }
+      }
+   }
+}
+
+static void update( dcrudRemoteFactory * This, dcrudShareable what, dcrudArguments how ) {
+   char   birthdate[12];
+   char * s;
+
+   if( dcrudArguments_getString( how, "birthdate", birthdate, sizeof( birthdate ))) {
+      s = strtok( birthdate, "-" );
+      if( s ) {
+         unsigned short year = (unsigned short)atoi( s );
+         s = strtok( NULL, "-" );
+         if( s ) {
+            byte month = (byte)atoi( s );
             s = strtok( NULL, "-" );
             if( s ) {
                Person * person = (Person *)dcrudShareable_getUserData( what );
                if( dcrudArguments_getString( how, "forname", person->forname, PERSON_NAME_MAX_LENGTH )) {
                   dcrudICache cache = dcrudIParticipant_getDefaultCache( This->participant );
-                  person->birthdate_day   = atoi( s );
+                  person->birthdate_day   = (byte)atoi( s );
                   person->birthdate_month = month;
                   person->birthdate_year  = year;
                   dcrudICache_update( cache, what );
@@ -80,10 +99,13 @@ static void update( dcrudRemoteFactory * This, dcrudShareable what, dcrudArgumen
 }
 
 static void delete( dcrudRemoteFactory * This, dcrudShareable what ) {
-   Person * person = (Person *)dcrudShareable_getUserData( what );
-//   _cache.delete( person );
-//   _cache.publish();
-   printf( "delete Person %s %s\n", person->forname, person->name );
+   Person *    person = (Person *)dcrudShareable_getUserData( what );
+   dcrudICache cache  = dcrudIParticipant_getDefaultCache( This->participant );
+   dcrudICache_delete ( cache, what );
+   dcrudICache_publish( cache );
+   printf( "Person remotely deleted: %s %s %02d/%02d/%4d\n",
+      person->forname, person->name,
+      person->birthdate_day, person->birthdate_month, person->birthdate_year );
 }
 
 void Person_initFactories(
@@ -91,16 +113,23 @@ void Person_initFactories(
    dcrudLocalFactory **  localFactory,
    dcrudRemoteFactory ** remoteFactory )
 {
+   static dcrudLocalFactory  PersonLocalFactory;
+   static dcrudRemoteFactory PersonRemoteFactory;
+
    PersonLocalFactory.classID     = dcrudClassID_new( 1, 1, 1, 1 );
    PersonLocalFactory.size        = sizeof( Person );
    PersonLocalFactory.initialize  = (dcrudLocalFactory_Initialize )init;
    PersonLocalFactory.set         = (dcrudLocalFactory_Set        )set;
    PersonLocalFactory.serialize   = (dcrudLocalFactory_Serialize  )serialize;
    PersonLocalFactory.unserialize = (dcrudLocalFactory_Unserialize)unserialize;
-   PersonRemoteFactory.create     = (dcrudRemoteFactory_create)create;
-   PersonRemoteFactory.update     = (dcrudRemoteFactory_update)update;
-   PersonRemoteFactory.delete     = (dcrudRemoteFactory_delete)delete;
    dcrudIParticipant_registerLocalFactory ( participant, &PersonLocalFactory  );
+
+   PersonRemoteFactory.classID     = PersonLocalFactory.classID;
+   PersonRemoteFactory.userContext = NULL;
+   PersonRemoteFactory.participant = participant;
+   PersonRemoteFactory.create      = (dcrudRemoteFactory_create)create;
+   PersonRemoteFactory.update      = (dcrudRemoteFactory_update)update;
+   PersonRemoteFactory.delete      = (dcrudRemoteFactory_delete)delete;
    dcrudIParticipant_registerRemoteFactory( participant, &PersonRemoteFactory );
    *localFactory  = &PersonLocalFactory;
    *remoteFactory = &PersonRemoteFactory;

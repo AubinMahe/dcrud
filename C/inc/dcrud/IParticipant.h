@@ -10,13 +10,6 @@ typedef dcrudShareable(* dcrudShareableFactory )();
 
 UTIL_ADT( dcrudIParticipant );
 
-typedef struct dcrudCounterpart_s {
-
-   const char *   mcastAddr;
-   unsigned short port;
-
-} dcrudCounterpart;
-
 typedef void     (* dcrudLocalFactory_Set         )( dcrudShareableData This, const dcrudShareableData source );
 typedef ioStatus (* dcrudLocalFactory_Serialize   )( dcrudShareableData This, ioByteBuffer target );
 typedef ioStatus (* dcrudLocalFactory_Unserialize )( dcrudShareableData This, ioByteBuffer source );
@@ -48,11 +41,11 @@ typedef struct dcrudRemoteFactory_s {
 
 } dcrudRemoteFactory;
 
-void             dcrudIParticipant_listen               ( dcrudIParticipant   This, const char * networkInterface, dcrudCounterpart * others[] );
+void             dcrudIParticipant_listen               ( dcrudIParticipant   This, const char * mcastAddr, unsigned short port, const char * networkInterface );
 bool             dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
 bool             dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
 dcrudICache      dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This );
-dcrudStatus      dcrudIParticipant_createCache          ( dcrudIParticipant   This, dcrudICache * target );
+dcrudStatus      dcrudIParticipant_createCache          ( dcrudIParticipant   This, dcrudICache * target, byte * cacheId );
 dcrudICache      dcrudIParticipant_getCache             ( dcrudIParticipant   This, byte ID );
 dcrudIDispatcher dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This );
 dcrudShareable   dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID );

@@ -1,34 +1,36 @@
 include ../flags.mak
 
 LIB_SRCS =\
- src/os/System.c\
- src/os/Mutex.c\
- src/dcrud/Arguments.c\
- src/dcrud/ParticipantImpl.c\
- src/dcrud/Network.c\
- src/dcrud/Dispatcher.c\
- src/dcrud/Status.c\
- src/dcrud/Shareable.c\
- src/dcrud/NetworkReceiver.c\
- src/dcrud/ClassID.c\
- src/dcrud/Callback.c\
- src/dcrud/Cache.c\
- src/dcrud/GUID.c\
- src/util/CheckSysCall.c\
- src/io/Errors.c\
- src/io/ByteBuffer.c\
- src/coll/MapVoidPtr.c\
- src/coll/Set.c\
- src/coll/Comparator.c\
- src/coll/MapFuncPtr.c\
- src/coll/List.c\
+ src/dbg/Dump.c\
  src/dbg/Performance.c\
- src/dbg/Dump.c
+ src/coll/MapVoidPtr.c\
+ src/coll/Comparator.c\
+ src/coll/List.c\
+ src/coll/MapFuncPtr.c\
+ src/coll/Set.c\
+ src/dcrud/Arguments.c\
+ src/dcrud/Cache.c\
+ src/dcrud/Callback.c\
+ src/dcrud/ClassID.c\
+ src/dcrud/Dispatcher.c\
+ src/dcrud/GUID.c\
+ src/dcrud/Network.c\
+ src/dcrud/NetworkReceiver.c\
+ src/dcrud/ParticipantImpl.c\
+ src/dcrud/Shareable.c\
+ src/dcrud/Status.c\
+ src/io/ByteBuffer.c\
+ src/io/Errors.c\
+ src/os/Mutex.c\
+ src/os/System.c\
+ src/util/CheckSysCall.c
 
 EXE_SRCS =\
  test/main.c\
+ test/Person.c\
  test/test_002.c\
  test/test_003.c\
+ test/test_005.c\
  test/test_006.c\
  test/test_008.c
 
@@ -49,8 +51,6 @@ tests: coll io shapes
 clean:
 	rm -fr Debug
 	rm -fr Release
-	rm -fr test/Debug
-	rm -fr test/Release
 
 coll: Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test coll
@@ -80,4 +80,3 @@ Debug/%.o: %.c
 Release/%.o: %.c
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS_RELEASE) -c $< -o $@
-

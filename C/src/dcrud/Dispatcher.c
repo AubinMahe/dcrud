@@ -84,19 +84,6 @@ static Provided * Provided_new() {
    return This;
 }
 
-static bool runAllPendingOperations( collForeach * context ) {
-   OperationCall *   opCall      = (OperationCall *  )context->item;
-   ParticipantImpl * participant = (ParticipantImpl *)context->user;
-   Operation *       op          = opCall->operation;
-   dcrudArguments    results     = op->function( op->context, opCall->arguments );
-   if( opCall->callId ) {
-      ParticipantImpl_sendCall(
-         participant, opCall->intrfcName, opCall->opName, results, -opCall->callId );
-   }
-   free( opCall );
-   return true;
-}
-
 bool dcrudIProvided_addOperation(
    dcrudIProvided  self,
    const char *    name,
@@ -199,18 +186,16 @@ dcrudICRUD dcrudIDispatcher_requireCRUD( dcrudIDispatcher self, dcrudClassID cla
    return (dcrudICRUD)crud;
 }
 
-void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
+void dcrudIDispatcher_executeCrud(
+   dcrudIDispatcher self,
+   const char *     opName,
+   dcrudArguments   args   )
+{
    Dispatcher * This = (Dispatcher *)self;
-   unsigned     queueNdx;
-
    osMutex_take( This->operationQueuesMutex );
-   for( queueNdx = 0; queueNdx < OPERATION_QUEUE_COUNT; ++queueNdx ) {
-      collList_foreach(
-         This->operationQueues[queueNdx],
-         runAllPendingOperations,
-         This->participant );
-      collList_clear( This->operationQueues[queueNdx] );
-   }
+   collList_add(
+      This->operationQueues[DCRUD_DEFAULT_QUEUE],
+      OperationCall_new( NULL, ICRUD_INTERFACE_NAME, opName, 0, args ));
    osMutex_release( This->operationQueuesMutex );
 }
 
@@ -251,4 +236,58 @@ void dcrudIDispatcher_execute(
          }
       }
    }
+}
+
+static bool runAllPendingOperations( collForeach * context ) {
+   OperationCall *   opCall      = (OperationCall *  )context->item;
+   ParticipantImpl * participant = (ParticipantImpl *)context->user;
+   Operation *       op          = opCall->operation;
+   if( op == NULL ) {
+      if( 0 == strcmp( opCall->opName, ICRUD_INTERFACE_CREATE )) {
+         dcrudClassID classID;
+         if( dcrudArguments_getClassID( opCall->arguments, ICRUD_INTERFACE_CLASSID, &classID )) {
+            ParticipantImpl_create( participant, classID, opCall->arguments );
+         }
+      }
+      else if( 0 == strcmp( opCall->opName, ICRUD_INTERFACE_UPDATE )) {
+         dcrudGUID id;
+         if( dcrudArguments_getGUID( opCall->arguments, ICRUD_INTERFACE_GUID, &id )) {
+            ParticipantImpl_update( participant, id, opCall->arguments );
+         }
+      }
+      else if( 0 == strcmp( opCall->opName, ICRUD_INTERFACE_DELETE )) {
+         dcrudGUID id;
+         if( dcrudArguments_getGUID( opCall->arguments, ICRUD_INTERFACE_GUID, &id )) {
+            ParticipantImpl_delete( participant, id );
+         }
+      }
+      else {
+         fprintf( stderr, "%s:%d: Unexpected Publisher operation '"ICRUD_INTERFACE_NAME".%s'\n",
+            __FILE__, __LINE__, opCall->opName );
+      }
+   }
+   else {
+      dcrudArguments results = op->function( op->context, opCall->arguments );
+      if( opCall->callId ) {
+         ParticipantImpl_sendCall(
+            participant, opCall->intrfcName, opCall->opName, results, -opCall->callId );
+      }
+   }
+   free( opCall );
+   return true;
+}
+
+void dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
+   Dispatcher * This = (Dispatcher *)self;
+   unsigned     queueNdx;
+
+   osMutex_take( This->operationQueuesMutex );
+   for( queueNdx = 0; queueNdx < OPERATION_QUEUE_COUNT; ++queueNdx ) {
+      collList_foreach(
+         This->operationQueues[queueNdx],
+         runAllPendingOperations,
+         This->participant );
+      collList_clear( This->operationQueues[queueNdx] );
+   }
+   osMutex_release( This->operationQueuesMutex );
 }

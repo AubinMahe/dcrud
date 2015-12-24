@@ -32,9 +32,13 @@ namespace dcrud {
          byte                queueNdx,
          byte                callMode );
 
-      void handleRequests();
+      void executeCrud( const std::string & opName, const Arguments & arguments );
 
       IRequired & require( const char * name );
+
+      ICRUD & requireCRUD( const ClassID & classID );
+
+      void handleRequests();
 
    private:
 

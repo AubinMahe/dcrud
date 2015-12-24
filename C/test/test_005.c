@@ -23,24 +23,19 @@ static dcrudArguments exitSrvc( dcrudIParticipant participant, dcrudArguments ar
 void test_005( void ) {
    dcrudIParticipant participant = dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE );
    if( participant ) {
-      dcrudIDispatcher   dispatcher       = NULL;
-      dcrudIProvided     monitor          = NULL;
-      dcrudCounterpart   firstCounterpart = { MCAST_ADDRESS, 2416 };
-      dcrudCounterpart * counterparts[]   = {
-         &firstCounterpart,
-         NULL
-      };
+      dcrudIDispatcher     dispatcher;
+      dcrudIProvided       monitor;
       dcrudLocalFactory *  localFactory;
       dcrudRemoteFactory * remoteFactory;
 
       Person_initFactories( participant, &localFactory, &remoteFactory );
-      dcrudIParticipant_listen( participant, NETWORK_INTERFACE, counterparts );
+      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
       dispatcher = dcrudIParticipant_getDispatcher( participant );
       monitor    = dcrudIDispatcher_provide( dispatcher, "IMonitor" );
       dcrudIProvided_addOperation( monitor, "exit", participant, (dcrudIOperation)exitSrvc );
 
       for(;;) {
-         osSystem_sleep( 100U );
+         osSystem_sleep( 10U );
          dcrudIDispatcher_handleRequests( dispatcher );
       }
    }

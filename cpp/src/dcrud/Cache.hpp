@@ -18,12 +18,6 @@ namespace dcrud {
 
       virtual ~ Cache();
 
-      bool matches( short publisherId, byte cacheId ) const;
-
-      unsigned getId() const {
-         return _cacheId;
-      }
-
       void updateFromNetwork( io::ByteBuffer * item );
 
       void deleteFromNetwork( const GUID & id );
@@ -51,8 +45,6 @@ namespace dcrud {
 
    private:
 
-      static byte _NextCacheId;
-
       typedef std::map<GUID, Shareable*>    local_t;
       typedef local_t::iterator             localIter_t;
       typedef local_t::const_iterator       localCstIter_t;
@@ -76,9 +68,8 @@ namespace dcrud {
       guids_t               _toDelete;
       mutable os::Mutex     _localMutex;
       local_t               _local;
-      int                   _nextInstance;
+      unsigned int          _nextInstance;
       bool                  _ownershipCheck;
       ParticipantImpl &     _participant;
-      byte                  _cacheId;
    };
 }

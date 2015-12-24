@@ -33,7 +33,7 @@ static int IntegerCompare( int * left, int * right ) {
 }
 
 dcrudStatus ParticipantImpl_new(
-   unsigned short      publisherId,
+   unsigned int        publisherId,
    const char *        address,
    unsigned short      port,
    const char *        intrfc,
@@ -102,46 +102,32 @@ dcrudStatus ParticipantImpl_new(
    }
    printf( "Sending to %s:%d via interface %s\n", address, port, intrfc );
    This->dispatcher = dcrudIDispatcher_new( This );
-   This->caches[This->nextCacheID++] = dcrudCache_new( This );
+   This->caches[This->cacheCount++] = dcrudCache_new( This );
+   This->receivers = collList_new();
    return DCRUD_NO_ERROR;
 }
 
-static struct NetworkReceiver_s * s_receivers[65536];
-static unsigned short             s_receiversCount;
-
 void dcrudIParticipant_listen(
-   dcrudIParticipant  self,
-   const char *       intrfc,
-   dcrudCounterpart * others[] )
+   dcrudIParticipant self,
+   const char *      mcastAddr,
+   unsigned short    port,
+   const char *      networkInterface )
 {
    ParticipantImpl * This = (ParticipantImpl *)self;
-   unsigned int      i;
-
-   for( i = 0; others[i]; ++i ) {
-      s_receivers[s_receiversCount++] =
-         createNetworkReceiver( This, others[i]->mcastAddr, others[i]->port, intrfc );
-   }
+   collList_add( This->receivers, NetworkReceiver_new( This, mcastAddr, port, networkInterface ));
 }
 
 void dcrudIParticipant_delete( dcrudIParticipant * self ) {
    ParticipantImpl * This = (ParticipantImpl *)*self;
    if( This ) {
       unsigned int i;
-      for( i = 0; ; ++i ) {
-         if( s_receivers[i] ) {
-            deleteNetworkReceiver( s_receivers[i] );
-         }
-         else {
-            break;
-         }
+      unsigned int count = collList_size( This->receivers );
+      for( i = 0; i < count; ++i ) {
+         NetworkReceiver item = (NetworkReceiver)collList_get( This->receivers, i );
+         NetworkReceiver_delete( &item );
       }
-      for( i = 0; i < This->nextCacheID; ++i ) {
-         if( This->caches[i] ) {
-            dcrudCache_delete( &(This->caches[i] ));
-         }
-         else {
-            break;
-         }
+      for( i = 0; i < This->cacheCount; ++i ) {
+         dcrudCache_delete( &(This->caches[i] ));
       }
       osMutex_delete     ( &This->cachesMutex    );
       ioByteBuffer_delete( &This->header         );
@@ -185,6 +171,10 @@ bool dcrudIParticipant_registerRemoteFactory( dcrudIParticipant self, dcrudRemot
    collMapPair       previous;
    bool              known;
 
+   if( rf->classID == NULL ) {
+      fprintf( stderr, "%s:%d: ClassID can't be null\n", __FILE__, __LINE__ );
+      return false;
+   }
    osMutex_take( This->publishersMutex );
    known = collMap_put( This->publishers, rf->classID, (collMapValue)rf, &previous );
    if( known ) {
@@ -205,17 +195,18 @@ dcrudICache dcrudIParticipant_getDefaultCache( dcrudIParticipant self ) {
    return cache;
 }
 
-dcrudStatus dcrudIParticipant_createCache( dcrudIParticipant self, dcrudICache * target ) {
+dcrudStatus dcrudIParticipant_createCache( dcrudIParticipant self, dcrudICache * target, byte * id ) {
    ParticipantImpl *   This   = (ParticipantImpl *)self;
    dcrudStatus status = DCRUD_NO_ERROR;
 
    osMutex_take( This->cachesMutex );
-   if( This->nextCacheID > 255 ) {
+   if( This->cacheCount == 0 ) {
       *target = NULL;
       status  = DCRUD_TOO_MANY_CACHES;
    }
    else {
-      *target = This->caches[This->nextCacheID++] = dcrudCache_new( This );
+      *id     = This->cacheCount++;
+      *target = This->caches[*id] = dcrudCache_new( This );
    }
    osMutex_release( This->cachesMutex );
    return status;
@@ -396,7 +387,9 @@ bool ParticipantImpl_create( ParticipantImpl * This, dcrudClassID classId, dcrud
    if( ! icrud ) {
       char buffer[100];
       dcrudClassID_toString( classId, buffer, sizeof( buffer ));
-      fprintf( stderr, "No ICRUD publisher registered for %s\n", buffer );
+      fprintf( stderr, "%s:%d: No ICRUD publisher registered for %s\n",
+         __FILE__, __LINE__, buffer );
+      collMap_foreach( This->publishers, dcrudClassID_printMapPair, stderr );
       return false;
    }
    icrud->create( icrud, how );
@@ -404,8 +397,8 @@ bool ParticipantImpl_create( ParticipantImpl * This, dcrudClassID classId, dcrud
 }
 
 bool ParticipantImpl_update( ParticipantImpl * This, dcrudGUID id, dcrudArguments how ) {
-   unsigned int i;
-   for( i = 0; i < This->nextCacheID; ++i ) {
+   byte i;
+   for( i = 0; i < This->cacheCount; ++i ) {
       dcrudShareable what = dcrudICache_read( This->caches[i], id );
       if( what ) {
          dcrudClassID     classID = dcrudShareable_getClassID( what );
@@ -424,11 +417,11 @@ bool ParticipantImpl_update( ParticipantImpl * This, dcrudGUID id, dcrudArgument
 }
 
 bool ParticipantImpl_delete( ParticipantImpl * This, dcrudGUID id ) {
-   unsigned int i;
-   for( i = 0; i < This->nextCacheID; ++i ) {
+   byte i;
+   for( i = 0; i < This->cacheCount; ++i ) {
       dcrudShareable what = dcrudICache_read( This->caches[i], id );
       if( what ) {
-         dcrudClassID     classID = dcrudShareable_getClassID( what );
+         dcrudClassID         classID = dcrudShareable_getClassID( what );
          dcrudRemoteFactory * icrud   = collMap_get( This->publishers, classID );
          if( ! icrud ) {
             char buffer[100];

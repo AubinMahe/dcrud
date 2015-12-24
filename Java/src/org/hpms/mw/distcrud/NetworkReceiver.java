@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
 
-import org.hpms.dbg.Dump;
 import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.ClassID.Type;
 import org.hpms.mw.distcrud.IRequired.CallMode;
@@ -87,23 +86,9 @@ final class NetworkReceiver extends Thread implements IProtocol {
          }
       }
       if( intrfcName.equals( ICRUD_INTERFACE_NAME )) {
-         switch( opName ) {
-         case ICRUD_INTERFACE_CREATE:
-             _participant.create( args.get( ICRUD_INTERFACE_CLASSID ), args );
-             break;
-         case ICRUD_INTERFACE_UPDATE:
-            _participant.update( args.get( ICRUD_INTERFACE_GUID ), args );
-            break;
-         case ICRUD_INTERFACE_DELETE:
-            _participant.delete( args.get( ICRUD_INTERFACE_GUID ));
-            break;
-         default:
-            System.err.printf( "Unexpected Publisher operation '%s'\n", opName );
-            break;
-         }
-         return;
+         _dispatcher.executeCrud( opName, args );
       }
-      if( callId >= 0 ) {
+      else if( callId >= 0 ) {
          _dispatcher.execute( intrfcName, opName, callId, args, queueNdx, callMode );
       }
       else if( callId < 0 ) {
@@ -124,7 +109,7 @@ final class NetworkReceiver extends Thread implements IProtocol {
             _in.receive( inBuf );
             atStart = System.nanoTime();
             inBuf.flip();
-            Dump.dump( inBuf );
+//            Dump.dump( inBuf );
             inBuf.get( signa );
             if( Arrays.equals( signa, SIGNATURE )) {
                final FrameType frameType = FrameType.values()[inBuf.get()];

@@ -7,7 +7,7 @@ extern const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE];
 #define SIZE_SIZE       4U
 #define GUID_SIZE       ( 4U + 4U )
 #define CLASS_ID_SIZE   ( 1U + 1U + 1U + 1U )
-#define HEADER_SIZE     ( SIZE_SIZE + FRAME_TYPE_SIZE + SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE )
+#define HEADER_SIZE     ( DCRUD_SIGNATURE_SIZE + FRAME_TYPE_SIZE + SIZE_SIZE + GUID_SIZE + CLASS_ID_SIZE )
 #define PAYLOAD_SIZE    ( 64U*1024U - HEADER_SIZE )
 
 typedef enum FrameType_e {

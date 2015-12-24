@@ -25,16 +25,14 @@ final class Cache implements ICache {
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
    private final ParticipantImpl      _participant;
-   private final int                  _publisherId;
 
    Cache( ParticipantImpl participant ) {
       _participant = participant;
-      _publisherId = participant.getPublisherId();
    }
 
    @Override
    public boolean owns( GUID id ) {
-      return id._publisher == _publisherId ;
+      return id._publisher == _participant.getPublisherId();
    }
 
    @Override
@@ -47,7 +45,7 @@ final class Cache implements ICache {
       if( item._id.isShared()) {
          return Status.ALREADY_CREATED;
       }
-      item._id._publisher = _publisherId;
+      item._id._publisher = _participant.getPublisherId();
       item._id._instance  = _nextInstance++;
       synchronized( _local ) {
          _local.put( item._id, item );

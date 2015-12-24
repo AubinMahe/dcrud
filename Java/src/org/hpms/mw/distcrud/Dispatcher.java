@@ -62,6 +62,13 @@ class Dispatcher implements IDispatcher, IProtocol {
       return provided;
    }
 
+   void executeCrud( String opName, Arguments args ) {
+      synchronized( _operationQueues ) {
+         _operationQueues[IRequired.DEFAULT_QUEUE].add(
+            new Operation( null, args, IProtocol.ICRUD_INTERFACE_NAME, opName, 0 ));
+      }
+   }
+
    boolean execute(
       String    intrfcName,
       String    opName,
@@ -94,18 +101,36 @@ class Dispatcher implements IDispatcher, IProtocol {
    }
 
    @Override
-   public void handleRequests() {
+   public void handleRequests() throws IOException{
       synchronized( _operationQueues ) {
          for( final List<Operation> queue : _operationQueues ) {
             for( final Operation op : queue ) {
-               final IOperation iOp     = op._operation;
-               final Arguments  results = iOp.execute( op._arguments );
-               if( op._callId > 0 ) {
-                  try {
-                     _participant.call( op._intrfcName, op._opName, results, -op._callId );
+               final IOperation iOp = op._operation;
+               if( iOp == null ) {
+                  ClassID classID;
+                  GUID    id;
+                  switch( op._opName ) {
+                  case ICRUD_INTERFACE_CREATE:
+                     classID = op._arguments.get( ICRUD_INTERFACE_CLASSID );
+                     _participant.create( classID, op._arguments );
+                     break;
+                  case ICRUD_INTERFACE_UPDATE:
+                     id = op._arguments.get( ICRUD_INTERFACE_GUID );
+                     _participant.update( id, op._arguments );
+                     break;
+                  case ICRUD_INTERFACE_DELETE:
+                     id = op._arguments.get( ICRUD_INTERFACE_GUID );
+                     _participant.delete( id );
+                     break;
+                  default:
+                     System.err.printf( "Unexpected Publisher operation '%s'\n", op._opName );
+                     break;
                   }
-                  catch( final IOException e ) {
-                     e.printStackTrace();
+               }
+               else {
+                  final Arguments  results = iOp.execute( op._arguments );
+                  if( op._callId > 0 ) {
+                     _participant.call( op._intrfcName, op._opName, results, -op._callId );
                   }
                }
             }

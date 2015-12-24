@@ -11,25 +11,22 @@ namespace dcrud {
    class GUID {
    public:
 
-      static const unsigned int SIZE = 2 + 1 + 4;
+      static const unsigned int SIZE = 4 + 4;
 
       static GUID unserialize( io::ByteBuffer & buffer );
 
       GUID() :
          _publisher( 0 ),
-         _cache    ( 0 ),
          _instance ( 0 )
       {}
 
       GUID( const GUID & right ) :
          _publisher( right._publisher ),
-         _cache    ( right._cache     ),
          _instance ( right._instance  )
       {}
 
       GUID & operator = ( const GUID & right ) {
          _publisher = right._publisher;
-         _cache     = right._cache;
          _instance  = right._instance;
          return *this;
       }
@@ -42,8 +39,6 @@ namespace dcrud {
          return _instance != 0;
       }
 
-      bool matches( short publisher, byte cacheId ) const;
-
       int compareTo( const GUID & right ) const;
 
       void set( const GUID & id );
@@ -54,9 +49,8 @@ namespace dcrud {
 
    private:
 
-      short _publisher;
-      byte  _cache;
-      int   _instance;
+      unsigned int _publisher;
+      unsigned int _instance;
 
       friend class Cache;
    };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace dcrud {
 
    class IParticipant;
@@ -7,11 +9,10 @@ namespace dcrud {
    class Network {
    public:
 
-      static IParticipant & join(
-         const char *   networkConfFile,
-         const char *   intrfcName,
-         unsigned short id             );
-
-      static void leave( IParticipant & toDelete );
+      static IParticipant * join(
+         unsigned int        publisherId,
+         const std::string & mcastAddr,
+         unsigned short      port,
+         const std::string & intrfc );
    };
 }

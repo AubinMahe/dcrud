@@ -99,25 +99,34 @@
       </exec>
    </target>
 
-   <target name="Test_004" description="Not written yet" />
+   <target name="Test_004" description="Same as Test_008 but in C++ language">
+      <exec executable="make" dir="../cpp" />
+      <exec executable="gnome-terminal" spawn="true" dir="../cpp">
+         <arg value="-t" /><arg value="Test_004" />
+         <arg value="-x" /><arg value="Debug/dcrud-cpp-test" />
+      </exec>
+      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
+   </target>
 
    <target name="Test_005" depends="jar-lib,jar-test"
       description="C Person publisher, Java subscrber">
-      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.person.Test_005" />
-      <exec executable="gnome-terminal" spawn="true">
-         <env key="LD_LIBRARY_PATH" value="/home/aubin/Dev/Git/dcrud/C/Debug" />
+      <exec executable="make" dir="../C" />
+      <exec executable="gnome-terminal" spawn="true" dir="../C">
+         <env key="LD_LIBRARY_PATH" value="Debug" />
          <arg value="-t" /><arg value="Test 005" />
-         <arg value="-x" /><arg value="../C/test/Debug/dcrud-c-test" />
+         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
          <arg value="005" />
       </exec>
+      <java fork="true" classpath="${jar-test}" classname="tests.person.Test_005" />
    </target>
 
    <target name="Test_006" depends="jar-lib,jar-test"
       description="C Person subscrber, Java publisher">
-      <exec spawn="true" executable="gnome-terminal">
-      	<env key="LD_LIBRARY_PATH" value="/home/aubin/Dev/Git/dcrud/C/Debug" />
+      <exec executable="make" dir="../C" />
+      <exec spawn="true" executable="gnome-terminal" dir="../C">
+      	<env key="LD_LIBRARY_PATH" value="Debug" />
          <arg value="-t" /><arg value="Test 006" />
-         <arg value="-x" /><arg value="../C/test/Debug/dcrud-c-test" />
+         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
          <arg value="006" />
       </exec>
       <java fork="true" classpath="${jar-test}" classname="tests.person.Test_006" />
@@ -168,10 +177,11 @@
 &#10;&#9;the server to create some coloured rectangles and ellipses.
 &#10;&#9;The server move and publish the shapes every 40 ms.
 &#10;&#9;The Java client display all the shapes published by the server.">
-      <exec executable="gnome-terminal" spawn="true">
-         <arg value="-t" /><arg value="dcrud-c-test" />
-         <arg value="-x" /><arg value="../C/Debug/" />
-         <arg value="4" />
+      <exec executable="make" dir="../C" />
+      <exec executable="gnome-terminal" spawn="true" dir="../C">
+         <arg value="-t" /><arg value="Test_008" />
+         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
+         <arg value="8" />
       </exec>
       <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
    </target>

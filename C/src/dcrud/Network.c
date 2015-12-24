@@ -2,7 +2,7 @@
 #include "ParticipantImpl.h"
 
 dcrudIParticipant dcrudNetwork_join(
-   byte           id,
+   unsigned int   publisherId,
    const char *   mcastAddr,
    unsigned short port,
    const char *   intrfc )
@@ -13,7 +13,7 @@ dcrudIParticipant dcrudNetwork_join(
       fprintf( stderr, "%s:%d:Network interface name can't be null\n", __FILE__, __LINE__ );
       return 0;
    }
-   if( DCRUD_NO_ERROR != ParticipantImpl_new( id, mcastAddr, port, intrfc, &retVal )) {
+   if( DCRUD_NO_ERROR != ParticipantImpl_new( publisherId, mcastAddr, port, intrfc, &retVal )) {
       dcrudIParticipant p = (dcrudIParticipant)retVal;
       dcrudIParticipant_delete( &p );
       retVal = 0;

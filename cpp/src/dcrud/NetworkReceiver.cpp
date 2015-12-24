@@ -1,6 +1,7 @@
 #include "NetworkReceiver.hpp"
 #include "Dispatcher.hpp"
 #include "Cache.hpp"
+#include "IProtocol.hpp"
 
 #include <dcrud/ClassID.hpp>
 #include <dcrud/GUID.hpp>
@@ -27,51 +28,6 @@
 #endif
 #include <stdio.h>
 
-namespace dcrud {
-
-   class NetworkReceiver {
-   public:
-
-      NetworkReceiver(
-         ParticipantImpl & participant,
-         const char *      address,
-         unsigned short    port,
-         const char *      intrfc );
-
-      ~ NetworkReceiver();
-
-      void dataDelete( void );
-      void dataUpdate( void );
-      void operation ( void );
-      void run       ( void );
-
-   private:
-
-      ParticipantImpl & _participant;
-      Dispatcher      & _dispatcher;
-      io::ByteBuffer    _inBuf;
-      SOCKET            _in;
-#ifdef WIN32
-      HANDLE            _thread;
-#else
-      pthread_t         _thread;
-#endif
-   };
-
-   NetworkReceiver * createNetworkReceiver(
-      ParticipantImpl & participant,
-      const char *      address,
-      unsigned short    port,
-      const char *      intrfc )
-   {
-      return new NetworkReceiver( participant, address, port, intrfc );
-   }
-
-   void deleteNetworkReceiver( NetworkReceiver * networkReceiver ) {
-      delete networkReceiver;
-   }
-}
-
 using namespace dcrud;
 
 static void * run( void * This ) {
@@ -80,10 +36,10 @@ static void * run( void * This ) {
 }
 
 NetworkReceiver::NetworkReceiver(
-   ParticipantImpl & participant,
-   const char *      address,
-   unsigned short    port,
-   const char *      intrfc )
+   ParticipantImpl &   participant,
+   const std::string & address,
+   unsigned short      port,
+   const std::string & intrfc )
  :
    _participant( participant ),
    _dispatcher ((Dispatcher &)participant.getDispatcher()),
@@ -107,21 +63,21 @@ NetworkReceiver::NetworkReceiver(
    local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
    if( ! utilCheckSysCall( 0 ==
       bind( _in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
-      __FILE__, __LINE__, "bind(%s,%d)", intrfc, port ))
+      __FILE__, __LINE__, "bind(%s,%d)", intrfc.c_str(), port ))
    {
       throw std::runtime_error( "bind" );
    }
    struct ip_mreq mreq;
    memset( &mreq, 0, sizeof( mreq ));
-   mreq.imr_multiaddr.s_addr = inet_addr( address );
-   mreq.imr_interface.s_addr = inet_addr( intrfc );
+   mreq.imr_multiaddr.s_addr = inet_addr( address.c_str());
+   mreq.imr_interface.s_addr = inet_addr( intrfc.c_str());
    if( ! utilCheckSysCall( 0 ==
       setsockopt( _in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
-      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address ))
+      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address.c_str()))
    {
       throw std::runtime_error( "setsockopt(IP_ADD_MEMBERSHIP)");
    }
-   printf( "receiving from %s, bound to %s:%d\n", address, intrfc, port );
+   printf( "receiving from %s, bound to %s:%d\n", address.c_str(), intrfc.c_str(), port );
 #ifdef WIN32
    DWORD tid;
    _thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, this, 0, &tid );
@@ -192,7 +148,10 @@ void NetworkReceiver::operation() {
       break;
       }
    }
-   if( callId > 0 ) {
+   if( intrfcName == ICRUD_INTERFACE_NAME ) {
+      _dispatcher.executeCrud( opName, args );
+   }
+   else if( callId > 0 ) {
       _dispatcher.execute( intrfcName, opName, args, callId, queueNdx, callMode );
    }
    else if( callId < 0 ) {

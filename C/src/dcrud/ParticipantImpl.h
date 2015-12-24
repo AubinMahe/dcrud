@@ -1,7 +1,11 @@
 #pragma once
 #include <dcrud/IParticipant.h>
+
+#include <coll/List.h>
 #include <coll/Set.h>
+
 #include <io/socket.h>
+
 #include <os/Mutex.h>
 
 #define CACHES_COUNT    256
@@ -10,7 +14,6 @@ typedef struct ParticipantImpl_s {
 
    osMutex            cachesMutex;
    dcrudICache        caches[CACHES_COUNT];
-   unsigned int       nextCacheID;
    ioByteBuffer       header;
    ioByteBuffer       payload;
    ioByteBuffer       message;
@@ -22,14 +25,15 @@ typedef struct ParticipantImpl_s {
    struct sockaddr_in target;
    osMutex            outMutex;
    SOCKET             out;
-   unsigned short     publisherId;
+   unsigned int       publisherId;
    dcrudIDispatcher   dispatcher;
-   unsigned int       itemCount;
+   byte               cacheCount;
    int                callId;
+   collList           receivers;
 
 } ParticipantImpl;
 
-dcrudStatus    ParticipantImpl_new            ( unsigned short publisherId, const char * address, unsigned short port, const char * intrfc, ParticipantImpl * * target );
+dcrudStatus    ParticipantImpl_new            ( unsigned int publisherId, const char * address, unsigned short port, const char * intrfc, ParticipantImpl * * target );
 unsigned int   ParticipantImpl_getMCastAddress( ParticipantImpl *   This );
 void           ParticipantImpl_publishUpdated ( ParticipantImpl *   This, collSet updated );
 void           ParticipantImpl_publishDeleted ( ParticipantImpl *   This, collSet deleted );

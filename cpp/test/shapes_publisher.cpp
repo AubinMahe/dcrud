@@ -27,12 +27,12 @@ public:
 
    static const unsigned int LOOP_COUNT = 10000U;
 
-   ShapesSample( unsigned short publisherId, const char * intrfc ) :
-      _participant( dcrud::Network::join( "network.cfg", intrfc, publisherId )),
-      _cache      ( _participant.createCache()),
-      _dispatcher ( _participant.getDispatcher())
+   ShapesSample() :
+      _participant( dcrud::Network::join( 2, "224.0.0.3", 2417, "192.168.1.7" )),
+      _cache      ( _participant->getDefaultCache()),
+      _dispatcher ( _participant->getDispatcher())
    {
-      ShareableShape::registerClasses   ( _participant );
+      ShareableShape::registerClasses   ( *_participant );
       ShareableShape::registerOperations( _dispatcher  );
    }
 
@@ -46,7 +46,7 @@ public:
       for( dcrud::shareablesIter_t it = snapshot.begin(); it != snapshot.end(); ++it ) {
          delete *it;
       }
-      dcrud::Network::leave( _participant );
+      delete _participant;
    }
 
    void run() {
@@ -71,33 +71,14 @@ public:
 
 private:
 
-   dcrud::IParticipant & _participant;
+   dcrud::IParticipant * _participant;
    dcrud::ICache &       _cache;
    dcrud::IDispatcher &  _dispatcher;
 };
 
-int main( int argc, char * argv[] ) {
-   unsigned short publisherId = 0;
-   const char *   intrfc      = 0;
-
-   for( int i = 2; i < argc; ++i ) {
-      if( 0 == strcmp( argv[i], "--pub-id" )) {
-         publisherId = (unsigned short)atoi( argv[++i] );
-      }
-      else if( 0 == strcmp( argv[i], "--interface" )) {
-         intrfc = argv[++i];
-      }
-   }
-   if( publisherId < 1 ) {
-      fprintf( stderr, "%s --pub-id <publisher-id> is mandatory\n", argv[0] );
-      exit(-1);
-   }
-   if( ! intrfc ) {
-      fprintf( stderr, "%s --interface <ipv4> is mandatory\n", argv[0] );
-      exit(-1);
-   }
+int main( void ) {
    try {
-      ShapesSample( publisherId, intrfc ).run();
+      ShapesSample().run();
       printf( "Well done.\n" );
    }
    catch( const std::exception & x ) {

@@ -246,7 +246,7 @@ void test_008( void ) {
       ellipseFactory  .unserialize = (dcrudLocalFactory_Unserialize)ShareableShape_unserialize;
       dcrudIParticipant_registerLocalFactory( participant, &rectangleFactory );
       dcrudIParticipant_registerLocalFactory( participant, &ellipseFactory );
-      dcrudIParticipant_createCache( participant, &cache );
+      cache = dcrudIParticipant_getDefaultCache( participant );
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleFactory.classID ));
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseFactory  .classID ));
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, rectangleFactory.classID ));
