@@ -23,11 +23,14 @@ static void remotelyCreatePerson(
    dcrudArguments_delete( &how );
 }
 
+extern bool dumpReceivedBuffer;
+
 /*
  * C Person subscriber, Java publisher
  */
 void test_006( void ) {
-   dcrudIParticipant participant = dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE );
+   dcrudIParticipant participant =
+      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
    if( participant ) {
       dcrudICache          cache;
       dcrudIDispatcher     dispatcher;
@@ -66,7 +69,7 @@ void test_006( void ) {
       printf( "Press <enter> to terminate Java counterpart\n" );
       fgetc( stdin );
       dcrudIRequired_call( monitor, "exit", NULL, NULL );
-      dcrudIParticipant_delete( &participant );
+      dcrudNetwork_leave( &participant );
    }
    else {
       fprintf( stderr, "Unable to join network.\n" );

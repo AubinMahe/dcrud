@@ -1,3 +1,6 @@
+#include <util/types.h>
+#include <util/trace.h>
+
 #ifdef _WIN32
 #  include <crtdbg.h>
 #endif
@@ -14,12 +17,25 @@ void test_006( void );
 /*   test_007: Java only */
 void test_008( void );
 
+bool dumpReceivedBuffer = false;
+
 int main( int argc, char * argv[] ) {
-   int testNumber = argc > 1 ? atoi( argv[1] ) : 0;
+   char logname[200];
+   int  testNumber = -1;
+   int  i;
+   for( i = 1; i < argc; ++i ) {
+      if( 0 == strncmp( argv[i], "--test=", 7 )) {
+         testNumber = atoi( argv[i] + 7 );
+      }
+      else if( 0 == strcmp( argv[i], "--dump-received-buffer" )) {
+         dumpReceivedBuffer = true;
+      }
+   }
 #ifdef _WIN32
    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
-
+   sprintf( logname, "Test_%03d.log", testNumber );
+   trace_open( logname );
    switch( testNumber ) {
    default:
       fprintf( stderr, "%s <nnn> where nnn is a test number > 0\n", argv[0] );

@@ -32,6 +32,8 @@ typedef struct NetworkReceiverImpl_s {
 #else
    pthread_t         thread;
 #endif
+   bool              dumpReceivedBuffer;
+
 } NetworkReceiverImpl;
 
 static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
@@ -194,9 +196,9 @@ static void * run( NetworkReceiverImpl * This ) {
          atStart = osSystem_nanotime();
 #endif
          ioByteBuffer_flip( This->inBuf );
-         /**/
-         ioByteBuffer_dump( This->inBuf, stderr );
-         /**/
+         if( This->dumpReceivedBuffer ) {
+            ioByteBuffer_dump( This->inBuf, stderr );
+         }
          ioByteBuffer_get( This->inBuf, (byte *)signa, 0, sizeof( signa ));
          if( 0 == strncmp( signa, (const char *)DCRUD_SIGNATURE, DCRUD_SIGNATURE_SIZE )) {
             FrameType    frameType = FRAMETYPE_NO_OP;
@@ -235,7 +237,8 @@ NetworkReceiver NetworkReceiver_new(
    ParticipantImpl * participant,
    const char *      address,
    unsigned short    port,
-   const char *      intrfc )
+   const char *      intrfc,
+   bool              dumpReceivedBuffer )
 {
    NetworkReceiverImpl * This = (NetworkReceiverImpl *)malloc( sizeof( NetworkReceiverImpl ));
    int                   trueValue = 1;
@@ -245,9 +248,10 @@ NetworkReceiver NetworkReceiver_new(
    memset( &local_sin, 0, sizeof( local_sin ));
    memset( &mreq     , 0, sizeof( mreq ));
    memset( This, 0, sizeof( NetworkReceiverImpl ));
-   This->participant = participant;
-   This->inBuf       = ioByteBuffer_new( 64*1024 );
-   This->in          = socket( AF_INET, SOCK_DGRAM, 0 );
+   This->participant        = participant;
+   This->inBuf              = ioByteBuffer_new( 64*1024 );
+   This->in                 = socket( AF_INET, SOCK_DGRAM, 0 );
+   This->dumpReceivedBuffer = dumpReceivedBuffer;
    if( ! utilCheckSysCall( This->in != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
       return (NetworkReceiver)This;
    }

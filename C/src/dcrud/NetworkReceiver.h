@@ -8,6 +8,7 @@ NetworkReceiver NetworkReceiver_new(
    ParticipantImpl * participant,
    const char *      address,
    unsigned short    port,
-   const char *      intrfc );
+   const char *      intrfc,
+   bool              dumpReceivedBuffer );
 
 void NetworkReceiver_delete( NetworkReceiver * This );

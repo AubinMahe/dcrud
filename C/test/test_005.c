@@ -12,16 +12,19 @@
 static dcrudArguments exitSrvc( dcrudIParticipant participant, dcrudArguments args ) {
    printf( "Well done, press <enter> to exit\n" );
    fgetc( stdin );
-   dcrudIParticipant_delete( &participant );
+   dcrudNetwork_leave( &participant );
    exit(0);
    (void)args;
 }
+
+extern bool dumpReceivedBuffer;
 
 /*
  * C Person publisher, Java subscriber
  */
 void test_005( void ) {
-   dcrudIParticipant participant = dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE );
+   dcrudIParticipant participant =
+      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
    if( participant ) {
       dcrudIDispatcher     dispatcher;
       dcrudIProvided       monitor;

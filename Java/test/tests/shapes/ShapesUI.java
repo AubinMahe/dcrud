@@ -16,6 +16,7 @@ import org.hpms.mw.distcrud.ICRUD;
 import org.hpms.mw.distcrud.ICache;
 import org.hpms.mw.distcrud.IDispatcher;
 import org.hpms.mw.distcrud.IParticipant;
+import org.hpms.mw.distcrud.IRequired;
 import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
 
@@ -46,19 +47,20 @@ public class ShapesUI implements Controller {
 
    private final Random _random = new Random();
 
-   private ICache  _cache;
-   private int     _rank;
-   private Node    _dragged;
-   private double  _nodeX;
-   private double  _nodeY;
-   private double  _fromX;
-   private double  _fromY;
-   private boolean _periodic;
-   private boolean _moveThem;
-   private boolean _readonly;
-   private ICRUD   _remoteEllipseFactory;
-   private ICRUD   _remoteRectangleFactory;
-   private String  _window;
+   private ICache    _cache;
+   private int       _rank;
+   private Node      _dragged;
+   private double    _nodeX;
+   private double    _nodeY;
+   private double    _fromX;
+   private double    _fromY;
+   private boolean   _periodic;
+   private boolean   _moveThem;
+   private boolean   _readonly;
+   private ICRUD     _remoteEllipseFactory;
+   private ICRUD     _remoteRectangleFactory;
+   private String    _window;
+   private IRequired _iMonitor;
 
    @FXML private Menu               _publisherMnu;
    @FXML private CheckMenuItem      _periodicChkMnu;
@@ -68,11 +70,12 @@ public class ShapesUI implements Controller {
    @FXML private ColorPicker        _strokeColor;
    @FXML private ColorPicker        _fillColor;
 
-   @SuppressWarnings("static-method")
    @FXML
    private void onQuit() {
       try {
          Performance.saveToDisk();
+         _iMonitor.call( "exit" );
+         Thread.sleep( 40 );
       }
       catch( final Throwable t ) {
          t.printStackTrace();
@@ -135,11 +138,12 @@ public class ShapesUI implements Controller {
       _cache.setOwnership( ownership );
       _cache.subscribe( ShareableEllipse.CLASS_ID );
       _cache.subscribe( ShareableRect   .CLASS_ID );
+      final IDispatcher dispatcher = participant.getDispatcher();
       if( remote ) {
-         final IDispatcher dispatcher = participant.getDispatcher();
          _remoteEllipseFactory   = dispatcher.requireCRUD( ShareableEllipse.CLASS_ID );
          _remoteRectangleFactory = dispatcher.requireCRUD( ShareableRect   .CLASS_ID );
       }
+      _iMonitor = dispatcher.require( "IMonitor" );
       new Timer( "AnimationActivity", true ).schedule(
          new TimerTask() { @Override public void run() { animationActivity(); }}, 0, 40L );
       new Timer( "NetworkActivity", true ).schedule(

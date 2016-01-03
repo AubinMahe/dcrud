@@ -22,9 +22,13 @@ namespace dcrud {
          _participant( participant )
       {}
 
-      IProvided & provide( const char * interfaceName );
+      virtual IProvided & provide( const std::string & interfaceName );
 
-      bool execute(
+      virtual IRequired & require( const std::string & interfaceName );
+
+      virtual ICRUD &     requireCRUD( const ClassID & classID );
+
+      virtual bool execute(
          const std::string & intrfcName,
          const std::string & opName,
          const Arguments &   arguments,
@@ -32,13 +36,9 @@ namespace dcrud {
          byte                queueNdx,
          byte                callMode );
 
-      void executeCrud( const std::string & opName, const Arguments & arguments );
+      virtual void executeCrud( const std::string & opName, const Arguments & arguments );
 
-      IRequired & require( const char * name );
-
-      ICRUD & requireCRUD( const ClassID & classID );
-
-      void handleRequests();
+      virtual void handleRequests();
 
    private:
 

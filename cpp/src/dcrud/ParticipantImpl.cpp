@@ -84,9 +84,11 @@ ParticipantImpl:: ~ ParticipantImpl() {
 void ParticipantImpl::listen(
    const std::string & mcastAddr,
    unsigned short      port,
-   const std::string & networkInterface )
+   const std::string & networkInterface,
+   bool                dumpReceivedBuffer /* = false */ )
 {
-   _receivers.push_back( new NetworkReceiver( *this, mcastAddr, port, networkInterface ));
+   _receivers.push_back(
+      new NetworkReceiver( *this, mcastAddr, port, networkInterface, dumpReceivedBuffer ));
 }
 
 void ParticipantImpl::registerLocalFactory( const ClassID & id, localFactory_t factory ) {
@@ -169,15 +171,12 @@ void ParticipantImpl::call(
 {
    os::Synchronized sync( _outMutex );
    _message.clear();
-   _header.clear();
-   _header.put( SIGNATURE, 0, SIGNATURE_SIZE );
-   _header.putByte( OPERATION );
-   _header.putByte( args ? (byte)args->getCount() : 0 );
-   _header.flip();
-   _message.put( _header );
+   _message.put      ( SIGNATURE, 0, SIGNATURE_SIZE );
+   _message.putByte  ( OPERATION );
    _message.putString( intrfcName );
    _message.putString( opName );
-   _message.putInt( callId );
+   _message.putInt   ( callId );
+   _message.putByte  ( args ? (byte)args->getCount() : 0 );
    if( args ) {
       args->serialize( _message );
    }

@@ -9,7 +9,10 @@ dcrudIParticipant dcrudNetwork_join(
    unsigned int   publisherId,
    const char *   mcastAddr,
    unsigned short port,
-   const char *   intrfc );
+   const char *   intrfc,
+   bool           dumpReceivedBuffer );
+
+void dcrudNetwork_leave( dcrudIParticipant * participant );
 
 #ifdef __cplusplus
 }

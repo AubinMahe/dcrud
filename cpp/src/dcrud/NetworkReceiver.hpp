@@ -14,7 +14,8 @@ namespace dcrud {
          ParticipantImpl &   participant,
          const std::string & address,
          unsigned short      port,
-         const std::string & intrfc );
+         const std::string & intrfc,
+         bool                dumpReceivedBuffer );
 
       ~ NetworkReceiver();
 
@@ -34,5 +35,6 @@ namespace dcrud {
 #else
       pthread_t         _thread;
 #endif
+      bool              _dumpReceivedBuffer;
    };
 }

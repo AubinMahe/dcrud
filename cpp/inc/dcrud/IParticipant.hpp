@@ -21,7 +21,8 @@ namespace dcrud {
       virtual void listen(
          const std::string & mcastAddr,
          unsigned short      port,
-         const std::string & networkInterface ) = 0;
+         const std::string & networkInterface,
+         bool                dumpReceivedBuffer ) = 0;
 
       virtual void registerLocalFactory ( const ClassID & id, localFactory_t factory ) = 0;
 

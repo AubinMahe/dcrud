@@ -155,14 +155,15 @@ final class ParticipantImpl implements IParticipant, IProtocol {
    }
 
    void call( String intrfcName, String opName, Arguments args, int callId ) throws IOException {
-      synchronized( _out ){
+      synchronized( _out ) {
+         final byte count = ( args == null ) ? 0 : (byte)args.getCount();
          _message.clear();
-         _message.put( SIGNATURE );
-         _message.put((byte)FrameType.OPERATION.ordinal());
+         _message        .put      ( SIGNATURE );
+         _message        .put      ((byte)FrameType.OPERATION.ordinal());
          SerializerHelper.putString( intrfcName, _message );
          SerializerHelper.putString( opName    , _message );
-         _message.putInt( callId );
-         _message.put( args == null ? 0 : (byte)args.getCount());
+         _message        .putInt   ( callId );
+         _message        .put      ( count );
          if( args != null ) {
             args.serialize( _message );
          }

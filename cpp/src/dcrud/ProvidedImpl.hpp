@@ -13,7 +13,7 @@ namespace dcrud {
 
       ProvidedImpl( void ) {}
 
-      IProvided & addOperation( const char * opName, IOperation & executor ) {
+      virtual IProvided & addOperation( const std::string & opName, IOperation & executor ) {
          _opsInOut[opName] = &executor;
          return *this;
       }

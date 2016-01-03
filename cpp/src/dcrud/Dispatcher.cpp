@@ -43,7 +43,7 @@ namespace dcrud {
 }
 using namespace dcrud;
 
-IProvided & Dispatcher::provide( const char * interfaceName ) {
+IProvided & Dispatcher::provide( const std::string & interfaceName ) {
    os::Synchronized sync( _providedMutex );
    providedIter_t it = _provided.find( interfaceName );
    if( it == _provided.end()) {
@@ -67,12 +67,16 @@ bool Dispatcher::execute(
       os::Synchronized sync( _providedMutex );
       providedIter_t it = _provided.find( intrfcName );
       if( it == _provided.end()) {
+         fprintf( stderr, "No provided interface named '%s' found\n", intrfcName.c_str());
          return false;
       }
       provided  = it->second;
    }
    IOperation * operation = provided->getOperation( opName );
    if( ! operation ) {
+      fprintf( stderr,
+         "Provided interface named '%s' is found but it's null! (internal error)\n",
+         intrfcName.c_str());
       return false;
    }
    if( callMode == IRequired::SYNCHRONOUS ) {
@@ -103,7 +107,7 @@ void Dispatcher::executeCrud( const std::string & opName, const Arguments & argu
    _operationQueues[IRequired::DEFAULT_QUEUE].push_back( new Operation( opName, arguments ));
 }
 
-IRequired & Dispatcher::require( const char * name ) {
+IRequired & Dispatcher::require( const std::string & name ) {
    return *new RequiredImpl( name, _participant );
 }
 

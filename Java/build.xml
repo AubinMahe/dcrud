@@ -82,52 +82,59 @@
    </target>
 
    <target name="Test_002" description="C only test: collections (List, Set, Map)">
-      <exec executable="gnome-terminal" spawn="true">
-         <env key="LD_LIBRARY_PATH" value="/home/aubin/Dev/Git/dcrud/C/Debug" />
+      <exec executable="make" dir=".." />
+      <exec executable="gnome-terminal" spawn="true" dir="..">
+         <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test002" />
-         <arg value="-x" /><arg value="../C/test/Debug/dcrud-c-test" />
-         <arg value="002" />
+         <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
+         <arg value="--test=2" />
       </exec>
    </target>
 
    <target name="Test_003" description="C only test: ioByteBuffer">
-      <exec executable="gnome-terminal" spawn="true">
-         <env key="LD_LIBRARY_PATH" value="/home/aubin/Dev/Git/dcrud/C/Debug" />
+      <exec executable="make" dir=".." />
+      <exec executable="gnome-terminal" spawn="true" dir="..">
+      	<env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 003" />
-         <arg value="-x" /><arg value="../C/test/Debug/dcrud-c-test" />
-         <arg value="003" />
+         <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
+         <arg value="--test=3" />
       </exec>
    </target>
 
-   <target name="Test_004" description="Same as Test_008 but in C++ language">
-      <exec executable="make" dir="../cpp" />
-      <exec executable="gnome-terminal" spawn="true" dir="../cpp">
+   <target name="Test_004" depends="jar-lib,jar-test"
+      description="Same as Test_008 but in C++ language">
+      <exec executable="make" dir=".." />
+      <exec executable="gnome-terminal" spawn="true" dir="..">
+         <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test_004" />
-         <arg value="-x" /><arg value="Debug/dcrud-cpp-test" />
+         <arg value="-x" /><arg value="cpp/Debug/dcrud-cpp-test" />
+         <arg value="--test=4" />
       </exec>
-      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
+      <java fork="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI">
+         <arg value="--periodic=true" />
+   	</java>
    </target>
 
    <target name="Test_005" depends="jar-lib,jar-test"
       description="C Person publisher, Java subscrber">
-      <exec executable="make" dir="../C" />
-      <exec executable="gnome-terminal" spawn="true" dir="../C">
-         <env key="LD_LIBRARY_PATH" value="Debug" />
+      <exec executable="make" dir=".." />
+      <exec executable="gnome-terminal" spawn="true" dir="..">
+         <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 005" />
-         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
-         <arg value="005" />
+         <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
+         <arg value="--test=5" />
       </exec>
       <java fork="true" classpath="${jar-test}" classname="tests.person.Test_005" />
    </target>
 
    <target name="Test_006" depends="jar-lib,jar-test"
       description="C Person subscrber, Java publisher">
-      <exec executable="make" dir="../C" />
-      <exec spawn="true" executable="gnome-terminal" dir="../C">
-      	<env key="LD_LIBRARY_PATH" value="Debug" />
+      <exec executable="make" dir=".." />
+      <exec spawn="true" executable="gnome-terminal" dir="..">
+         <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 006" />
-         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
-         <arg value="006" />
+         <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
+         <arg value="--test=6" />
       </exec>
       <java fork="true" classpath="${jar-test}" classname="tests.person.Test_006" />
    </target>
@@ -178,11 +185,16 @@
 &#10;&#9;The server move and publish the shapes every 40 ms.
 &#10;&#9;The Java client display all the shapes published by the server.">
       <exec executable="make" dir="../C" />
-      <exec executable="gnome-terminal" spawn="true" dir="../C">
+      <exec executable="gnome-terminal" spawn="true" dir="..">
+         <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test_008" />
-         <arg value="-x" /><arg value="Debug/dcrud-c-test" />
-         <arg value="8" />
+         <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
+         <arg value="--test=8" />
+         <arg value="--dump-received-buffer" />
       </exec>
-      <java fork="true" spawn="true" classpath="${jar-test}" classname="tests.shapes.ShapesUI" />
+      <java fork="true" spawn="true" jar="${jar-test}">
+         <arg value="--window=left-top" />
+         <arg value="--periodic=true" />
+   	</java>
    </target>
 </project>

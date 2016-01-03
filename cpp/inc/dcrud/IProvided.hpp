@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace dcrud {
 
    class IOperation;
@@ -10,7 +12,7 @@ namespace dcrud {
       virtual ~ IProvided() {}
 
       virtual IProvided & addOperation(
-         const char * operationName,
-         IOperation & executor      ) = 0;
+         const std::string & operationName,
+         IOperation &        executor      ) = 0;
    };
 }

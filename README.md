@@ -47,8 +47,6 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Todo list (in priority order)
 -----------------------------
 
- * Enhancing interfaces to support remote CRUD without knowledge of publisher
- * Adding hand made Makefiles to ease building without Eclipse
  * Adding UDP/IP, TCP/IP protocols
  * Building a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation
  * Adding TCP-IP streams services and protocol for big data

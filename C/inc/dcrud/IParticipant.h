@@ -50,7 +50,6 @@ dcrudICache      dcrudIParticipant_getCache             ( dcrudIParticipant   Th
 dcrudIDispatcher dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This );
 dcrudShareable   dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID );
 void             dcrudIParticipant_run                  ( dcrudIParticipant   This );
-void             dcrudIParticipant_delete               ( dcrudIParticipant * This );
 
 #ifdef __cplusplus
 }

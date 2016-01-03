@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8"
-   fx:controller="org.hpms.mw.distcrud.samples.shapes.ShapesUI">
+   fx:controller="tests.shapes.ShapesUI">
    <padding><Insets bottom="2" left="2" right="2" top="2" /></padding>
    <top>
       <MenuBar>

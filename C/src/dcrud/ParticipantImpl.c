@@ -37,6 +37,7 @@ dcrudStatus ParticipantImpl_new(
    const char *        address,
    unsigned short      port,
    const char *        intrfc,
+   bool                dumpReceivedBuffer,
    ParticipantImpl * * target  )
 {
    int               trueValue = 1;
@@ -84,6 +85,7 @@ dcrudStatus ParticipantImpl_new(
    This->target.sin_port        = htons( port );
    This->target.sin_addr.s_addr = inet_addr( address );
    This->out                    = socket( AF_INET, SOCK_DGRAM, 0 );
+   This->dumpReceivedBuffer     = dumpReceivedBuffer;
    if( ! utilCheckSysCall( This->out != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
       return DCRUD_INIT_FAILED;
    }
@@ -114,7 +116,9 @@ void dcrudIParticipant_listen(
    const char *      networkInterface )
 {
    ParticipantImpl * This = (ParticipantImpl *)self;
-   collList_add( This->receivers, NetworkReceiver_new( This, mcastAddr, port, networkInterface ));
+   collList_add(
+      This->receivers,
+      NetworkReceiver_new( This, mcastAddr, port, networkInterface, This->dumpReceivedBuffer ));
 }
 
 void dcrudIParticipant_delete( dcrudIParticipant * self ) {

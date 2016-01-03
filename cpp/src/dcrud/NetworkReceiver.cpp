@@ -39,12 +39,14 @@ NetworkReceiver::NetworkReceiver(
    ParticipantImpl &   participant,
    const std::string & address,
    unsigned short      port,
-   const std::string & intrfc )
+   const std::string & intrfc,
+   bool                dumpReceivedBuffer )
  :
-   _participant( participant ),
-   _dispatcher ((Dispatcher &)participant.getDispatcher()),
-   _inBuf      ( 64*1024 ),
-   _in         ( socket( AF_INET, SOCK_DGRAM, 0 ))
+   _participant       ( participant                             ),
+   _dispatcher        ((Dispatcher &)participant.getDispatcher()),
+   _inBuf             ( 64*1024                                 ),
+   _in                ( socket( AF_INET, SOCK_DGRAM, 0 )        ),
+   _dumpReceivedBuffer( dumpReceivedBuffer                      )
 {
    if( ! utilCheckSysCall( _in != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
       throw std::runtime_error( "socket" );
@@ -120,10 +122,10 @@ void NetworkReceiver::operation() {
    Arguments   args;
    byte        queueNdx   = IRequired::DEFAULT_QUEUE;
    byte        callMode   = IRequired::ASYNCHRONOUS_DEFERRED;
-   byte        count      = _inBuf.getByte();
    std::string intrfcName = _inBuf.getString();
    std::string opName     = _inBuf.getString();
    int         callId     = _inBuf.getInt();
+   byte        count      = _inBuf.getByte();
    for( unsigned i = 0; i < count; ++i ) {
       std::string   name    = _inBuf.getString();
       ClassID       classID = ClassID::unserialize( _inBuf );
@@ -151,7 +153,7 @@ void NetworkReceiver::operation() {
    if( intrfcName == ICRUD_INTERFACE_NAME ) {
       _dispatcher.executeCrud( opName, args );
    }
-   else if( callId > 0 ) {
+   else if( callId >= 0 ) {
       _dispatcher.execute( intrfcName, opName, args, callId, queueNdx, callMode );
    }
    else if( callId < 0 ) {
@@ -168,9 +170,9 @@ void NetworkReceiver::run() {
       if( _inBuf.receive( _in )) {
          atStart = osSystem_nanotime();
          _inBuf.flip();
-         /*
-         _inBuf.dump( stderr );
-         */
+         if( _dumpReceivedBuffer ) {
+            _inBuf.dump( stderr );
+         }
          char signa[ParticipantImpl::SIGNATURE_SIZE];
          _inBuf.get((byte *)signa, 0, sizeof( signa ));
          if( 0 == strncmp(

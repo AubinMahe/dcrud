@@ -23,7 +23,8 @@ LIB_SRCS =\
  src/io/Errors.c\
  src/os/Mutex.c\
  src/os/System.c\
- src/util/CheckSysCall.c
+ src/util/CheckSysCall.c\
+ src/util/trace.c
 
 EXE_SRCS =\
  test/main.c\

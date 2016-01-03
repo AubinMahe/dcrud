@@ -30,10 +30,11 @@ typedef struct ParticipantImpl_s {
    byte               cacheCount;
    int                callId;
    collList           receivers;
+   bool               dumpReceivedBuffer;
 
 } ParticipantImpl;
 
-dcrudStatus    ParticipantImpl_new            ( unsigned int publisherId, const char * address, unsigned short port, const char * intrfc, ParticipantImpl * * target );
+dcrudStatus    ParticipantImpl_new            ( unsigned int publisherId, const char * address, unsigned short port, const char * intrfc, bool dumpReceivedBuffer, ParticipantImpl * * target );
 unsigned int   ParticipantImpl_getMCastAddress( ParticipantImpl *   This );
 void           ParticipantImpl_publishUpdated ( ParticipantImpl *   This, collSet updated );
 void           ParticipantImpl_publishDeleted ( ParticipantImpl *   This, collSet deleted );
@@ -44,3 +45,4 @@ bool           ParticipantImpl_callback       ( ParticipantImpl *   This, const 
 bool           ParticipantImpl_create         ( ParticipantImpl *   This, dcrudClassID clsId, dcrudArguments how );
 bool           ParticipantImpl_update         ( ParticipantImpl *   This, dcrudGUID id, dcrudArguments how );
 bool           ParticipantImpl_delete         ( ParticipantImpl *   This, dcrudGUID id );
+void           dcrudIParticipant_delete       ( dcrudIParticipant * This );

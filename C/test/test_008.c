@@ -2,27 +2,11 @@
 #include <os/System.h>
 #include <util/CheckSysCall.h>
 
+#include "Settings.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __linux__
-#  include <sys/socket.h>
-#  include <netdb.h>
-#  include <time.h>
-#  include <inttypes.h>
-#elif _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <winsock2.h>
-/*#  include <Ws2tcpip.h>*/
-#  include <mswsock.h>
-#endif
-
-#define LOOP_COUNT 10000
-
-/*
-#define PRINT_SERIALIZE
-#define PRINT_TIMING
-*/
 
 static dcrudLocalFactory rectangleFactory;
 static dcrudLocalFactory ellipseFactory;
@@ -83,22 +67,6 @@ static void ShareableShape_serialize( const ShareableShape * This, ioByteBuffer 
    ioByteBuffer_putDouble( target, This->stroke.green );
    ioByteBuffer_putDouble( target, This->stroke.blue );
    ioByteBuffer_putDouble( target, This->stroke.opacity );
-#ifdef PRINT_SERIALIZE
-   fprintf( stderr, "-- Serialize --\n" );
-   fprintf( stderr, "name          : %s\n", This->name );
-   fprintf( stderr, "x             : %f\n", This->x );
-   fprintf( stderr, "y             : %f\n", This->y );
-   fprintf( stderr, "w             : %f\n", This->w );
-   fprintf( stderr, "h             : %f\n", This->h );
-   fprintf( stderr, "fill  .red    : %f\n", This->fill  .red     );
-   fprintf( stderr, "fill  .green  : %f\n", This->fill  .green   );
-   fprintf( stderr, "fill  .blue   : %f\n", This->fill  .blue    );
-   fprintf( stderr, "fill  .opacity: %f\n", This->fill  .opacity );
-   fprintf( stderr, "stroke.red    : %f\n", This->stroke.red     );
-   fprintf( stderr, "stroke.green  : %f\n", This->stroke.green   );
-   fprintf( stderr, "stroke.blue   : %f\n", This->stroke.blue    );
-   fprintf( stderr, "stroke.opacity: %f\n", This->stroke.opacity );
-#endif
 }
 
 static void ShareableShape_unserialize( ShareableShape * This, ioByteBuffer source ) {
@@ -218,19 +186,35 @@ static collMap * createShapes( dcrudIParticipant participant, collMap args ) {
    shape->w = *w;
    shape->h = *h;
    dcrudICache_create( cache, shareable );
-   return 0;
+   return NULL;
 }
 
+static collMap * exitSrvc( dcrudIParticipant participant, collMap args ) {
+   dcrudICache cache = dcrudIParticipant_getDefaultCache( participant );
+   printf( "Well done, press <enter> to exit\n" );
+   fgetc( stdin );
+   dcrudNetwork_leave( &participant );
+   dcrudICache_foreach( cache, removeFromCache, cache );
+   dcrudICache_publish( cache );
+   dcrudICache_foreach( cache, deleteShape, NULL );
+   dcrudClassID_delete( &rectangleFactory.classID );
+   dcrudClassID_delete( &ellipseFactory  .classID );
+   printf( "Well done.\n" );
+   exit(0);
+   return NULL;
+   (void)args;
+}
+
+extern bool dumpReceivedBuffer;
+
 void test_008( void ) {
-   dcrudIParticipant participant = dcrudNetwork_join( 2, "224.0.0.3", 2417, "192.168.1.7" );
+   dcrudIParticipant participant =
+      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
    if( participant ) {
-      int              i;
-#ifdef PRINT_TIMING
-      uint64_t         prev          = osSystem_nanotime();
-#endif
       dcrudICache      cache         = NULL;
       dcrudIDispatcher dispatcher    = NULL;
       dcrudIProvided   shapesFactory = NULL;
+      dcrudIProvided   iMonitor      = NULL;
 
       rectangleFactory.classID     = dcrudClassID_new( 1, 1, 1, 1 );
       rectangleFactory.size        = sizeof( ShareableShape );
@@ -253,28 +237,17 @@ void test_008( void ) {
       dcrudICache_create( cache, dcrudIParticipant_createShareable( participant, ellipseFactory  .classID ));
       dispatcher    = dcrudIParticipant_getDispatcher( participant );
       shapesFactory = dcrudIDispatcher_provide( dispatcher, "IShapesFactory" );
-      dcrudIProvided_addOperation(
-         shapesFactory, "create", participant, (dcrudIOperation)createShapes );
-      printf( "Publish every 40 ms, %d times.\n", LOOP_COUNT );
-      for( i = 0; i < LOOP_COUNT; ++i ) {
-#ifdef PRINT_TIMING
-         uint64_t now = osSystem_nanotime();
-         fprintf( stderr, "-- Publish, delta = %7.2f ------------------------------------------\n",
-            ((double)(now-prev))/1000000.0 );
-         prev = now;
-#endif
+      iMonitor      = dcrudIDispatcher_provide( dispatcher, "IMonitor" );
+      dcrudIProvided_addOperation( shapesFactory, "create", participant, (dcrudIOperation)createShapes );
+      dcrudIProvided_addOperation( iMonitor     , "exit"  , participant, (dcrudIOperation)exitSrvc );
+      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
+      printf( "Publish every 40 ms.\n" );
+      for(;;) {
          dcrudICache_publish( cache );
          osSystem_sleep( 40U );
          dcrudICache_foreach( cache, moveShape, cache );
          dcrudIDispatcher_handleRequests( dispatcher );
       }
-      dcrudICache_foreach( cache, removeFromCache, cache );
-      dcrudICache_publish( cache );
-      dcrudICache_foreach( cache, deleteShape, NULL );
-      dcrudClassID_delete( &rectangleFactory.classID );
-      dcrudClassID_delete( &ellipseFactory  .classID );
-      dcrudIParticipant_delete( &participant );
-      printf( "Well done.\n" );
    }
    else {
       fprintf( stderr, "Unable to join network.\n" );
