@@ -38,7 +38,7 @@ void test_006( void ) {
       dcrudIRequired       monitor;
       dcrudLocalFactory *  localFactory;
       dcrudRemoteFactory * remoteFactory;
-      char                 c;
+      char                 c = '\0';
       int                  i;
 
       Person_initFactories( participant, &localFactory, &remoteFactory );

@@ -26,7 +26,7 @@ Arguments:: ~ Arguments() {
          case ClassID::TYPE_DOUBLE     : delete (double *        )value; break;
          case ClassID::TYPE_STRING     : delete (std::string *   )value; break;
          case ClassID::TYPE_CLASS_ID   : delete (ClassID *       )value; break;
-         case ClassID::TYPE_GUID       : delete (GUID *          )value; break;
+         case ClassID::TYPE_GUID       : delete (dcrud::GUID *          )value; break;
          case ClassID::TYPE_CALL_MODE  : delete (byte *          )value; break;
          case ClassID::TYPE_QUEUE_INDEX: delete (byte *          )value; break;
          case ClassID::TYPE_SHAREABLE  : break;
@@ -91,8 +91,8 @@ void Arguments::put( const std::string & key, const ClassID & value ) {
    _types[key] = ClassID::TYPE_CLASS_ID;
 }
 
-void Arguments::put( const std::string & key, const GUID & value ) {
-   _args [key] = new GUID( value );
+void Arguments::put( const std::string & key, const dcrud::GUID & value ) {
+   _args [key] = new dcrud::GUID( value );
    _types[key] = ClassID::TYPE_GUID;
 }
 
@@ -226,7 +226,7 @@ bool Arguments::get( const std::string & key, ClassID & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, GUID & value ) const {
+bool Arguments::get( const std::string & key, dcrud::GUID & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -235,7 +235,7 @@ bool Arguments::get( const std::string & key, GUID & value ) const {
    if( type != ClassID::TYPE_GUID ) {
       return false;
    }
-   value = *(const GUID *)it->second;
+   value = *(const dcrud::GUID *)it->second;
    return true;
 }
 
@@ -294,7 +294,7 @@ void Arguments::serialize( io::ByteBuffer & message ) const {
          case ClassID::TYPE_DOUBLE     : message.putDouble ( *(double *         )value ); break;
          case ClassID::TYPE_STRING     : message.putString ( *(std::string *    )value ); break;
          case ClassID::TYPE_CLASS_ID   : ((ClassID *)value)->serialize( message );        break;
-         case ClassID::TYPE_GUID       : ((GUID *   )value)->serialize( message );        break;
+         case ClassID::TYPE_GUID       : ((dcrud::GUID *   )value)->serialize( message );        break;
          case ClassID::TYPE_CALL_MODE  : message.putByte   ( *(byte *           )value ); break;
          case ClassID::TYPE_QUEUE_INDEX: message.putByte   ( *(byte *           )value ); break;
          case ClassID::TYPE_SHAREABLE  : /* Already handled before this switch. */        break;

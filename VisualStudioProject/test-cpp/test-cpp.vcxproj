@@ -25,6 +25,14 @@
   <ItemGroup>
     <ClInclude Include="..\..\cpp\test\ShareableShape.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dcrud-cpp\dcrud-cpp.vcxproj">
+      <Project>{4dc3723f-af42-4262-92a7-23dc7607fd12}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dcrud\dcrud.vcxproj">
+      <Project>{530abe8a-91ac-4b44-969f-80899726e450}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{38573DD7-8C1A-4B0D-B25A-5FB1D56C8932}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -101,11 +109,14 @@
       <ProgramDataBaseFileName>$(IntDir)cpp\$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,11 +132,14 @@
       <ProgramDataBaseFileName>$(IntDir)cpp\$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,13 +157,16 @@
       <ProgramDataBaseFileName>$(IntDir)cpp\$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,13 +184,16 @@
       <ProgramDataBaseFileName>$(IntDir)cpp\$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <XMLDocumentationFileName>$(IntDir)cpp\</XMLDocumentationFileName>
       <BrowseInformationFile>$(IntDir)cpp\</BrowseInformationFile>
-      <AdditionalIncludeDirectories>..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\cpp\inc;..\..\C\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

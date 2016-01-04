@@ -2,7 +2,6 @@ package tests.person;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
 import java.util.Collection;
 
 import org.hpms.mw.distcrud.Arguments;
@@ -14,14 +13,14 @@ import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
 
-public class Subscriber extends Thread {
+public class UDPSubscriber extends Thread {
 
    private final IParticipant _participant;
 
-   Subscriber( int id, InetSocketAddress addr, NetworkInterface via, InetSocketAddress...others ) throws IOException {
-      super( Subscriber.class.getName());
-      _participant = Network.join( id, addr, via );
-      _participant.listen( via, others );
+   UDPSubscriber( int id, InetSocketAddress addr, InetSocketAddress...others ) throws IOException {
+      super( UDPSubscriber.class.getName());
+      _participant = Network.join( id, addr );
+      _participant.listen( others );
       start();
    }
 

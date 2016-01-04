@@ -24,9 +24,9 @@ final class Cache implements ICache {
    private final Map<GUID, Shareable> _local          = new TreeMap<>();
    private /* */ int                  _nextInstance   = 1;
    private /* */ boolean              _ownershipCheck = false;
-   private final ParticipantImpl      _participant;
+   private final AbstractParticipant  _participant;
 
-   Cache( ParticipantImpl participant ) {
+   Cache( AbstractParticipant participant ) {
       _participant = participant;
    }
 

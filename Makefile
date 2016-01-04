@@ -1,10 +1,7 @@
-all:\
- C/Debug/dcrud-c-test\
- C/Release/dcrud-c-test\
- cpp/Debug/dcrud-cpp-test\
- cpp/Release/dcrud-cpp-test\
- Java/dcrud.jar\
- Java/dcrud-ui.jar
+all:
+	cd C ; make
+	cd cpp ; make
+	cd Java ; ant
 
 clean:
 	rm -fr C/Debug

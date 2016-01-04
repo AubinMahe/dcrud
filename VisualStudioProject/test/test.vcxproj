@@ -19,10 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\C\test\coll.c" />
-    <ClCompile Include="..\..\C\test\io.c" />
     <ClCompile Include="..\..\C\test\main.c" />
-    <ClCompile Include="..\..\C\test\shapes_publisher.c" />
+    <ClCompile Include="..\..\C\test\Person.c" />
+    <ClCompile Include="..\..\C\test\test_002.c" />
+    <ClCompile Include="..\..\C\test\test_003.c" />
+    <ClCompile Include="..\..\C\test\test_005.c" />
+    <ClCompile Include="..\..\C\test\test_006.c" />
+    <ClCompile Include="..\..\C\test\test_008.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\C\inc\coll\Comparator.h" />
@@ -30,14 +33,24 @@
     <ClInclude Include="..\..\C\inc\coll\List.h" />
     <ClInclude Include="..\..\C\inc\coll\Map.h" />
     <ClInclude Include="..\..\C\inc\coll\Set.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Arguments.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h" />
     <ClInclude Include="..\..\C\inc\dcrud\GUID.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h" />
-    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICache.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICRUD.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Network.h" />
     <ClInclude Include="..\..\C\inc\dcrud\Shareable.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Status.h" />
     <ClInclude Include="..\..\C\inc\io\ByteBuffer.h" />
     <ClInclude Include="..\..\C\inc\util\check.h" />
     <ClInclude Include="..\..\C\inc\util\types.h" />
+    <ClInclude Include="..\..\C\test\Person.h" />
+    <ClInclude Include="..\..\C\test\Settings.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dcrud\dcrud.vcxproj">

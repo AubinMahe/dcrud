@@ -27,6 +27,9 @@ all:\
  Debug/dcrud-cpp-test\
  Release/dcrud-cpp-test
 
+-include $(LIB_OBJS_DEBUG:.o=.d)
+-include $(EXE_OBJS_DEBUG:.o=.d)
+
 tests: shapes
 
 clean:
@@ -59,6 +62,9 @@ Release/libdcrud-cpp-lib.so: $(LIB_OBJS_RELEASE)
 Debug/%.o: %.cpp
 	@mkdir -p $$(dirname $@)
 	$(CCC) $(CFLAGS_DEBUG) -c $< -o $@
+
+Debug/%.d: %.cpp
+	$(CCC) $(CFLAGS_DEBUG) -MM $< > $@
 
 Release/%.o: %.cpp
 	@mkdir -p $$(dirname $@)

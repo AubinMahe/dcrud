@@ -2,8 +2,9 @@
 #include <coll/Map.h>
 #include <coll/Comparator.h>
 #include "Shareable_private.h"
-#ifdef linux
-#  include <inttypes.h>
+
+#ifdef _MSC_VER
+#  define strdup _strdup
 #endif
 
 typedef struct Arguments_t {

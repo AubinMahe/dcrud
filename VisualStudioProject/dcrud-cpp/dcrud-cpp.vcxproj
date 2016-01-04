@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\cpp\inc\dcrud\GUID.hpp" />
     <ClInclude Include="..\..\cpp\inc\dcrud\ICache.hpp" />
     <ClInclude Include="..\..\cpp\inc\dcrud\ICallback.hpp" />
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICRUD.hpp" />
     <ClInclude Include="..\..\cpp\inc\dcrud\IDispatcher.hpp" />
     <ClInclude Include="..\..\cpp\inc\dcrud\IOperation.hpp" />
     <ClInclude Include="..\..\cpp\inc\dcrud\IParticipant.hpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="..\..\cpp\inc\os\Mutex.hpp" />
     <ClInclude Include="..\..\cpp\src\dcrud\Cache.hpp" />
     <ClInclude Include="..\..\cpp\src\dcrud\Dispatcher.hpp" />
+    <ClInclude Include="..\..\cpp\src\dcrud\IProtocol.hpp" />
     <ClInclude Include="..\..\cpp\src\dcrud\NetworkReceiver.hpp" />
     <ClInclude Include="..\..\cpp\src\dcrud\Operation.hpp" />
     <ClInclude Include="..\..\cpp\src\dcrud\ParticipantImpl.hpp" />
@@ -43,6 +45,7 @@
     <ClInclude Include="..\..\cpp\src\dcrud\RequiredImpl.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\cpp\src\dcrud\Arguments.cpp" />
     <ClCompile Include="..\..\cpp\src\dcrud\Cache.cpp" />
     <ClCompile Include="..\..\cpp\src\dcrud\ClassID.cpp" />
     <ClCompile Include="..\..\cpp\src\dcrud\Dispatcher.cpp" />

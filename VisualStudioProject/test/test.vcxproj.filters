@@ -24,27 +24,27 @@
     <ClCompile Include="..\..\C\test\main.c">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\test\coll.c">
+    <ClCompile Include="..\..\C\test\Person.c">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\test\io.c">
+    <ClCompile Include="..\..\C\test\test_002.c">
       <Filter>test</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\C\test\shapes_publisher.c">
+    <ClCompile Include="..\..\C\test\test_003.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\test_005.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\test_006.c">
+      <Filter>test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\test\test_008.c">
       <Filter>test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\C\inc\dcrud\GUID.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\IRepository.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\IRepositoryFactory.h">
-      <Filter>inc\dcrud</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\C\inc\dcrud\RepositoryFactoryBuilder.h">
       <Filter>inc\dcrud</Filter>
     </ClInclude>
     <ClInclude Include="..\..\C\inc\dcrud\Shareable.h">
@@ -73,6 +73,45 @@
     </ClInclude>
     <ClInclude Include="..\..\C\inc\io\ByteBuffer.h">
       <Filter>inc\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\test\Person.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\test\Settings.h">
+      <Filter>test</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Arguments.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ClassID.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICache.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICallback.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICRUD.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IProvided.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\IRequired.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Network.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Status.h">
+      <Filter>inc\dcrud</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

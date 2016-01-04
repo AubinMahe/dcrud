@@ -87,6 +87,12 @@
     <ClInclude Include="..\..\cpp\src\dcrud\RequiredImpl.hpp">
       <Filter>src\dcrud</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\cpp\src\dcrud\IProtocol.hpp">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cpp\inc\dcrud\ICRUD.hpp">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cpp\src\dcrud\Cache.cpp">
@@ -111,6 +117,9 @@
       <Filter>src\dcrud</Filter>
     </ClCompile>
     <ClCompile Include="..\..\cpp\src\dcrud\RequiredImpl.cpp">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cpp\src\dcrud\Arguments.cpp">
       <Filter>src\dcrud</Filter>
     </ClCompile>
   </ItemGroup>

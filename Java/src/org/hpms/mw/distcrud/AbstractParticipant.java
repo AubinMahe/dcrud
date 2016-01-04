@@ -1,61 +1,26 @@
 package org.hpms.mw.distcrud;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.ProtocolFamily;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-final class ParticipantImpl implements IParticipant, IProtocol {
+abstract class AbstractParticipant implements IParticipant {
 
-   private final ByteBuffer                        _header          = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer                        _payload         = ByteBuffer.allocate( PAYLOAD_SIZE );
-   private final ByteBuffer                        _message         = ByteBuffer.allocate( 64*1024 );
-   private final Cache[]                           _caches          = new Cache[256];
-   private final Dispatcher                        _dispatcher      = new Dispatcher( this );
-   private final Map<ClassID, Supplier<Shareable>> _localFactories  = new TreeMap<>();
-   private final Map<ClassID, ICRUD >              _remoteFactories = new TreeMap<>();
-   private final Map<Integer, ICallback>           _callbacks       = new HashMap<>();
-   private final int                               _publisherId;
-   private final InetSocketAddress                 _target;
-   private final DatagramChannel                   _out;
-   private /* */ int                               _callId     = 1;
-   private /* */ byte                              _cacheCount = 0;
+   protected final int _publisherId;
+   protected final Cache[]                           _caches          = new Cache[256];
+   protected final Dispatcher                        _dispatcher      = new Dispatcher( this );
+   protected final Map<ClassID, Supplier<Shareable>> _localFactories  = new TreeMap<>();
+   protected final Map<ClassID, ICRUD >              _remoteFactories = new TreeMap<>();
+   protected final Map<Integer, ICallback>           _callbacks       = new HashMap<>();
+   protected /* */ byte                              _cacheCount      = 0;
+   protected /* */ int                               _callId          = 1;
 
-   ParticipantImpl( int publisherId, InetSocketAddress group, NetworkInterface  intrfc ) throws IOException {
-      final ProtocolFamily family =
-         ( group.getAddress().getAddress().length > 4 )
-            ? StandardProtocolFamily.INET6
-            : StandardProtocolFamily.INET;
+   AbstractParticipant( int publisherId ) {
       _publisherId = publisherId;
-      _target      = group;
-      _out         = DatagramChannel
-         .open     ( family )
-//         .setOption( StandardSocketOptions.SO_REUSEADDR, true )
-//         .bind     ( group )
-         .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc )
-      ;
-      createCache();
-      System.out.printf( "Sending to %s via interface %s\n", group, intrfc );
-   }
-
-   @Override
-   public void listen( NetworkInterface via, InetSocketAddress...others ) throws IOException {
-      for( final InetSocketAddress other : others ) {
-         new NetworkReceiver( this, other, via );
-      }
-   }
-
-   int getPublisherId() {
-      return _publisherId;
    }
 
    Shareable newInstance( ClassID classId, ByteBuffer frame ) {
@@ -110,26 +75,11 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       return _dispatcher;
    }
 
-   private void pushCreateOrUpdateItem( Shareable item ) throws IOException {
-      synchronized( _out ){
-         _payload.clear();
-         item.serialize( _payload );
-         _payload.flip();
-         final int size = _payload.remaining();
-         _header.clear();
-         _header.put( SIGNATURE );
-         _header.put((byte)FrameType.DATA_CREATE_OR_UPDATE.ordinal());
-         _header.putInt( size );
-         item._id   .serialize( _header );
-         item._class.serialize( _header );
-         _header.flip();
-         _message.clear();
-         _message.put( _header  );
-         _message.put( _payload );
-         _message.flip();
-         _out.send( _message, _target );
-      }
+   int getPublisherId() {
+      return _publisherId;
    }
+
+   abstract void pushCreateOrUpdateItem( Shareable item ) throws IOException;
 
    void publishUpdated( Set<? extends Shareable> updated ) throws IOException {
       for( final Shareable item : updated ) {
@@ -137,16 +87,7 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       }
    }
 
-   private void pushDeleteItem( Shareable item ) throws IOException {
-      synchronized( _out ){
-         _header.clear();
-         _header.put( SIGNATURE );
-         _header.put((byte)FrameType.DATA_DELETE.ordinal());
-         item._id.serialize( _header );
-         _header.flip();
-         _out.send( _header, _target );
-      }
-   }
+   abstract void pushDeleteItem( Shareable item ) throws IOException;
 
    void publishDeleted( Set<? extends Shareable> deleted ) throws IOException {
       for( final Shareable item : deleted ) {
@@ -154,23 +95,7 @@ final class ParticipantImpl implements IParticipant, IProtocol {
       }
    }
 
-   void call( String intrfcName, String opName, Arguments args, int callId ) throws IOException {
-      synchronized( _out ) {
-         final byte count = ( args == null ) ? 0 : (byte)args.getCount();
-         _message.clear();
-         _message        .put      ( SIGNATURE );
-         _message        .put      ((byte)FrameType.OPERATION.ordinal());
-         SerializerHelper.putString( intrfcName, _message );
-         SerializerHelper.putString( opName    , _message );
-         _message        .putInt   ( callId );
-         _message        .put      ( count );
-         if( args != null ) {
-            args.serialize( _message );
-         }
-         _message.flip();
-         _out.send( _message, _target );
-      }
-   }
+   abstract void call( String intrfcName, String opName, Arguments args, int callId ) throws IOException;
 
    void call( String intrfcName, String opName, Arguments args, ICallback callback ) throws IOException {
       assert callback != null;

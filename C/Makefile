@@ -47,6 +47,9 @@ all:\
  Debug/dcrud-c-test\
  Release/dcrud-c-test
 
+-include $(LIB_OBJS_DEBUG:.o=.d)
+-include $(EXE_OBJS_DEBUG:.o=.d)
+
 tests: coll io shapes
 
 clean:
@@ -76,8 +79,12 @@ Release/libdcrud-c-lib.so: $(LIB_OBJS_RELEASE)
 
 Debug/%.o: %.c
 	@mkdir -p $$(dirname $@)
-	$(CC) $(CFLAGS_DEBUG) -c $< -o $@
+	$(CC) $(CFLAGS_DEBUG) -c  $< -o $@
+
+Debug/%.d: %.c
+	$(CC) $(CFLAGS_DEBUG) -MM $< > $@
 
 Release/%.o: %.c
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS_RELEASE) -c $< -o $@
+

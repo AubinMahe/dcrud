@@ -5,6 +5,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #ifndef __cplusplus
    typedef int bool;

@@ -9,12 +9,24 @@ import org.hpms.mw.distcrud.ClassID.Type;
 
 public class Arguments {
 
+   public enum CallMode {
+      SYNCHRONOUS,
+      ASYNCHRONOUS_DEFERRED,
+      ASYNCHRONOUS_IMMEDIATE,
+   }
+
+   public static final byte     NON_URGENT_QUEUE = -128; // 0xFF
+   public static final byte     NORMAL_QUEUE     =  127; // 0x7F
+   public static final byte     URGENT_QUEUE     =    0; // 0x00
+   public static final byte     DEFAULT_QUEUE     =  Arguments.NORMAL_QUEUE;
+   public static final CallMode DEFAULT_CALL_MODE = CallMode.ASYNCHRONOUS_DEFERRED;
+
    private final Map<String, Object>       _args  = new LinkedHashMap<>();
    private final Map<String, ClassID.Type> _types = new LinkedHashMap<>();
 
    public Arguments() {
-      setMode ( IRequired.DEFAULT_CALL_MODE );
-      setQueue( IRequired.DEFAULT_QUEUE );
+      setMode ( DEFAULT_CALL_MODE );
+      setQueue( DEFAULT_QUEUE );
    }
 
    public void clear() {
@@ -85,7 +97,7 @@ public class Arguments {
       _types.put( name, ClassID.Type.SHAREABLE );
    }
 
-   public void setMode( IRequired.CallMode mode ) {
+   public void setMode( CallMode mode ) {
       final String name = "@mode";
       _args .put( name, mode );
       _types.put( name, ClassID.Type.CALL_MODE );
@@ -126,19 +138,19 @@ public class Arguments {
             ClassID.serialize( type, message );
             switch( type ) {
             case NULL       : /* No data */ break;
-            case BOOLEAN    : SerializerHelper.putBoolean((Boolean)value, message ); break;
-            case BYTE       : message.put                ((Byte   )value );          break;
-            case SHORT      : message.putShort           ((Short  )value );          break;
-            case INTEGER    : message.putInt             ((Integer)value );          break;
-            case LONG       : message.putLong            ((Long   )value );          break;
-            case FLOAT      : message.putFloat           ((Float  )value );          break;
-            case DOUBLE     : message.putDouble          ((Double )value );          break;
-            case STRING     : SerializerHelper.putString ((String )value, message ); break;
-            case CLASS_ID   : ((ClassID)value).serialize( message );                 break;
-            case GUID       : ((GUID   )value).serialize( message );                 break;
-            case CALL_MODE  : message.put((byte)((IRequired.CallMode)value).ordinal()); break;
-            case QUEUE_INDEX: message.put                ((Byte   )value );          break;
-            case SHAREABLE  : /* Already handled before this switch. */              break;
+            case BOOLEAN    : SerializerHelper.putBoolean((Boolean)value, message );  break;
+            case BYTE       : message.put                ((Byte   )value );           break;
+            case SHORT      : message.putShort           ((Short  )value );           break;
+            case INTEGER    : message.putInt             ((Integer)value );           break;
+            case LONG       : message.putLong            ((Long   )value );           break;
+            case FLOAT      : message.putFloat           ((Float  )value );           break;
+            case DOUBLE     : message.putDouble          ((Double )value );           break;
+            case STRING     : SerializerHelper.putString ((String )value, message );  break;
+            case CLASS_ID   : ((ClassID)value).serialize( message );                  break;
+            case GUID       : ((GUID   )value).serialize( message );                  break;
+            case CALL_MODE  : message.put        ((byte)((CallMode)value).ordinal()); break;
+            case QUEUE_INDEX: message.put                ((Byte   )value );           break;
+            case SHAREABLE  : /* Already handled before this switch. */               break;
             default:
                throw new IllegalArgumentException(
                   name + " is of type " + value.getClass().getName() +

@@ -77,7 +77,7 @@
    </target>
 
    <target name="Test_001" depends="jar-lib,jar-test"
-      description="Java publisher and subcriber in a single jar">
+      description="Multicast protocol, Java publisher and subcriber in a single jar">
       <java fork="true" classpath="${jar-test}" classname="tests.person.Test_001" />
    </target>
 
@@ -102,7 +102,7 @@
    </target>
 
    <target name="Test_004" depends="jar-lib,jar-test"
-      description="Same as Test_008 but in C++ language">
+      description="Multicast protocol, Same as Test_008 but in C++ language">
       <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
@@ -116,7 +116,7 @@
    </target>
 
    <target name="Test_005" depends="jar-lib,jar-test"
-      description="C Person publisher, Java subscrber">
+      description="Multicast protocol, C Person publisher, Java subscrber">
       <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
@@ -128,7 +128,7 @@
    </target>
 
    <target name="Test_006" depends="jar-lib,jar-test"
-      description="C Person subscrber, Java publisher">
+      description="Multicast protocol, C Person subscrber, Java publisher">
       <exec executable="make" dir=".." />
       <exec spawn="true" executable="gnome-terminal" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
@@ -140,7 +140,7 @@
    </target>
 
    <target name="Test_007" depends="jar-lib,jar-test"
-      description="
+      description="&#9;Multicast protocol
 &#10;&#9;Launch 4 Java writters which create some coloured rectangles and ellipses.
 &#10;&#9;Each of them moves and publishes the shapes every 40 ms.
 &#10;&#9;All of them display all the shapes published.">
@@ -179,7 +179,7 @@
    </target>
 
    <target name="Test_008" depends="jar-test"
-      description="
+      description="&#9;Multicast protocol
 &#10;&#9;Launch a server - written in C - and a client - written in Java - which call
 &#10;&#9;the server to create some coloured rectangles and ellipses.
 &#10;&#9;The server move and publish the shapes every 40 ms.
@@ -197,4 +197,10 @@
          <arg value="--periodic=true" />
    	</java>
    </target>
+
+   <target name="Test_011" depends="jar-lib,jar-test"
+      description="UDP protocol, Java publisher and subcriber in a single jar">
+      <java fork="true" classpath="${jar-test}" classname="tests.person.Test_011" />
+   </target>
+
 </project>

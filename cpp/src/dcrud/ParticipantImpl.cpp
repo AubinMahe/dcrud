@@ -210,7 +210,7 @@ Shareable * ParticipantImpl::newInstance( const ClassID & classId, io::ByteBuffe
    return item;
 }
 
-void ParticipantImpl::dataDelete( const GUID & id ) {
+void ParticipantImpl::dataDelete( const dcrud::GUID & id ) {
    os::Synchronized sync( _cachesMutex );
    for( unsigned i = 0U; i < CACHE_COUNT; ++i ) {
       Cache * cache = _caches[i];
@@ -273,7 +273,7 @@ bool ParticipantImpl::create( const ClassID & clsId, const Arguments & how ) {
    return true;
 }
 
-bool ParticipantImpl::update( const GUID & id, const Arguments & how ) {
+bool ParticipantImpl::update( const dcrud::GUID & id, const Arguments & how ) {
    os::Synchronized sync( _factoriesMutex );
    for( int i = 0; i < _cacheCount; ++i ) {
       Shareable * item = _caches[i]->read( id );
@@ -293,7 +293,7 @@ bool ParticipantImpl::update( const GUID & id, const Arguments & how ) {
    return false;
 }
 
-bool ParticipantImpl::deleTe( const GUID & id ) {
+bool ParticipantImpl::deleTe( const dcrud::GUID & id ) {
    os::Synchronized sync( _factoriesMutex );
    for( int i = 0; i < _cacheCount; ++i ) {
       Shareable * item = _caches[i]->read( id );

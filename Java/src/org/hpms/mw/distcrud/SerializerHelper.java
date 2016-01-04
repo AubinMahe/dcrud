@@ -2,7 +2,7 @@ package org.hpms.mw.distcrud;
 
 import java.nio.ByteBuffer;
 
-public class SerializerHelper {
+public final class SerializerHelper {
 
    public static void putString( String s, ByteBuffer target ) {
       final byte[] bytes = s.getBytes();

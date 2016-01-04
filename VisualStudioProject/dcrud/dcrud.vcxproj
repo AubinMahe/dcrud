@@ -28,10 +28,12 @@
     <ClInclude Include="..\..\C\inc\coll\Set.h" />
     <ClInclude Include="..\..\C\inc\dbg\Dump.h" />
     <ClInclude Include="..\..\C\inc\dbg\Performance.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\Arguments.h" />
     <ClInclude Include="..\..\C\inc\dcrud\ClassID.h" />
     <ClInclude Include="..\..\C\inc\dcrud\GUID.h" />
     <ClInclude Include="..\..\C\inc\dcrud\ICache.h" />
     <ClInclude Include="..\..\C\inc\dcrud\ICallback.h" />
+    <ClInclude Include="..\..\C\inc\dcrud\ICRUD.h" />
     <ClInclude Include="..\..\C\inc\dcrud\IDispatcher.h" />
     <ClInclude Include="..\..\C\inc\dcrud\IParticipant.h" />
     <ClInclude Include="..\..\C\inc\dcrud\IProvided.h" />
@@ -46,12 +48,13 @@
     <ClInclude Include="..\..\C\inc\os\System.h" />
     <ClInclude Include="..\..\C\inc\util\CheckSysCall.h" />
     <ClInclude Include="..\..\C\inc\util\Perf.h" />
+    <ClInclude Include="..\..\C\inc\util\trace.h" />
     <ClInclude Include="..\..\C\inc\util\types.h" />
     <ClInclude Include="..\..\C\src\dcrud\Cache.h" />
     <ClInclude Include="..\..\C\src\dcrud\ClassID_private.h" />
     <ClInclude Include="..\..\C\src\dcrud\Dispatcher.h" />
     <ClInclude Include="..\..\C\src\dcrud\GUID_private.h" />
-    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h" />
+    <ClInclude Include="..\..\C\src\dcrud\IProtocol.h" />
     <ClInclude Include="..\..\C\src\dcrud\NetworkReceiver.h" />
     <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h" />
     <ClInclude Include="..\..\C\src\dcrud\Shareable_private.h" />
@@ -64,6 +67,7 @@
     <ClCompile Include="..\..\C\src\coll\Set.c" />
     <ClCompile Include="..\..\C\src\dbg\Dump.c" />
     <ClCompile Include="..\..\C\src\dbg\Performance.c" />
+    <ClCompile Include="..\..\C\src\dcrud\Arguments.c" />
     <ClCompile Include="..\..\C\src\dcrud\Cache.c" />
     <ClCompile Include="..\..\C\src\dcrud\Callback.c" />
     <ClCompile Include="..\..\C\src\dcrud\ClassID.c" />
@@ -79,6 +83,7 @@
     <ClCompile Include="..\..\C\src\os\Mutex.c" />
     <ClCompile Include="..\..\C\src\os\System.c" />
     <ClCompile Include="..\..\C\src\util\CheckSysCall.c" />
+    <ClCompile Include="..\..\C\src\util\trace.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{530ABE8A-91AC-4B44-969F-80899726E450}</ProjectGuid>

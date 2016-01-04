@@ -6,6 +6,10 @@
 
 using namespace dcrud;
 
+#ifdef NO_ERROR
+#  undef NO_ERROR
+#endif
+
 Cache::Cache( ParticipantImpl & participant ) :
    _nextInstance  ( 1U          ),
    _ownershipCheck( false       ),
@@ -15,7 +19,7 @@ Cache::Cache( ParticipantImpl & participant ) :
 Cache::~ Cache() {
 }
 
-bool Cache::owns( const GUID & id ) const {
+bool Cache::owns( const dcrud::GUID & id ) const {
    return _participant.getPublisherId() == id._publisher;
 }
 
@@ -36,7 +40,7 @@ Status Cache::create( Shareable & item ) {
    return NO_ERROR;
 }
 
-Shareable * Cache::read( const GUID & id ) const {
+Shareable * Cache::read( const dcrud::GUID & id ) const {
    localCstIter_t it = _local.find( id );
    if( it == _local.end()) {
       return 0;
@@ -126,7 +130,7 @@ void Cache::refresh( void ) {
          os::Synchronized sync2( _toUpdateMutex );
          for( byteBuffersIter_t it = _toUpdate.begin(); it != _toUpdate.end(); ++it ) {
             io::ByteBuffer * update   = *it;
-            GUID             id       = GUID   ::unserialize( *update );
+            dcrud::GUID             id       = dcrud::GUID   ::unserialize( *update );
             ClassID          classId  = ClassID::unserialize( *update );
             localIter_t      itemIter = _local.find( id );
             if( itemIter == _local.end()) {
@@ -161,7 +165,7 @@ void Cache::updateFromNetwork( io::ByteBuffer * source ) {
    _toUpdate.insert( source );
 }
 
-void Cache::deleteFromNetwork( const GUID & id ) {
+void Cache::deleteFromNetwork( const dcrud::GUID & id ) {
    os::Synchronized sync( _toDeleteMutex );
    _toDelete.insert( id );
 }

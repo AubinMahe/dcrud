@@ -11,11 +11,11 @@ DCRUD offers remote asynchronous operations too, grouped into interfaces. If an 
 Features
 --------
 
- - Data distribution on LAN using multicast, the Internet (WAN) is not a target.
+ - Data distribution on LAN using multicast, unicast UDP, TCP streams, the Internet (WAN) is not a target.
  - Remote operation, asynchronous or synchronous, with or without returned result.
- - Multi-OS: currently Windows and Linux
- - Multi-languages: Java, C, C-static-allocation, C++, and a lot of C friendly scripting languages because DCRUD is completely dynamic
- - Low level resources (CPU, RAM) consumption
+ - Multi-OS: currently Windows and Linux.
+ - Multi-languages: Java, C, C-static-allocation, C++, and a lot of C friendly scripting languages because DCRUD is completely dynamic.
+ - Low level resources (CPU, RAM) consumption.
 
 Design and usage
 ----------------
@@ -40,20 +40,55 @@ Overview
 - `SerializerHelper` (Java), `ioByteBuffer` (C), `io::ByteBuffer` (C++) is an utility class to deal with the network, handling endianness, serialization and deserialization.
 - `Performance` is a simple timestamp recorder, GNU plot compatible, see [plot.sh](EclipseProject/plot.sh).
 
-### Implementation of the inheritance in C language ###
+### Implementation of inheritance in C language ###
 
 Shared piece of data are derived from `Shareable`. dcrud use delegation to emulate this behavior in C language. Bidirectional link initialization between base and inherited instances are made by dcrud library, see [C API](http://aubinmahe.github.io/doxygen/html). 
+
+How to build
+------------
+
+Use Eclipse JDT with CDT plugin or Visual Studio 2015 or type `make` to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, `jar-lib`, `jar-test`.
+
+Discovery
+---------
+
+With Multicast protocol, discovery isn't necessary because subscribing and publishing is done by the protocol. However, with unicast UDP and TCP streams, a mechanism must be offered to register publishers - indexed by published data or offered services - and connect them to subscribers, requested by consumed data or required services.
+A centralized registry, like CORBA Naming Service, will be a bottleneck and a single point of failure, DCRUD offer a distributed registry:
+ - A first participant has to wait for followers, it do nothing at start
+ - A second participant is launched with the address:port of the first
+ - The second ask the first to obtain the registry
+ - The first answer with a list of data and services offered by one participant: itself
+ - A third participant is launched with the address:port of any other participant "P"
+ - The third ask "P" to obtain the registry
+ - "P" answer with a list of two participants: first and second, it send the list to all (broadcast)
+ - At this point, each participant known the others.
+ - After that, each time a new service or data is declared, a broadcast of the complete registry will be done (no delta publication).
+ - In case of failure and restart of a participant, the complete registry will be shared again.
+
+Persistence
+-----------
+
+DCRUD isn't a database but since the data are in cache, it's possible to save each cache at periodic interval to disk to ease shutdown and restart without loosing data.
+
+Fault tolerance and Monitoring
+------------------------------
+
+When persistence will be done, the participant's state will be saved periodically, so it may be restarted in case of failure thanks to a monitoring layer.
 
 Todo list (in priority order)
 -----------------------------
 
- * Adding UDP/IP, TCP/IP protocols
- * Building a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation
- * Adding TCP-IP streams services and protocol for big data
- * Adding HTML5-WebSocket support
+ * Add registry mechanism
+ * Add UDP/IP protocol
+ * Add binary, XML and JSON persistence
+ * Add monitoring layer to achieve fault tolerance
+ * Add TCP/IP protocol
+ * Update C static allocation implementation for embedded, low resource targets
+ * Add TCP-IP streams services and protocol for big or continuous data
+ * Build a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation (from UML definition, encoded in XML)
+ * Add HTML5-WebSocket support
  * Add JavaScript support to address HTML5-WebSockets
- * Updating C static allocation implementation for embedded, low resource targets
-
+ 
 Interfaces sample usage
 -----------------------
 
@@ -178,11 +213,3 @@ API references
 [C API](http://aubinmahe.github.io/doxygen/html)
 
 [C++ API](http://aubinmahe.github.io/doxygen-cpp/html)
-
-How to build
-------------
-
-Use Eclipse JDT with CDT plugin to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, then go to Java project and use ANT, target `jar-lib`. 
-Jar `jar-lib` contains a tool which convert XML configuration file to a plain text for C and C++ implementations of DCRUD (to reduce dependencies).
-
-*In progress*: hand made Makefiles are on the way...

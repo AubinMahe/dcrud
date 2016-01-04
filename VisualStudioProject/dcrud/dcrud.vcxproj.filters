@@ -141,9 +141,6 @@
     <ClInclude Include="..\..\C\src\dcrud\GUID_private.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\C\src\dcrud\INetworkReceiver.h">
-      <Filter>src\dcrud</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\C\src\dcrud\ParticipantImpl.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
@@ -151,6 +148,18 @@
       <Filter>src\dcrud</Filter>
     </ClInclude>
     <ClInclude Include="..\..\C\src\dcrud\NetworkReceiver.h">
+      <Filter>src\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\Arguments.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\dcrud\ICRUD.h">
+      <Filter>inc\dcrud</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\inc\util\trace.h">
+      <Filter>inc\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\C\src\dcrud\IProtocol.h">
       <Filter>src\dcrud</Filter>
     </ClInclude>
   </ItemGroup>
@@ -219,6 +228,12 @@
       <Filter>src\os</Filter>
     </ClCompile>
     <ClCompile Include="..\..\C\src\dcrud\NetworkReceiver.c">
+      <Filter>src\dcrud</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\util\trace.c">
+      <Filter>src\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\C\src\dcrud\Arguments.c">
       <Filter>src\dcrud</Filter>
     </ClCompile>
   </ItemGroup>

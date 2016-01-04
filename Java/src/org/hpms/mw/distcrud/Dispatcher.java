@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.hpms.mw.distcrud.IRequired.CallMode;
+import org.hpms.mw.distcrud.Arguments.CallMode;
 
 class Dispatcher implements IDispatcher, IProtocol {
 
@@ -43,12 +43,12 @@ class Dispatcher implements IDispatcher, IProtocol {
       }
    }
 
-   private final ParticipantImpl           _participant;
+   private final AbstractParticipant       _participant;
    private final Map<String, ProvidedImpl> _provided        = new HashMap<>();
    @SuppressWarnings("unchecked")
    private final List<Operation>[]         _operationQueues = new List[256];
 
-   public Dispatcher( ParticipantImpl participant ) {
+   public Dispatcher( AbstractParticipant participant ) {
       _participant = participant;
       for( int i = 0; i < _operationQueues.length; ++i ) {
          _operationQueues[i] = new LinkedList<>();
@@ -64,7 +64,7 @@ class Dispatcher implements IDispatcher, IProtocol {
 
    void executeCrud( String opName, Arguments args ) {
       synchronized( _operationQueues ) {
-         _operationQueues[IRequired.DEFAULT_QUEUE].add(
+         _operationQueues[Arguments.DEFAULT_QUEUE].add(
             new Operation( null, args, IProtocol.ICRUD_INTERFACE_NAME, opName, 0 ));
       }
    }

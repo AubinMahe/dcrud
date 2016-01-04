@@ -82,7 +82,7 @@ NetworkReceiver::NetworkReceiver(
    printf( "receiving from %s, bound to %s:%d\n", address.c_str(), intrfc.c_str(), port );
 #ifdef WIN32
    DWORD tid;
-   _thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, this, 0, &tid );
+   _thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)&::run, this, 0, &tid );
    if( ! utilCheckSysCall( _thread != NULL, __FILE__, __LINE__, "CreateThread" ))
 #else
    if( ! utilCheckSysCall( 0 ==
