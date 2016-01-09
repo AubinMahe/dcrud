@@ -47,9 +47,9 @@ Design
 - Implementations are organized into several modules, i.e. `packages` in Java, prefixes (in lower case) in C, namespaces in C++:
    - `coll` : collections, *java.util.List,Map,Set* in Java, *std::list,map,set*, in C++
    - `dcrud`: API and implementation of DCRUD itself, *org.hpms.dcrud* in Java
-   - `io`   : low level network communications, *java.nio* in Java, C++ implementation partially wraps C implementation*
-   - `os`   : operating system abstraction, *doesn't exists in Java, C++ implementation partially wraps C implementation*
-   - `util` : debugging, performances probes, system calls checking, errors reporting and logging. 
+   - `io`   : low level network communications, *java.nio* in Java, C++ implementation partially wraps C implementation (inline code only)*
+   - `os`   : operating system abstraction, *doesn't exists in Java, C++ implementation partially wraps C implementation (inline code only)*
+   - `util` : debugging, performances probes, system calls checking, errors reporting and logging, *doesn't exists in Java and C++*. 
 - Java implementation is pure, without any kind of JNI
 - C++ implementation depends on C implementation because it uses `os` and `io` modules
 
@@ -100,7 +100,7 @@ Todo list (in priority order)
 Interfaces sample usage
 -----------------------
 
-Java: [ShapesUI](Java/test/org/hpms/mw/distcrud/samples/shapes/ShapesUI.java) has been *simplified* below for clarity reason.
+Java: [ShapesUI](Java/test/tests/shapes/ShapesUI.java) has been *simplified* below for clarity reason.
 
 ```Java
 IParticipant participant = Network.join( new File( "network.xml" ), intrfc, name );
@@ -122,7 +122,7 @@ cache.refresh();
 ```
 ------------
 
-C: [shapes_publisher.c](C/test/shapes_publisher.c) has been *simplified* below for clarity reason.
+C: [shapes_publisher.c](C/test/test_008.c) has been *simplified* below for clarity reason.
 
 ```C
 dcrudIRepositoryFactory repositories;

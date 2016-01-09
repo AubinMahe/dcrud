@@ -17,7 +17,10 @@
    </target>
 
    <target name="api-docs" description="">
-      <mkdir dir="../../AubinMahe.github.io/javadoc" />
+      <delete dir="../../AubinMahe.github.io/doxygen" />
+      <delete dir="../../AubinMahe.github.io/doxygen-cpp" />
+      <delete dir="../../AubinMahe.github.io/javadoc" />
+      <mkdir  dir="../../AubinMahe.github.io/javadoc" />
       <javadoc
          author    ="Aubin Mahé"
          destdir   ="../../AubinMahe.github.io/javadoc"

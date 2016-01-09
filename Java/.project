@@ -21,6 +21,11 @@
 			<locationURI>DCRUD_ROOT/API-tests.xlsx</locationURI>
 		</link>
 		<link>
+			<name>DCRUD Documentation.html</name>
+			<type>1</type>
+			<locationURI>DCRUD_DOC_ROOT/index.html</locationURI>
+		</link>
+		<link>
 			<name>Makefile</name>
 			<type>1</type>
 			<locationURI>DCRUD_ROOT/Makefile</locationURI>
@@ -37,6 +42,10 @@
 		</link>
 	</linkedResources>
 	<variableList>
+		<variable>
+			<name>DCRUD_DOC_ROOT</name>
+			<value>$%7BPARENT-2-PROJECT_LOC%7D/AubinMahe.github.io</value>
+		</variable>
 		<variable>
 			<name>DCRUD_ROOT</name>
 			<value>$%7BPARENT-1-PROJECT_LOC%7D</value>
