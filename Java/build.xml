@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="project" default="jar-lib">
+<project name="project" default="all">
 
    <property name="build-lib" value="BUILD-LIB" />
    <property name="jar-lib"   value="dcrud.jar" />
 
    <property name="build-test" value="BUILD-TEST" />
    <property name="jar-test"   value="dcrud-ui.jar" />
+
+   <target name="all" depends="jar-lib,jar-test,api-docs" description="" />
 
    <target name="clean" description="">
       <delete dir ="${build-lib}" />

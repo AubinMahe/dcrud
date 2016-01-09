@@ -10,8 +10,8 @@
 
 #include <util/CheckSysCall.h>
 
-#include <dbg/Performance.h>
-#include <dbg/Dump.h>
+#include <util/Dump.h>
+#include <util/Performance.h>
 
 #if defined( WIN32 ) || defined( _WIN32 )
 #  include <windows.h>

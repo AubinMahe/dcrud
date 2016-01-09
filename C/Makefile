@@ -1,12 +1,10 @@
 include ../flags.mak
 
 LIB_SRCS =\
- src/dbg/Dump.c\
- src/dbg/Performance.c\
- src/coll/MapVoidPtr.c\
  src/coll/Comparator.c\
  src/coll/List.c\
  src/coll/MapFuncPtr.c\
+ src/coll/MapVoidPtr.c\
  src/coll/Set.c\
  src/dcrud/Arguments.c\
  src/dcrud/Cache.c\
@@ -24,7 +22,9 @@ LIB_SRCS =\
  src/os/Mutex.c\
  src/os/System.c\
  src/util/CheckSysCall.c\
- src/util/trace.c
+ src/util/Dump.c\
+ src/util/Performance.c\
+ src/util/Trace.c
 
 EXE_SRCS =\
  test/main.c\
@@ -77,12 +77,12 @@ Debug/libdcrud-c-lib.so: $(LIB_OBJS_DEBUG)
 Release/libdcrud-c-lib.so: $(LIB_OBJS_RELEASE)
 	$(CC) -pthread -shared -o $@ $(LIB_OBJS_RELEASE)
 
-Debug/%.o: %.c
-	@mkdir -p $$(dirname $@)
-	$(CC) $(CFLAGS_DEBUG) -c  $< -o $@
-
 Debug/%.d: %.c
+	@mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS_DEBUG) -MM $< > $@
+
+Debug/%.o: %.c
+	$(CC) $(CFLAGS_DEBUG) -c  $< -o $@
 
 Release/%.o: %.c
 	@mkdir -p $$(dirname $@)

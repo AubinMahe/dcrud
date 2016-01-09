@@ -11,19 +11,19 @@ DCRUD offers remote asynchronous operations too, grouped into interfaces. If an 
 Features
 --------
 
- - Data distribution on LAN using multicast, unicast UDP, TCP streams, the Internet (WAN) is not a target.
+ - Data distribution on LAN using multicast, unicast UDP, TCP streams, the Internet (WAN) is not a target of this project.
  - Remote operation, asynchronous or synchronous, with or without returned result.
  - Multi-OS: currently Windows and Linux.
  - Multi-languages: Java, C, C-static-allocation, C++, and a lot of C friendly scripting languages because DCRUD is completely dynamic.
  - Low level resources (CPU, RAM) consumption.
 
-Design and usage
-----------------
+How to build
+------------
 
-Interfaces and implementation are separated and implementation is hidden, even in C, thanks to [Abstract Data Type (ADT)](https://en.wikipedia.org/wiki/Abstract_data_type) intensive usage.
+Hand made Makefiles, Eclipse and Visual Studio project are provided. Use Eclipse JDT with CDT plugin or Visual Studio 2015 or type `make` to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, `jar-lib`, `jar-test`. *TODO: use autoconf/automake (help welcome)*
 
-Overview
---------
+API Overview
+------------
 
 ![UML diagram interfaces](interfaces.png "UML diagram interfaces")
 
@@ -40,14 +40,22 @@ Overview
 - `SerializerHelper` (Java), `ioByteBuffer` (C), `io::ByteBuffer` (C++) is an utility class to deal with the network, handling endianness, serialization and deserialization.
 - `Performance` is a simple timestamp recorder, GNU plot compatible, see [plot.sh](EclipseProject/plot.sh).
 
+Design
+------
+
+- Interfaces and implementation are separated and implementation is hidden, even in C, thanks to [Abstract Data Type (ADT)](https://en.wikipedia.org/wiki/Abstract_data_type) intensive usage.
+- Implementations are organized into several modules, i.e. `packages` in Java, prefixes (in lower case) in C, namespaces in C++:
+   - `coll` : collections, *java.util.List,Map,Set* in Java, *std::list,map,set*, in C++
+   - `dcrud`: API and implementation of DCRUD itself, *org.hpms.dcrud* in Java
+   - `io`   : low level network communications, *java.nio* in Java, C++ implementation partially wraps C implementation*
+   - `os`   : operating system abstraction, *doesn't exists in Java, C++ implementation partially wraps C implementation*
+   - `util` : debugging, performances probes, system calls checking, errors reporting and logging. 
+- Java implementation is pure, without any kind of JNI
+- C++ implementation depends on C implementation because it uses `os` and `io` modules
+
 ### Implementation of inheritance in C language ###
 
 Shared piece of data are derived from `Shareable`. dcrud use delegation to emulate this behavior in C language. Bidirectional link initialization between base and inherited instances are made by dcrud library, see [C API](http://aubinmahe.github.io/doxygen/html). 
-
-How to build
-------------
-
-Use Eclipse JDT with CDT plugin or Visual Studio 2015 or type `make` to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, `jar-lib`, `jar-test`.
 
 Discovery
 ---------

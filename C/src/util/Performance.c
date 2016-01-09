@@ -1,4 +1,4 @@
-#include <dbg/Performance.h>
+#include <util/Performance.h>
 
 #include <coll/List.h>
 #include <coll/Map.h>
@@ -13,11 +13,11 @@
 static collMap s_samplesByAttribute;
 static bool    s_enabled = false;
 
-void dbgPerformance_enable( bool enabled ) {
+void utilPerformance_enable( bool enabled ) {
    s_enabled = enabled;
 }
 
-void dbgPerformance_record( const char * attribute, uint64_t elapsed ) {
+void utilPerformance_record( const char * attribute, uint64_t elapsed ) {
    collList          samples;
    uint64_t *        sample;
    collMapKey key;
@@ -93,7 +93,7 @@ static bool saveSamplesToGnuPlot( collForeach * context ) {
    return true;
 }
 
-void dbgPerformance_saveToDisk( void ) {
+void utilPerformance_saveToDisk( void ) {
    FILE * out;
    if( ! s_enabled ) {
       return;

@@ -1,4 +1,4 @@
-#include <dbg/Dump.h>
+#include <util/Dump.h>
 #include <string.h>
 
 static void dumpLine( FILE * target, char * hexa, const char * ascii ) {
@@ -7,7 +7,7 @@ static void dumpLine( FILE * target, char * hexa, const char * ascii ) {
    fprintf( target, "%s - %s\n", hexa, ascii );
 }
 
-void dbgDump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {
+void utilDump_range( FILE * target, const byte * bytes, size_t from, size_t to ) {
    size_t addr        = 0;
    char   hexStr[200] = "";
    char   addStr[200] = "";
@@ -41,6 +41,6 @@ void dbgDump_range( FILE * target, const byte * bytes, size_t from, size_t to ) 
    }
 }
 
-void dbgDump( FILE * target, const byte * bytes, size_t length ) {
-   dbgDump_range( target, bytes, 0, length );
+void utilDump( FILE * target, const byte * bytes, size_t length ) {
+   utilDump_range( target, bytes, 0, length );
 }

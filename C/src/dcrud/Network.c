@@ -1,6 +1,7 @@
 #include <dcrud/Network.h>
+#include <util/Trace.h>
+
 #include "ParticipantImpl.h"
-#include <util/trace.h>
 
 dcrudIParticipant dcrudNetwork_join(
    unsigned int   publisherId,
@@ -12,12 +13,12 @@ dcrudIParticipant dcrudNetwork_join(
    ParticipantImpl * retVal = NULL;
    dcrudStatus status = DCRUD_NO_ERROR;
 
-   trace_entry( __func__,
+   utilTrace_entry( __func__,
       "publisherId: %d, mcastAddr: '%s', port: %d, intrfc: '%s', dumpReceivedBuffer: %d",
       publisherId, mcastAddr, port, intrfc, dumpReceivedBuffer );
    if( !intrfc ) {
       fprintf( stderr, "%s:%d:Network interface name can't be null\n", __FILE__, __LINE__ );
-      trace_error( __func__, "Network interface name can't be null" );
+      utilTrace_error( __func__, "Network interface name can't be null" );
       retVal = NULL;
    }
    else {
@@ -25,12 +26,12 @@ dcrudIParticipant dcrudNetwork_join(
          ParticipantImpl_new( publisherId, mcastAddr, port, intrfc, dumpReceivedBuffer, &retVal );
       if( DCRUD_NO_ERROR != status ) {
          dcrudIParticipant p = (dcrudIParticipant)retVal;
-         trace_error( __func__, "ParticipantImpl_new returns %d", status );
+         utilTrace_error( __func__, "ParticipantImpl_new returns %d", status );
          dcrudIParticipant_delete( &p );
          retVal = NULL;
       }
    }
-   trace_exit( __func__, "retVal: %08X", retVal );
+   utilTrace_exit( __func__, "retVal: %08X", retVal );
    return (dcrudIParticipant)retVal;
 }
 

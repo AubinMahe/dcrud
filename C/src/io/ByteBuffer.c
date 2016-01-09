@@ -1,6 +1,6 @@
 #include <io/ByteBuffer.h>
 #include <util/CheckSysCall.h>
-#include <dbg/Dump.h>
+#include <util/Dump.h>
 
 #ifdef _MSC_VER
 #  define ssize_t int
@@ -399,6 +399,6 @@ ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
 
 ioStatus ioByteBuffer_dump( ioByteBuffer self, FILE * target ) {
    ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   dbgDump_range( target, This->bytes, 0, This->limit );
+   utilDump_range( target, This->bytes, 0, This->limit );
    return IO_STATUS_NO_ERROR;
 }

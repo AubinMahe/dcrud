@@ -1,5 +1,5 @@
 #include <util/types.h>
-#include <util/trace.h>
+#include <util/Trace.h>
 
 #ifdef _WIN32
 #  include <crtdbg.h>
@@ -35,7 +35,7 @@ int main( int argc, char * argv[] ) {
    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
    sprintf( logname, "Test_%03d.log", testNumber );
-   trace_open( logname );
+   utilTrace_open( logname );
    switch( testNumber ) {
    default:
       fprintf( stderr, "%s <nnn> where nnn is a test number > 0\n", argv[0] );

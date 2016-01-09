@@ -59,14 +59,13 @@ Debug/libdcrud-cpp-lib.so: $(LIB_OBJS_DEBUG)
 Release/libdcrud-cpp-lib.so: $(LIB_OBJS_RELEASE)
 	$(CCC) -pthread -shared -o $@ $(LIB_OBJS_RELEASE)
 
-Debug/%.o: %.cpp
-	@mkdir -p $$(dirname $@)
-	$(CCC) $(CFLAGS_DEBUG) -c $< -o $@
-
 Debug/%.d: %.cpp
+	@mkdir -p $$(dirname $@)
 	$(CCC) $(CFLAGS_DEBUG) -MM $< > $@
+
+Debug/%.o: %.cpp
+	$(CCC) $(CFLAGS_DEBUG) -c $< -o $@
 
 Release/%.o: %.cpp
 	@mkdir -p $$(dirname $@)
 	$(CCC) $(CFLAGS_RELEASE) -c $< -o $@
-

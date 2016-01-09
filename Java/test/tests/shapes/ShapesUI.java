@@ -10,7 +10,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
-import org.hpms.dbg.Performance;
 import org.hpms.mw.distcrud.Arguments;
 import org.hpms.mw.distcrud.ICRUD;
 import org.hpms.mw.distcrud.ICache;
@@ -19,6 +18,7 @@ import org.hpms.mw.distcrud.IParticipant;
 import org.hpms.mw.distcrud.IRequired;
 import org.hpms.mw.distcrud.Network;
 import org.hpms.mw.distcrud.Shareable;
+import org.hpms.util.Performance;
 
 import javafx.application.Application.Parameters;
 import javafx.application.Platform;

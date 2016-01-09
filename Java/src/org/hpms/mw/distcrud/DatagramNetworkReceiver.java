@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
 
-import org.hpms.dbg.Performance;
+import org.hpms.util.Performance;
 
 abstract class DatagramNetworkReceiver extends AbstractNetworkReceiver {
 

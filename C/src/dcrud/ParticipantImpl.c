@@ -11,12 +11,12 @@
 
 #include <os/System.h>
 
-#include <dbg/Performance.h>
-#include <dbg/Dump.h>
 #include <os/Mutex.h>
 
 #include <stdio.h>
 #include <util/CheckSysCall.h>
+#include <util/Dump.h>
+#include <util/Performance.h>
 
 const byte DCRUD_SIGNATURE[DCRUD_SIGNATURE_SIZE] = { 'D','C','R','U', 'D' };
 

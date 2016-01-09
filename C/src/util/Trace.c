@@ -1,10 +1,10 @@
-#include <util/trace.h>
 #include <os/System.h>
 
 #include <stdarg.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util/Trace.h>
 
 static FILE * log;
 
@@ -14,7 +14,7 @@ static void closeLog( void ) {
    }
 }
 
-void trace_open( const char * filename ) {
+void utilTrace_open( const char * filename ) {
    if( ! log ) {
       uint64_t now = osSystem_nanotime();
       log = fopen( filename, "wt" );
@@ -23,7 +23,7 @@ void trace_open( const char * filename ) {
    }
 }
 
-void trace_entry( const char * functionName, const char * format, ... ) {
+void utilTrace_entry( const char * functionName, const char * format, ... ) {
    if( log ) {
       uint64_t now  = osSystem_nanotime();
       va_list  args;
@@ -34,7 +34,7 @@ void trace_entry( const char * functionName, const char * format, ... ) {
    }
 }
 
-void trace_error( const char * functionName, const char * format, ... ) {
+void utilTrace_error( const char * functionName, const char * format, ... ) {
    if( log ) {
       uint64_t now  = osSystem_nanotime();
       va_list  args;
@@ -45,7 +45,7 @@ void trace_error( const char * functionName, const char * format, ... ) {
    }
 }
 
-void trace_exit( const char * functionName, const char * format, ... ) {
+void utilTrace_exit( const char * functionName, const char * format, ... ) {
    if( log ) {
       uint64_t now  = osSystem_nanotime();
       va_list  args;

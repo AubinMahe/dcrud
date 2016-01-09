@@ -8,13 +8,12 @@
 #include <os/Mutex.h>
 #include <os/System.h>
 
-#include <dbg/Performance.h>
-
 #include "GUID_private.h"
 #include "Shareable_private.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <util/Performance.h>
 
 #include "ParticipantImpl.h"
 
@@ -269,7 +268,7 @@ void dcrudICache_refresh( dcrudICache self ) {
    collSet_clear  ( This->toDelete );
    osMutex_release( This->toDeleteMutex );
    osMutex_release( This->localMutex );
-   dbgPerformance_record( "refresh", osSystem_nanotime() - atStart );
+   utilPerformance_record( "refresh", osSystem_nanotime() - atStart );
 }
 
 void dcrudCache_updateFromNetwork( dcrudICache self, ioByteBuffer source ) {

@@ -12,9 +12,8 @@
 #include <os/System.h>
 
 #include <util/CheckSysCall.h>
-
-#include <dbg/Performance.h>
-#include <dbg/Dump.h>
+#include <util/Dump.h>
+#include <util/Performance.h>
 
 #include <stdexcept>
 
@@ -165,7 +164,7 @@ void NetworkReceiver::run() {
    uint64_t atStart = 0;
    while( true ) {
       if( atStart > 0 ) {
-         dbgPerformance_record( "network", osSystem_nanotime() - atStart );
+         utilPerformance_record( "network", osSystem_nanotime() - atStart );
       }
       if( _inBuf.receive( _in )) {
          atStart = osSystem_nanotime();
