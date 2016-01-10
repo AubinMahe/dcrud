@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,15 +35,18 @@ final class MulticastParticipant extends AbstractParticipant implements IProtoco
    }
 
    @Override
-   public void listen( NetworkInterface via, InetSocketAddress...others ) throws IOException {
-      for( final InetSocketAddress other : others ) {
-         new MulticastNetworkReceiver( this, other, via );
+   public void listen( NetworkInterface via, IRegistry registry ) throws IOException {
+      for( final InetSocketAddress other : registry.getParticipants()) {
+         if( ! other.equals( _target )) {
+            new MulticastNetworkReceiver( this, other, via );
+         }
       }
    }
 
    @Override
-   public void listen( InetSocketAddress... others ) throws IOException {
-      throw new IllegalArgumentException( "Multicast participant require an interface argument" );
+   public void listen( IRegistry registry ) throws IOException {
+      final NetworkInterface intrfc = NetworkInterface.getNetworkInterfaces().nextElement();
+      listen( intrfc, registry );
    }
 
    @Override

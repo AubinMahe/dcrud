@@ -1,10 +1,10 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.hpms.mw.distcrud.Arguments.CallMode;
-import org.hpms.mw.distcrud.ClassID.Type;
+import org.hpms.mw.dcrud.Arguments.CallMode;
+import org.hpms.mw.dcrud.ClassID.Type;
 
 abstract class AbstractNetworkReceiver extends Thread implements IProtocol {
 

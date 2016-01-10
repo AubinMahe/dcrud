@@ -3,8 +3,8 @@ package tests.person;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 
-import org.hpms.mw.distcrud.ClassID;
-import org.hpms.mw.distcrud.Shareable;
+import org.hpms.mw.dcrud.ClassID;
+import org.hpms.mw.dcrud.Shareable;
 
 final class Person extends Shareable {
 
@@ -51,15 +51,15 @@ final class Person extends Shareable {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      org.hpms.mw.distcrud.SerializerHelper.putString   ( _forname  , target );
-      org.hpms.mw.distcrud.SerializerHelper.putString   ( _name     , target );
+      org.hpms.mw.dcrud.SerializerHelper.putString   ( _forname  , target );
+      org.hpms.mw.dcrud.SerializerHelper.putString   ( _name     , target );
       tests               .SerializerHelper.putLocalDate( _birthdate, target );
    }
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _forname   = org.hpms.mw.distcrud.SerializerHelper.getString   ( source );
-      _name      = org.hpms.mw.distcrud.SerializerHelper.getString   ( source );
+      _forname   = org.hpms.mw.dcrud.SerializerHelper.getString   ( source );
+      _name      = org.hpms.mw.dcrud.SerializerHelper.getString   ( source );
       _birthdate = tests               .SerializerHelper.getLocalDate( source );
    }
 

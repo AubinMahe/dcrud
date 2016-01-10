@@ -1,15 +1,14 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.util.function.Supplier;
 
 public interface IParticipant {
 
-   void listen( NetworkInterface via, InetSocketAddress...others ) throws IOException;
+   void listen( NetworkInterface via, IRegistry registry ) throws IOException;
 
-   void listen( InetSocketAddress...others ) throws IOException;
+   void listen( IRegistry registry ) throws IOException;
 
    void registerLocalFactory ( ClassID id, Supplier<Shareable> factory );
 

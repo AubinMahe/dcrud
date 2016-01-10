@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,13 +12,13 @@ final class UDPParticipant extends AbstractParticipant implements IProtocol {
    }
 
    @Override
-   public void listen( NetworkInterface via, InetSocketAddress... others ) throws IOException {
-      listen( others );
+   public void listen( NetworkInterface via, IRegistry registry ) throws IOException {
+      listen( registry );
    }
 
    @Override
-   public void listen( InetSocketAddress... others ) throws IOException {
-      for( final InetSocketAddress other : others ) {
+   public void listen( IRegistry registry ) throws IOException {
+      for( final InetSocketAddress other : registry.getParticipants()) {
          new UDPNetworkReceiver( this, other );
       }
    }

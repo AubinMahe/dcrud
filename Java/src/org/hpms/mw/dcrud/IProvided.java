@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 public interface IProvided {
 

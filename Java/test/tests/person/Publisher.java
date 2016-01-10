@@ -5,13 +5,14 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.time.LocalDate;
 
-import org.hpms.mw.distcrud.Arguments;
-import org.hpms.mw.distcrud.ICRUD;
-import org.hpms.mw.distcrud.ICache;
-import org.hpms.mw.distcrud.IDispatcher;
-import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.Network;
-import org.hpms.mw.distcrud.Shareable;
+import org.hpms.mw.dcrud.Arguments;
+import org.hpms.mw.dcrud.ICRUD;
+import org.hpms.mw.dcrud.ICache;
+import org.hpms.mw.dcrud.IDispatcher;
+import org.hpms.mw.dcrud.IParticipant;
+import org.hpms.mw.dcrud.IRegistry;
+import org.hpms.mw.dcrud.Network;
+import org.hpms.mw.dcrud.Shareable;
 
 public class Publisher extends Thread {
 
@@ -56,10 +57,10 @@ public class Publisher extends Thread {
 
    private final IParticipant _participant;
 
-   Publisher( int id, InetSocketAddress addr, NetworkInterface via, InetSocketAddress...others ) throws IOException {
+   Publisher( int id, InetSocketAddress addr, NetworkInterface via, IRegistry registry ) throws IOException {
       super( Publisher.class.getName());
       _participant = Network.join( id, addr, via );
-      _participant.listen( via, others );
+      _participant.listen( via, registry );
       start();
    }
 
@@ -71,7 +72,7 @@ public class Publisher extends Thread {
       dispatcher
          .provide( "IMonitor" )
             .addOperation( "exit", args -> { System.exit(0); return null; });
-      _participant.registerLocalFactory  ( Person.CLASS_ID, Person::new );
+      _participant.registerLocalFactory ( Person.CLASS_ID, Person::new );
       _participant.registerRemoteFactory( Person.CLASS_ID, publisher );
       for(;;) {
          try {

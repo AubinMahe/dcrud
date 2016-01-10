@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.hpms.mw.distcrud.Arguments.CallMode;
+import org.hpms.mw.dcrud.Arguments.CallMode;
 
 class Dispatcher implements IDispatcher, IProtocol {
 

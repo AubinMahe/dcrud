@@ -5,23 +5,24 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.util.Collection;
 
-import org.hpms.mw.distcrud.Arguments;
-import org.hpms.mw.distcrud.Arguments.CallMode;
-import org.hpms.mw.distcrud.ICRUD;
-import org.hpms.mw.distcrud.ICache;
-import org.hpms.mw.distcrud.IDispatcher;
-import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.Network;
-import org.hpms.mw.distcrud.Shareable;
+import org.hpms.mw.dcrud.Arguments;
+import org.hpms.mw.dcrud.Arguments.CallMode;
+import org.hpms.mw.dcrud.ICRUD;
+import org.hpms.mw.dcrud.ICache;
+import org.hpms.mw.dcrud.IDispatcher;
+import org.hpms.mw.dcrud.IParticipant;
+import org.hpms.mw.dcrud.IRegistry;
+import org.hpms.mw.dcrud.Network;
+import org.hpms.mw.dcrud.Shareable;
 
 public class Subscriber extends Thread {
 
    private final IParticipant _participant;
 
-   Subscriber( int id, InetSocketAddress addr, NetworkInterface via, InetSocketAddress...others ) throws IOException {
+   Subscriber( int id, InetSocketAddress addr, NetworkInterface via, IRegistry registry ) throws IOException {
       super( Subscriber.class.getName());
       _participant = Network.join( id, addr, via );
-      _participant.listen( via, others );
+      _participant.listen( via, registry );
       start();
    }
 

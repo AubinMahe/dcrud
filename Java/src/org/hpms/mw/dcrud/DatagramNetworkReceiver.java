@@ -1,4 +1,4 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -10,14 +10,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BiFunction;
 
-import org.hpms.mw.distcrud.Arguments;
-import org.hpms.mw.distcrud.ICRUD;
-import org.hpms.mw.distcrud.ICache;
-import org.hpms.mw.distcrud.IDispatcher;
-import org.hpms.mw.distcrud.IParticipant;
-import org.hpms.mw.distcrud.IRequired;
-import org.hpms.mw.distcrud.Network;
-import org.hpms.mw.distcrud.Shareable;
+import org.hpms.mw.dcrud.Arguments;
+import org.hpms.mw.dcrud.ICRUD;
+import org.hpms.mw.dcrud.ICache;
+import org.hpms.mw.dcrud.IDispatcher;
+import org.hpms.mw.dcrud.IParticipant;
+import org.hpms.mw.dcrud.IRegistry;
+import org.hpms.mw.dcrud.IRequired;
+import org.hpms.mw.dcrud.Network;
+import org.hpms.mw.dcrud.Shareable;
 import org.hpms.util.Performance;
 
 import javafx.application.Application.Parameters;
@@ -42,6 +43,7 @@ import javafx.stage.Stage;
 import tests.App;
 import tests.Controller;
 import tests.QuadFunction;
+import tests.StaticRegistry;
 
 public class ShapesUI implements Controller {
 
@@ -123,15 +125,12 @@ public class ShapesUI implements Controller {
       if( intrfcName == null ) {
          throw new IllegalStateException( "--interface=<string> missing" );
       }
-      final NetworkInterface  intrfc = NetworkInterface.getByName( intrfcName );
-      final InetSocketAddress addr = new InetSocketAddress( "224.0.0.3", port );
       Performance.enable( perf );
-      final IParticipant participant = Network.join( port - 2415, addr, intrfc );
-      for( short p = 0; p < 4; ++p ) {
-         if( ( p+2416 ) != port ) {
-            participant.listen( intrfc, new InetSocketAddress( "224.0.0.3", p+2416 ));
-         }
-      }
+      final NetworkInterface  intrfc      = NetworkInterface.getByName( intrfcName );
+      final InetSocketAddress addr        = new InetSocketAddress( "224.0.0.3", port );
+      final IRegistry         registry    = new StaticRegistry();
+      final IParticipant      participant = Network.join( port - 2415, addr, intrfc );
+      participant.listen( intrfc, registry );
       participant.registerLocalFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       participant.registerLocalFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
       _cache = participant.createCache();

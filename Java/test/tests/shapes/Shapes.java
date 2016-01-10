@@ -3,8 +3,8 @@ package tests.shapes;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.hpms.mw.distcrud.ClassID;
-import org.hpms.mw.distcrud.Shareable;
+import org.hpms.mw.dcrud.ClassID;
+import org.hpms.mw.dcrud.Shareable;
 
 import javafx.geometry.Bounds;
 import javafx.scene.paint.Color;
@@ -65,7 +65,7 @@ final class ShareableRect extends ShareableShape {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      org.hpms.mw.distcrud.SerializerHelper.putString( _name, target );
+      org.hpms.mw.dcrud.SerializerHelper.putString( _name, target );
       final Rectangle r = getShape();
       target.putDouble( r.getX());
       target.putDouble( r.getY());
@@ -77,7 +77,7 @@ final class ShareableRect extends ShareableShape {
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _name = org.hpms.mw.distcrud.SerializerHelper.getString( source );
+      _name = org.hpms.mw.dcrud.SerializerHelper.getString( source );
       final Rectangle r = getShape();
       r.setUserData( this );
       final double x = source.getDouble();
@@ -142,7 +142,7 @@ final class ShareableEllipse extends ShareableShape {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      org.hpms.mw.distcrud.SerializerHelper.putString( _name, target );
+      org.hpms.mw.dcrud.SerializerHelper.putString( _name, target );
       final Ellipse e = getShape();
       target.putDouble( e.getCenterX());
       target.putDouble( e.getCenterY());
@@ -154,7 +154,7 @@ final class ShareableEllipse extends ShareableShape {
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _name  = org.hpms.mw.distcrud.SerializerHelper.getString( source );
+      _name  = org.hpms.mw.dcrud.SerializerHelper.getString( source );
       final Ellipse e = getShape();
       e.setUserData( this );
       final double x  = source.getDouble();

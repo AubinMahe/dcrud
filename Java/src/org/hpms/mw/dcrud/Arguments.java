@@ -1,11 +1,11 @@
-package org.hpms.mw.distcrud;
+package org.hpms.mw.dcrud;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.hpms.mw.distcrud.ClassID.Type;
+import org.hpms.mw.dcrud.ClassID.Type;
 
 public class Arguments {
 

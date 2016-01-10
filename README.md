@@ -6,7 +6,7 @@ Goal
 
 DCRUD manage distributed collections of items - local caches - providing CRUD interface (**C**reate, **R**ead, **U**pdate, **D**elete). All items dispose of an identity, unique system wide. Items may reference others ([UML association](https://en.wikipedia.org/wiki/Association_%28object-oriented_programming%29)). An item may be internally structured ([UML composition](https://en.wikipedia.org/wiki/Object_composition)), treated as a whole, indivisible piece of data. Granularity of a publication is the whole item, which size are expected to be small (<2 kB).
 
-DCRUD offers remote asynchronous operations too, grouped into interfaces. If an operation have to return a result, a callback must be provided, see [IRequired](Java/src/org/hpms/mw/distcrud/IRequired.java) and [IOperationInOut](Java/src/org/hpms/mw/distcrud/IOperationInOut.java).
+DCRUD offers remote asynchronous operations too, grouped into interfaces. If an operation have to return a result, a callback must be provided, see [IRequired](Java/src/org/hpms/mw/dcrud/IRequired.java), [ICallback](Java/src/org/hpms/mw/dcrud/ICallback.java), [IProvided](Java/src/org/hpms/mw/dcrud/IProvided.java), [IOperation](Java/src/org/hpms/mw/dcrud/IOperation.java), [Arguments](Java/src/org/hpms/mw/dcrud/Arguments.java).
 
 Features
 --------
@@ -60,18 +60,25 @@ Shared piece of data are derived from `Shareable`. dcrud use delegation to emula
 Discovery
 ---------
 
-With Multicast protocol, discovery isn't necessary because subscribing and publishing is done by the protocol. However, with unicast UDP and TCP streams, a mechanism must be offered to register publishers - indexed by published data or offered services - and connect them to subscribers, requested by consumed data or required services.
-A centralized registry, like CORBA Naming Service, will be a bottleneck and a single point of failure, DCRUD offer a distributed registry:
- - A first participant has to wait for followers, it do nothing at start
- - A second participant is launched with the address:port of the first
+In order to connect each participant to others a mechanism must be offered to register publishers - indexed and required by data or interface names - and connect them to subscribers.
+A centralized registry, like CORBA Naming Service, will be a bottleneck and a single point of failure, when DCRUD offer a distributed registry based on the following protocol, over TCP:
+ - The first participant is launched with an address:port
+ - It send a message to obtain the registry contents
+ - When the answer timeout elapsed, it know it's the first participant, it initialize a registry with its own published data and its own offered services
+ - A second participant is launched with the same address:port of the first
  - The second ask the first to obtain the registry
  - The first answer with a list of data and services offered by one participant: itself
+ - The second initializes a registry with the data received
  - A third participant is launched with the address:port of any other participant "P"
  - The third ask "P" to obtain the registry
  - "P" answer with a list of two participants: first and second, it send the list to all (broadcast)
  - At this point, each participant known the others.
  - After that, each time a new service or data is declared, a broadcast of the complete registry will be done (no delta publication).
- - In case of failure and restart of a participant, the complete registry will be shared again.
+ - In case of failure and restart of a participant, the complete registry will be published again.
+
+**Notes:**
+
+An implementation of the registry based on constants is provided in the examples module to address statically designed systems. In this case no discovery occurs, the preceding dialogue isn't deployed but the same API is used (see [IRegistry](Java/src/org/hpms/mw/dcrud/IRegistry.java)).
 
 Persistence
 -----------

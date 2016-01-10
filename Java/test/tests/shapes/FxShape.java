@@ -1,6 +1,6 @@
 package tests.shapes;
 
-import org.hpms.mw.distcrud.GUID;
+import org.hpms.mw.dcrud.GUID;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
