@@ -22,7 +22,7 @@ public class Subscriber extends Thread {
    Subscriber( int id, InetSocketAddress addr, NetworkInterface via, IRegistry registry ) throws IOException {
       super( Subscriber.class.getName());
       _participant = Network.join( id, addr, via );
-      _participant.listen( via, registry );
+      _participant.listen( via, registry, false );
       start();
    }
 

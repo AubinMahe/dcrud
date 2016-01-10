@@ -4,6 +4,7 @@
 
 #include "Person.h"
 #include "Settings.h"
+#include "StaticRegistry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +30,11 @@ extern bool dumpReceivedBuffer;
  * C Person subscriber, Java publisher
  */
 void test_006( void ) {
-   dcrudIParticipant participant =
-      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
+   ioInetSocketAddress p1;
+   dcrudIParticipant participant;
+
+   ioInetSocketAddress_init( &p1, MCAST_ADDRESS, 2417 );
+   participant = dcrudNetwork_join( 2, &p1, NETWORK_INTERFACE );
    if( participant ) {
       dcrudICache          cache;
       dcrudIDispatcher     dispatcher;
@@ -38,13 +42,14 @@ void test_006( void ) {
       dcrudIRequired       monitor;
       dcrudLocalFactory *  localFactory;
       dcrudRemoteFactory * remoteFactory;
+      ioInetSocketAddress  p2;
+      dcrudIRegistry       registry = getStaticRegistry();
       char                 c = '\0';
       int                  i;
 
+      ioInetSocketAddress_init( &p2, MCAST_ADDRESS, 2416 );
       Person_initFactories( participant, &localFactory, &remoteFactory );
-
-      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
-
+      dcrudIParticipant_listen( participant, registry, NULL, dumpReceivedBuffer );
       cache      = dcrudIParticipant_getDefaultCache( participant );
       dispatcher = dcrudIParticipant_getDispatcher( participant );
       personCRUD = dcrudIDispatcher_requireCRUD( dispatcher, localFactory->classID );

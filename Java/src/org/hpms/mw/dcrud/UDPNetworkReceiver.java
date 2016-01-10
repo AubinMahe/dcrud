@@ -7,12 +7,13 @@ import java.nio.channels.DatagramChannel;
 
 final class UDPNetworkReceiver extends DatagramNetworkReceiver {
 
-   UDPNetworkReceiver( AbstractParticipant participant, InetSocketAddress other ) throws IOException {
+   UDPNetworkReceiver( AbstractParticipant participant, InetSocketAddress other, boolean dumpReceivedBuffer ) throws IOException {
       super( participant, DatagramChannel
          .open(( other.getAddress().getAddress().length > 4 )
                   ? StandardProtocolFamily.INET6
                   : StandardProtocolFamily.INET              )
-         .bind( other                                        )
+         .bind( other                                        ),
+         dumpReceivedBuffer
       );
       System.out.printf( "receiving from %s\n", other );
    }

@@ -9,11 +9,11 @@
 #include <coll/List.h>
 #include <coll/MapFuncPtr.h>
 
-#include <os/System.h>
+#include <io/NetworkInterfaces.h>
 
+#include <os/System.h>
 #include <os/Mutex.h>
 
-#include <stdio.h>
 #include <util/CheckSysCall.h>
 #include <util/Dump.h>
 #include <util/Performance.h>
@@ -33,12 +33,10 @@ static int IntegerCompare( int * left, int * right ) {
 }
 
 dcrudStatus ParticipantImpl_new(
-   unsigned int        publisherId,
-   const char *        address,
-   unsigned short      port,
-   const char *        intrfc,
-   bool                dumpReceivedBuffer,
-   ParticipantImpl * * target  )
+   unsigned int                publisherId,
+   const ioInetSocketAddress * addr,
+   const char *                intrfc,
+   ParticipantImpl * *         target  )
 {
    int               trueValue = 1;
    struct in_addr    lIntrfc;
@@ -82,10 +80,9 @@ dcrudStatus ParticipantImpl_new(
    This->callbacks              = collMap_new((collComparator)IntegerCompare );
    This->publisherId            = publisherId;
    This->target.sin_family      = AF_INET;
-   This->target.sin_port        = htons( port );
-   This->target.sin_addr.s_addr = inet_addr( address );
+   This->target.sin_port        = htons( addr->port );
+   This->target.sin_addr.s_addr = inet_addr( addr->inetAddress );
    This->out                    = socket( AF_INET, SOCK_DGRAM, 0 );
-   This->dumpReceivedBuffer     = dumpReceivedBuffer;
    if( ! utilCheckSysCall( This->out != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
       return DCRUD_INIT_FAILED;
    }
@@ -102,23 +99,54 @@ dcrudStatus ParticipantImpl_new(
    {
       return DCRUD_INIT_FAILED;
    }
-   printf( "Sending to %s:%d via interface %s\n", address, port, intrfc );
+   printf( "Sending to %s:%d via interface %s\n", addr->inetAddress, addr->port, intrfc );
    This->dispatcher = dcrudIDispatcher_new( This );
    This->caches[This->cacheCount++] = dcrudCache_new( This );
    This->receivers = collList_new();
    return DCRUD_NO_ERROR;
 }
 
+typedef struct createReceiverParams_s {
+
+   ParticipantImpl * participant;
+   const char *      networkInterface;
+   bool              dumpReceivedBuffer;
+
+} createReceiverParams;
+
+static bool createReceiver( collForeach * context ) {
+   const ioInetSocketAddress * addr = (const ioInetSocketAddress *)context->item;
+   createReceiverParams *      p    = (createReceiverParams *     )context->user;
+
+   collList_add( p->participant->receivers,
+      NetworkReceiver_new( p->participant, addr, p->networkInterface, p->dumpReceivedBuffer ));
+   return true;
+}
+
 void dcrudIParticipant_listen(
    dcrudIParticipant self,
-   const char *      mcastAddr,
-   unsigned short    port,
-   const char *      networkInterface )
+   dcrudIRegistry    registry,
+   const char *      networkInterface,
+   bool              dumpReceivedBuffer )
 {
-   ParticipantImpl * This = (ParticipantImpl *)self;
-   collList_add(
-      This->receivers,
-      NetworkReceiver_new( This, mcastAddr, port, networkInterface, This->dumpReceivedBuffer ));
+   ParticipantImpl *    This         = (ParticipantImpl *)self;
+   collSet              participants = dcrudIRegistry_getParticipants( registry );
+   createReceiverParams p;
+
+   if( participants ) {
+      p.participant        = This;
+      p.networkInterface   = networkInterface;
+      p.dumpReceivedBuffer = dumpReceivedBuffer;
+      if( ! p.networkInterface ) {
+         p.networkInterface = ioNetworkInterfaces_getFirst( true );
+      }
+      collSet_foreach( participants, createReceiver, &p );
+   }
+   else {
+      fprintf( stderr, "%s:%d: dcrudIRegistry_getParticipants() returns null\n",
+         __FILE__, __LINE__ );
+      exit(-1);
+   }
 }
 
 void dcrudIParticipant_delete( dcrudIParticipant * self ) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <util/types.h>
-#include <string>
+#include <io/InetSocketAddress.hpp>
 
 namespace dcrud {
 
@@ -10,6 +10,7 @@ namespace dcrud {
    class IDispatcher;
    class Shareable;
    class ICRUD;
+   class IRegistry;
 
    typedef Shareable * (* localFactory_t )( void );
 
@@ -19,10 +20,11 @@ namespace dcrud {
       virtual ~ IParticipant() {}
 
       virtual void listen(
-         const std::string & mcastAddr,
-         unsigned short      port,
+         const IRegistry &   registry,
          const std::string & networkInterface,
-         bool                dumpReceivedBuffer ) = 0;
+         bool                dumpReceivedBuffer = false ) = 0;
+
+      virtual void listen( const IRegistry & registry, bool dumpReceivedBuffer = false ) = 0;
 
       virtual void registerLocalFactory ( const ClassID & id, localFactory_t factory ) = 0;
 

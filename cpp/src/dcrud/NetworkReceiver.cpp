@@ -35,11 +35,10 @@ static void * run( void * This ) {
 }
 
 NetworkReceiver::NetworkReceiver(
-   ParticipantImpl &   participant,
-   const std::string & address,
-   unsigned short      port,
-   const std::string & intrfc,
-   bool                dumpReceivedBuffer )
+   ParticipantImpl &             participant,
+   const io::InetSocketAddress & addr,
+   const std::string &           intrfc,
+   bool                          dumpReceivedBuffer /* = false */ )
  :
    _participant       ( participant                             ),
    _dispatcher        ((Dispatcher &)participant.getDispatcher()),
@@ -60,25 +59,26 @@ NetworkReceiver::NetworkReceiver(
    struct sockaddr_in local_sin;
    memset( &local_sin, 0, sizeof( local_sin ));
    local_sin.sin_family      = AF_INET;
-   local_sin.sin_port        = htons( port );
+   local_sin.sin_port        = htons( addr._port );
    local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
    if( ! utilCheckSysCall( 0 ==
       bind( _in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
-      __FILE__, __LINE__, "bind(%s,%d)", intrfc.c_str(), port ))
+      __FILE__, __LINE__, "bind(%s,%d)", intrfc.c_str(), addr._port ))
    {
       throw std::runtime_error( "bind" );
    }
    struct ip_mreq mreq;
    memset( &mreq, 0, sizeof( mreq ));
-   mreq.imr_multiaddr.s_addr = inet_addr( address.c_str());
+   mreq.imr_multiaddr.s_addr = inet_addr( addr._inetAddress.c_str());
    mreq.imr_interface.s_addr = inet_addr( intrfc.c_str());
    if( ! utilCheckSysCall( 0 ==
       setsockopt( _in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
-      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address.c_str()))
+      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", addr._inetAddress.c_str()))
    {
       throw std::runtime_error( "setsockopt(IP_ADD_MEMBERSHIP)");
    }
-   printf( "receiving from %s, bound to %s:%d\n", address.c_str(), intrfc.c_str(), port );
+   printf( "receiving from %s, bound to %s:%d\n",
+      addr._inetAddress.c_str(), intrfc.c_str(), addr._port );
 #ifdef WIN32
    DWORD tid;
    _thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)&::run, this, 0, &tid );

@@ -17,6 +17,8 @@ public final class StaticRegistry implements IRegistry, Settings {
    public StaticRegistry() {
       _participants.add( new InetSocketAddress( MCAST_ADDR, PORT   ));
       _participants.add( new InetSocketAddress( MCAST_ADDR, PORT+1 ));
+      _participants.add( new InetSocketAddress( MCAST_ADDR, PORT+2 ));
+      _participants.add( new InetSocketAddress( MCAST_ADDR, PORT+3 ));
    }
 
    @Override

@@ -87,7 +87,6 @@
    </target>
 
    <target name="Test_002" description="C only test: collections (List, Set, Map)">
-      <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test002" />
@@ -97,7 +96,6 @@
    </target>
 
    <target name="Test_003" description="C only test: ioByteBuffer">
-      <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
       	<env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 003" />
@@ -108,7 +106,6 @@
 
    <target name="Test_004" depends="jar-lib,jar-test"
       description="Multicast protocol, Same as Test_008 but in C++ language">
-      <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test_004" />
@@ -122,7 +119,6 @@
 
    <target name="Test_005" depends="jar-lib,jar-test"
       description="Multicast protocol, C Person publisher, Java subscrber">
-      <exec executable="make" dir=".." />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 005" />
@@ -134,7 +130,6 @@
 
    <target name="Test_006" depends="jar-lib,jar-test"
       description="Multicast protocol, C Person subscrber, Java publisher">
-      <exec executable="make" dir=".." />
       <exec spawn="true" executable="gnome-terminal" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test 006" />
@@ -189,13 +184,11 @@
 &#10;&#9;the server to create some coloured rectangles and ellipses.
 &#10;&#9;The server move and publish the shapes every 40 ms.
 &#10;&#9;The Java client display all the shapes published by the server.">
-      <exec executable="make" dir="../C" />
       <exec executable="gnome-terminal" spawn="true" dir="..">
          <env key="LD_LIBRARY_PATH" value="cpp/Debug:C/Debug" />
          <arg value="-t" /><arg value="Test_008" />
          <arg value="-x" /><arg value="C/Debug/dcrud-c-test" />
          <arg value="--test=8" />
-         <arg value="--dump-received-buffer" />
       </exec>
       <java fork="true" spawn="true" jar="${jar-test}">
          <arg value="--window=left-top" />

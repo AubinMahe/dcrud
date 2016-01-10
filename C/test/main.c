@@ -38,7 +38,7 @@ int main( int argc, char * argv[] ) {
    utilTrace_open( logname );
    switch( testNumber ) {
    default:
-      fprintf( stderr, "%s <nnn> where nnn is a test number > 0\n", argv[0] );
+      fprintf( stderr, "%s --test=<nnn> where nnn is a test number > 0\n", argv[0] );
       break;
    case 1:
       printf( "TEST %03d - Java only test: Person pub/sub\n", testNumber );

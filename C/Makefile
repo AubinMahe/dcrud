@@ -12,6 +12,7 @@ LIB_SRCS =\
  src/dcrud/ClassID.c\
  src/dcrud/Dispatcher.c\
  src/dcrud/GUID.c\
+ src/dcrud/IRegistry.c\
  src/dcrud/Network.c\
  src/dcrud/NetworkReceiver.c\
  src/dcrud/ParticipantImpl.c\
@@ -19,6 +20,8 @@ LIB_SRCS =\
  src/dcrud/Status.c\
  src/io/ByteBuffer.c\
  src/io/Errors.c\
+ src/io/InetSocketAddress.c\
+ src/io/NetworkInterfaces.c\
  src/os/Mutex.c\
  src/os/System.c\
  src/util/CheckSysCall.c\
@@ -29,6 +32,7 @@ LIB_SRCS =\
 EXE_SRCS =\
  test/main.c\
  test/Person.c\
+ test/StaticRegistry.c\
  test/test_002.c\
  test/test_003.c\
  test/test_005.c\

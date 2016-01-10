@@ -4,11 +4,14 @@
 #include "IProtocol.hpp"
 #include "NetworkReceiver.hpp"
 
+#include <io/NetworkInterfaces.h>
+
+#include <util/CheckSysCall.h>
+
 #include <dcrud/Shareable.hpp>
 #include <dcrud/ICallback.hpp>
 #include <dcrud/ICRUD.hpp>
-
-#include <util/CheckSysCall.h>
+#include <dcrud/IRegistry.hpp>
 
 #include <stdio.h>
 
@@ -20,10 +23,9 @@ using namespace dcrud;
 const byte ParticipantImpl::SIGNATURE[] = {'D','C','R','U','D'};
 
 ParticipantImpl::ParticipantImpl(
-   unsigned int        publisherId,
-   const std::string & address,
-   unsigned short      port,
-   const std::string & intrfc )
+   unsigned int                  publisherId,
+   const io::InetSocketAddress & addr,
+   const std::string &           intrfc )
  :
    _publisherId( publisherId  ),
    _header     ( HEADER_SIZE  ),
@@ -47,8 +49,8 @@ ParticipantImpl::ParticipantImpl(
    }
    memset( &_target, 0, sizeof( _target ));
    _target.sin_family      = AF_INET;
-   _target.sin_port        = htons( port );
-   _target.sin_addr.s_addr = inet_addr( address.c_str());
+   _target.sin_port        = htons( addr._port );
+   _target.sin_addr.s_addr = inet_addr( addr._inetAddress.c_str());
    int trueValue = 1;
    if( ! utilCheckSysCall( 0 ==
       setsockopt( _out, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
@@ -65,7 +67,8 @@ ParticipantImpl::ParticipantImpl(
    {
       throw std::runtime_error( "setsockopt(IP_MULTICAST_IF)" );
    }
-   printf( "sending to %s:%d via interface %s\n", address.c_str(), port, intrfc.c_str());
+   printf( "sending to %s:%d via interface %s\n",
+      addr._inetAddress.c_str(), addr._port, intrfc.c_str());
    _dispatcher            = new Dispatcher( *this );
    _caches[_cacheCount++] = new Cache( *this );
 }
@@ -82,13 +85,28 @@ ParticipantImpl:: ~ ParticipantImpl() {
 }
 
 void ParticipantImpl::listen(
-   const std::string & mcastAddr,
-   unsigned short      port,
+   const IRegistry &   registry,
    const std::string & networkInterface,
    bool                dumpReceivedBuffer /* = false */ )
 {
-   _receivers.push_back(
-      new NetworkReceiver( *this, mcastAddr, port, networkInterface, dumpReceivedBuffer ));
+   const socketAddresses_t & participants = registry.getParticipants();
+   for( socketAddressesCstIter_t it = participants.begin(); it != participants.end(); ++it ) {
+      const io::InetSocketAddress & addr     = *it;
+      NetworkReceiver *             receiver =
+         new NetworkReceiver( *this, addr, networkInterface, dumpReceivedBuffer );
+      _receivers.push_back( receiver );
+   }
+}
+
+void ParticipantImpl::listen( const IRegistry & registry, bool dumpReceivedBuffer ) {
+   std::string               networkInterface = ioNetworkInterfaces_getFirst( true );
+   const socketAddresses_t & participants     = registry.getParticipants();
+   for( socketAddressesCstIter_t it = participants.begin(); it != participants.end(); ++it ) {
+      const io::InetSocketAddress & addr     = *it;
+      NetworkReceiver *             receiver =
+         new NetworkReceiver( *this, addr, networkInterface, dumpReceivedBuffer );
+      _receivers.push_back( receiver );
+   }
 }
 
 void ParticipantImpl::registerLocalFactory( const ClassID & id, localFactory_t factory ) {

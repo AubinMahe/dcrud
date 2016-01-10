@@ -12,14 +12,14 @@ final class UDPParticipant extends AbstractParticipant implements IProtocol {
    }
 
    @Override
-   public void listen( NetworkInterface via, IRegistry registry ) throws IOException {
-      listen( registry );
+   public void listen( NetworkInterface via, IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
+      listen( registry, dumpReceivedBuffer );
    }
 
    @Override
-   public void listen( IRegistry registry ) throws IOException {
+   public void listen( IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
       for( final InetSocketAddress other : registry.getParticipants()) {
-         new UDPNetworkReceiver( this, other );
+         new UDPNetworkReceiver( this, other, dumpReceivedBuffer );
       }
    }
 

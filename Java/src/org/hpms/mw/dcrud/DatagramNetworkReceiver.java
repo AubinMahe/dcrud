@@ -5,15 +5,22 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
 
+import org.hpms.util.Dump;
 import org.hpms.util.Performance;
 
 abstract class DatagramNetworkReceiver extends AbstractNetworkReceiver {
 
    protected final DatagramChannel _in;
+   protected final boolean         _dumpReceivedBuffer;
 
-   DatagramNetworkReceiver( AbstractParticipant participant, DatagramChannel in ) throws IOException {
+   DatagramNetworkReceiver(
+      AbstractParticipant participant,
+      DatagramChannel     in,
+      boolean             dumpReceivedBuffer ) throws IOException
+   {
       super( participant );
-      _in = in;
+      _in                 = in;
+      _dumpReceivedBuffer = dumpReceivedBuffer;
       setName( "Receiver-" + _in.getLocalAddress().toString());
       setDaemon( true );
       start();
@@ -32,7 +39,9 @@ abstract class DatagramNetworkReceiver extends AbstractNetworkReceiver {
             _in.receive( inBuf );
             atStart = System.nanoTime();
             inBuf.flip();
-//            Dump.dump( inBuf );
+            if( _dumpReceivedBuffer ) {
+               Dump.dump( inBuf );
+            }
             inBuf.get( signa );
             if( Arrays.equals( signa, SIGNATURE )) {
                final FrameType frameType = FrameType.values()[inBuf.get()];

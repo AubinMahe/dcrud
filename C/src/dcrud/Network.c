@@ -1,35 +1,27 @@
 #include <dcrud/Network.h>
+#include <io/NetworkInterfaces.h>
 #include <util/Trace.h>
 
 #include "ParticipantImpl.h"
 
 dcrudIParticipant dcrudNetwork_join(
-   unsigned int   publisherId,
-   const char *   mcastAddr,
-   unsigned short port,
-   const char *   intrfc,
-   bool           dumpReceivedBuffer )
+   unsigned int                publisherId,
+   const ioInetSocketAddress * addr,
+   const char *                intrfc )
 {
    ParticipantImpl * retVal = NULL;
    dcrudStatus status = DCRUD_NO_ERROR;
 
-   utilTrace_entry( __func__,
-      "publisherId: %d, mcastAddr: '%s', port: %d, intrfc: '%s', dumpReceivedBuffer: %d",
-      publisherId, mcastAddr, port, intrfc, dumpReceivedBuffer );
-   if( !intrfc ) {
-      fprintf( stderr, "%s:%d:Network interface name can't be null\n", __FILE__, __LINE__ );
-      utilTrace_error( __func__, "Network interface name can't be null" );
-      retVal = NULL;
+   if( ! intrfc ) {
+      intrfc = ioNetworkInterfaces_getFirst( true );
    }
-   else {
-      status =
-         ParticipantImpl_new( publisherId, mcastAddr, port, intrfc, dumpReceivedBuffer, &retVal );
-      if( DCRUD_NO_ERROR != status ) {
-         dcrudIParticipant p = (dcrudIParticipant)retVal;
-         utilTrace_error( __func__, "ParticipantImpl_new returns %d", status );
-         dcrudIParticipant_delete( &p );
-         retVal = NULL;
-      }
+   utilTrace_entry( __func__, "publisherId: %d, intrfc: '%s'\n", publisherId, intrfc );
+   status = ParticipantImpl_new( publisherId, addr, intrfc, &retVal );
+   if( DCRUD_NO_ERROR != status ) {
+      dcrudIParticipant p = (dcrudIParticipant)retVal;
+      utilTrace_error( __func__, "ParticipantImpl_new returns %d", status );
+      dcrudIParticipant_delete( &p );
+      retVal = NULL;
    }
    utilTrace_exit( __func__, "retVal: %08X", retVal );
    return (dcrudIParticipant)retVal;

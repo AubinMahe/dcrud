@@ -60,7 +60,7 @@ public class Publisher extends Thread {
    Publisher( int id, InetSocketAddress addr, NetworkInterface via, IRegistry registry ) throws IOException {
       super( Publisher.class.getName());
       _participant = Network.join( id, addr, via );
-      _participant.listen( via, registry );
+      _participant.listen( via, registry, false );
       start();
    }
 

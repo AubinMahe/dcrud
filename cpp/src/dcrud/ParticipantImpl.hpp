@@ -48,18 +48,18 @@ namespace dcrud {
    public:
 
       ParticipantImpl(
-         unsigned int        publisherId,
-         const std::string & address,
-         unsigned short      port,
-         const std::string & intrfc );
+         unsigned int                  publisherId,
+         const io::InetSocketAddress & addr,
+         const std::string &           intrfc );
 
       ~ ParticipantImpl();
 
       virtual void listen(
-         const std::string & mcastAddr,
-         unsigned short      port,
+         const IRegistry &   registry,
          const std::string & networkInterface,
          bool                dumpReceivedBuffer = false );
+
+      virtual void listen( const IRegistry & registry, bool dumpReceivedBuffer = false );
 
       virtual void registerLocalFactory( const ClassID & id, localFactory_t factory );
 

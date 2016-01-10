@@ -3,6 +3,7 @@ package org.hpms.mw.dcrud;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.util.Enumeration;
 
 public class Network {
 
@@ -12,7 +13,23 @@ public class Network {
 
    public static IParticipant join( int id, InetSocketAddress addr ) throws IOException {
       if( addr.getAddress().isMulticastAddress()) {
-         return new MulticastParticipant( id, addr, NetworkInterface.getByIndex( 0 ));
+         NetworkInterface intrfc = null;
+         for( final Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+              e.hasMoreElements(); )
+         {
+            final NetworkInterface candidate = e.nextElement();
+            if(   !candidate.isLoopback()
+               && candidate.isUp()
+               && candidate.supportsMulticast())
+            {
+               intrfc = candidate;
+            }
+         }
+         if( intrfc == null ) {
+            throw new IllegalStateException(
+               "No network up, non loopback, multicast capable interface found" );
+         }
+         return new MulticastParticipant( id, addr, intrfc );
       }
       return new UDPParticipant( id, addr );
    }

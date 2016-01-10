@@ -4,6 +4,7 @@
 
 #include "Person.h"
 #include "Settings.h"
+#include "StaticRegistry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,16 +24,22 @@ extern bool dumpReceivedBuffer;
  * C Person publisher, Java subscriber
  */
 void test_005( void ) {
-   dcrudIParticipant participant =
-      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
+   ioInetSocketAddress p1;
+   dcrudIParticipant participant;
+
+   ioInetSocketAddress_init( &p1, MCAST_ADDRESS, 2417 );
+   participant = dcrudNetwork_join( 2, &p1, NULL );
    if( participant ) {
       dcrudIDispatcher     dispatcher;
       dcrudIProvided       monitor;
       dcrudLocalFactory *  localFactory;
       dcrudRemoteFactory * remoteFactory;
+      ioInetSocketAddress  p2;
+      dcrudIRegistry       registry = getStaticRegistry();
 
+      ioInetSocketAddress_init( &p2, MCAST_ADDRESS, 2416 );
       Person_initFactories( participant, &localFactory, &remoteFactory );
-      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
+      dcrudIParticipant_listen( participant, registry, NULL, dumpReceivedBuffer );
       dispatcher = dcrudIParticipant_getDispatcher( participant );
       monitor    = dcrudIDispatcher_provide( dispatcher, "IMonitor" );
       dcrudIProvided_addOperation( monitor, "exit", participant, (dcrudIOperation)exitSrvc );

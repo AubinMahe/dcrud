@@ -234,11 +234,10 @@ static void * run( NetworkReceiverImpl * This ) {
 typedef void * ( * pthread_routine_t )( void * );
 
 NetworkReceiver NetworkReceiver_new(
-   ParticipantImpl * participant,
-   const char *      address,
-   unsigned short    port,
-   const char *      intrfc,
-   bool              dumpReceivedBuffer )
+   ParticipantImpl *           participant,
+   const ioInetSocketAddress * addr,
+   const char *                intrfc,
+   bool                        dumpReceivedBuffer )
 {
    NetworkReceiverImpl * This = (NetworkReceiverImpl *)malloc( sizeof( NetworkReceiverImpl ));
    int                   trueValue = 1;
@@ -262,23 +261,23 @@ NetworkReceiver NetworkReceiver_new(
       return (NetworkReceiver)This;
    }
    local_sin.sin_family      = AF_INET;
-   local_sin.sin_port        = htons( port );
+   local_sin.sin_port        = htons( addr->port );
    local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
    if( ! utilCheckSysCall( 0 ==
       bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
-      __FILE__, __LINE__, "bind(%s,%d)", intrfc, port ))
+      __FILE__, __LINE__, "bind(%s,%d)", intrfc, addr->port ))
    {
       return (NetworkReceiver)This;
    }
-   mreq.imr_multiaddr.s_addr = inet_addr( address );
+   mreq.imr_multiaddr.s_addr = inet_addr( addr->inetAddress );
    mreq.imr_interface.s_addr = inet_addr( intrfc );
    if( ! utilCheckSysCall( 0 ==
       setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
-      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", address ))
+      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", addr->inetAddress ))
    {
       return (NetworkReceiver)This;
    }
-   printf( "Receiving from %s, bound to %s:%d\n", address, intrfc, port );
+   printf( "Receiving from %s, bound to %s:%d\n", addr->inetAddress, intrfc, addr->port );
 #ifdef WIN32
    DWORD tid;
    This->thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, This, 0, &tid );

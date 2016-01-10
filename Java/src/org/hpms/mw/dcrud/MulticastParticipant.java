@@ -35,18 +35,18 @@ final class MulticastParticipant extends AbstractParticipant implements IProtoco
    }
 
    @Override
-   public void listen( NetworkInterface via, IRegistry registry ) throws IOException {
+   public void listen( NetworkInterface via, IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
       for( final InetSocketAddress other : registry.getParticipants()) {
          if( ! other.equals( _target )) {
-            new MulticastNetworkReceiver( this, other, via );
+            new MulticastNetworkReceiver( this, other, via, dumpReceivedBuffer );
          }
       }
    }
 
    @Override
-   public void listen( IRegistry registry ) throws IOException {
+   public void listen( IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
       final NetworkInterface intrfc = NetworkInterface.getNetworkInterfaces().nextElement();
-      listen( intrfc, registry );
+      listen( intrfc, registry, dumpReceivedBuffer );
    }
 
    @Override

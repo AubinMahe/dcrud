@@ -3,6 +3,7 @@
 #include <util/CheckSysCall.h>
 
 #include "Settings.h"
+#include "StaticRegistry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,13 +209,17 @@ static collMap * exitSrvc( dcrudIParticipant participant, collMap args ) {
 extern bool dumpReceivedBuffer;
 
 void test_008( void ) {
-   dcrudIParticipant participant =
-      dcrudNetwork_join( 2, MCAST_ADDRESS, 2417, NETWORK_INTERFACE, dumpReceivedBuffer );
+   ioInetSocketAddress p1;
+   dcrudIParticipant participant;
+
+   ioInetSocketAddress_init( &p1, MCAST_ADDRESS, 2417 );
+   participant = dcrudNetwork_join( 2, &p1, NULL );
    if( participant ) {
       dcrudICache      cache         = NULL;
       dcrudIDispatcher dispatcher    = NULL;
       dcrudIProvided   shapesFactory = NULL;
       dcrudIProvided   iMonitor      = NULL;
+      dcrudIRegistry   registry      = getStaticRegistry();
 
       rectangleFactory.classID     = dcrudClassID_new( 1, 1, 1, 1 );
       rectangleFactory.size        = sizeof( ShareableShape );
@@ -240,7 +245,7 @@ void test_008( void ) {
       iMonitor      = dcrudIDispatcher_provide( dispatcher, "IMonitor" );
       dcrudIProvided_addOperation( shapesFactory, "create", participant, (dcrudIOperation)createShapes );
       dcrudIProvided_addOperation( iMonitor     , "exit"  , participant, (dcrudIOperation)exitSrvc );
-      dcrudIParticipant_listen( participant, MCAST_ADDRESS, 2416, NETWORK_INTERFACE );
+      dcrudIParticipant_listen( participant, registry, NULL, dumpReceivedBuffer );
       printf( "Publish every 40 ms.\n" );
       for(;;) {
          dcrudICache_publish( cache );

@@ -78,7 +78,7 @@ A centralized registry, like CORBA Naming Service, will be a bottleneck and a si
 
 **Notes:**
 
-An implementation of the registry based on constants is provided in the examples module to address statically designed systems. In this case no discovery occurs, the preceding dialogue isn't deployed but the same API is used (see [IRegistry](Java/src/org/hpms/mw/dcrud/IRegistry.java)).
+An implementation of the registry based on constants is provided in the examples module to address statically designed systems. In this case no discovery occurs, the preceding protocol isn't deployed but the same API is used (see [IRegistry](Java/src/org/hpms/mw/dcrud/IRegistry.java)).
 
 Persistence
 -----------
@@ -100,7 +100,7 @@ Todo list (in priority order)
  * Add TCP/IP protocol
  * Update C static allocation implementation for embedded, low resource targets
  * Add TCP-IP streams services and protocol for big or continuous data
- * Build a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation (from UML definition, encoded in XML)
+ * Build a code generator for C, C++ and Java languages to ease implementation of serialize methods and IOperation implementation. Generators will use XML representation based on a schema (XSD) designed to be as close as possible to UML concepts.
  * Add HTML5-WebSocket support
  * Add JavaScript support to address HTML5-WebSockets
  

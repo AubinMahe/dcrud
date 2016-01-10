@@ -7,6 +7,7 @@
 
 #include <os/System.h>
 
+#include "StaticRegistry.hpp"
 #include "ShareableShape.hpp"
 
 #include <stdio.h>
@@ -44,14 +45,15 @@ private:
 public:
 
    ShapesSample( bool dumpReceivedBuffer = false ) :
-      _participant( dcrud::Network::join( 2, "224.0.0.3", 2417, "192.168.1.7" )),
+      _participant(
+         dcrud::Network::join( 2, io::InetSocketAddress( "224.0.0.3", 2417 ), "192.168.1.7" )),
       _cache      ( _participant.getDefaultCache()),
       _dispatcher ( _participant.getDispatcher  ())
    {
       ShareableShape::registerClasses   ( _participant );
       ShareableShape::registerOperations( _dispatcher  );
       _dispatcher.provide( "IMonitor" ).addOperation( "exit", *new ExitSrvc());
-      _participant.listen( "224.0.0.3", 2416, "192.168.1.7", dumpReceivedBuffer );
+      _participant.listen( _registry, dumpReceivedBuffer );
    }
 
    ~ ShapesSample() {
@@ -89,6 +91,7 @@ public:
 
 private:
 
+   StaticRegistry        _registry;
    dcrud::IParticipant & _participant;
    dcrud::ICache &       _cache;
    dcrud::IDispatcher &  _dispatcher;

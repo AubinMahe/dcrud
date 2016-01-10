@@ -2,10 +2,7 @@
 #include <dcrud/IParticipant.h>
 
 #include <coll/List.h>
-#include <coll/Set.h>
-
 #include <io/socket.h>
-
 #include <os/Mutex.h>
 
 #define CACHES_COUNT    256
@@ -30,11 +27,10 @@ typedef struct ParticipantImpl_s {
    byte               cacheCount;
    int                callId;
    collList           receivers;
-   bool               dumpReceivedBuffer;
 
 } ParticipantImpl;
 
-dcrudStatus    ParticipantImpl_new            ( unsigned int publisherId, const char * address, unsigned short port, const char * intrfc, bool dumpReceivedBuffer, ParticipantImpl * * target );
+dcrudStatus    ParticipantImpl_new            ( unsigned int publisherId, const ioInetSocketAddress * addr, const char * intrfc, ParticipantImpl * * target );
 unsigned int   ParticipantImpl_getMCastAddress( ParticipantImpl *   This );
 void           ParticipantImpl_publishUpdated ( ParticipantImpl *   This, collSet updated );
 void           ParticipantImpl_publishDeleted ( ParticipantImpl *   This, collSet deleted );

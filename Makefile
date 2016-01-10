@@ -20,8 +20,6 @@ clean:
 tests: Test_001 Test_002 Test_003 Test_004 Test_005 Test_006 Test_007 Test_008
 
 Test_%:
-	cd C ; make
-	cd cpp ; make
 	cd Java ; ant $@ 
 
 C/Debug/dcrud-c-test:

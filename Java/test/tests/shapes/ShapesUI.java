@@ -130,7 +130,7 @@ public class ShapesUI implements Controller {
       final InetSocketAddress addr        = new InetSocketAddress( "224.0.0.3", port );
       final IRegistry         registry    = new StaticRegistry();
       final IParticipant      participant = Network.join( port - 2415, addr, intrfc );
-      participant.listen( intrfc, registry );
+      participant.listen( intrfc, registry, false );
       participant.registerLocalFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       participant.registerLocalFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
       _cache = participant.createCache();

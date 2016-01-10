@@ -21,7 +21,7 @@ public class UDPSubscriber extends Thread {
    UDPSubscriber( int id, InetSocketAddress addr, IRegistry registry ) throws IOException {
       super( UDPSubscriber.class.getName());
       _participant = Network.join( id, addr );
-      _participant.listen( registry );
+      _participant.listen( registry, false );
       start();
    }
 

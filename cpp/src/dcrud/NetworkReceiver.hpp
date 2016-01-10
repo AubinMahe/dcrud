@@ -1,6 +1,7 @@
 #pragma once
 
 #include <io/ByteBuffer.hpp>
+#include <io/InetSocketAddress.hpp>
 
 namespace dcrud {
 
@@ -11,11 +12,10 @@ namespace dcrud {
    public:
 
       NetworkReceiver(
-         ParticipantImpl &   participant,
-         const std::string & address,
-         unsigned short      port,
-         const std::string & intrfc,
-         bool                dumpReceivedBuffer );
+         ParticipantImpl &             participant,
+         const io::InetSocketAddress & addr,
+         const std::string &           intrfc,
+         bool                          dumpReceivedBuffer = false );
 
       ~ NetworkReceiver();
 

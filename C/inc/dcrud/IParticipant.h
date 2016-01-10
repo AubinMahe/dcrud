@@ -3,8 +3,10 @@
 extern "C" {
 #endif
 
+#include <io/InetSocketAddress.h>
 #include "ICache.h"
 #include "IDispatcher.h"
+#include "IRegistry.h"
 
 typedef dcrudShareable(* dcrudShareableFactory )();
 
@@ -41,7 +43,15 @@ typedef struct dcrudRemoteFactory_s {
 
 } dcrudRemoteFactory;
 
-void             dcrudIParticipant_listen               ( dcrudIParticipant   This, const char * mcastAddr, unsigned short port, const char * networkInterface );
+/**
+ * Use the registry to instanciate and listen to other participants.
+ * @param This     this participant
+ * @param registry the registry to use
+ * @param intrfc   the network interface to use, identified by its IP address, may be null,
+ * in such case the first up, non loopback, multicast capable interface will be used
+ * @param dumpReceivedBuffer if true, dump the received frames on stderr
+ */
+void             dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc, bool dumpReceivedBuffer );
 bool             dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
 bool             dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
 dcrudICache      dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This );
