@@ -12,8 +12,7 @@ final class MulticastNetworkReceiver extends DatagramNetworkReceiver {
    MulticastNetworkReceiver(
       AbstractParticipant participant,
       InetSocketAddress   source,
-      NetworkInterface    intrfc,
-      boolean             dumpReceivedBuffer ) throws IOException
+      NetworkInterface    intrfc ) throws IOException
    {
       super( participant, DatagramChannel
          .open     (( source.getAddress().getAddress().length > 4 )
@@ -21,8 +20,7 @@ final class MulticastNetworkReceiver extends DatagramNetworkReceiver {
                         : StandardProtocolFamily.INET              )
          .setOption( StandardSocketOptions.SO_REUSEADDR, true      )
          .bind     ( source                                        )
-         .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc ),
-         dumpReceivedBuffer
+         .setOption( StandardSocketOptions.IP_MULTICAST_IF, intrfc )
       );
       _in.join( source.getAddress(), intrfc );
       System.out.printf( "receiving from %s, bound to %s\n", source, intrfc );

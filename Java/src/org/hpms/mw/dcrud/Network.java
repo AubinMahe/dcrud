@@ -7,6 +7,9 @@ import java.util.Enumeration;
 
 public class Network {
 
+   public static boolean dumpReceivedBuffer = false;
+   public static boolean recordPerformance  = false;
+
    public static IParticipant join( int id, InetSocketAddress addr, NetworkInterface intrfc ) throws IOException {
       return new MulticastParticipant( id, addr, intrfc );
    }

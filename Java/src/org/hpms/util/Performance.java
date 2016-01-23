@@ -11,19 +11,10 @@ import java.util.Map.Entry;
 public class Performance {
 
    private static final Map<String, List<Long>> _records = new HashMap<>();
-   private static /* */ boolean                 _enabled;
 
    private Performance(){}
 
-   public static void enable( boolean enabled ) {
-      _enabled = enabled;
-   }
-
    public static synchronized void record( String attribute, long elapsed ) {
-      if( ! _enabled ) {
-         return;
-      }
-
       List<Long> records = _records.get( attribute );
       if( records == null ) {
          _records.put( attribute, records = new ArrayList<>( 10_000 ));
@@ -32,10 +23,6 @@ public class Performance {
    }
 
    public static synchronized void saveToDisk() throws FileNotFoundException {
-      if( ! _enabled ) {
-         return;
-      }
-
       try( PrintStream _out = new PrintStream( "perfo.txt" )) {
          _out.printf( "+------------+-----------+-----------+-----------+\n" );
          _out.printf( "| Attribute  |    Min µs |    Max µs |    Avg µs |\n" );

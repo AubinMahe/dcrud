@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-abstract class AbstractParticipant implements IParticipant {
+abstract class AbstractParticipant implements IParticipant, IProtocol {
 
    protected final int _publisherId;
    protected final Cache[]                           _caches          = new Cache[256];
@@ -16,6 +16,9 @@ abstract class AbstractParticipant implements IParticipant {
    protected final Map<ClassID, Supplier<Shareable>> _localFactories  = new TreeMap<>();
    protected final Map<ClassID, ICRUD >              _remoteFactories = new TreeMap<>();
    protected final Map<Integer, ICallback>           _callbacks       = new HashMap<>();
+   protected final ByteBuffer                        _header          = ByteBuffer.allocate( HEADER_SIZE );
+   protected final ByteBuffer                        _payload         = ByteBuffer.allocate( PAYLOAD_SIZE );
+   protected final ByteBuffer                        _message         = ByteBuffer.allocate( 64*1024 );
    protected /* */ byte                              _cacheCount      = 0;
    protected /* */ int                               _callId          = 1;
 
@@ -117,7 +120,6 @@ abstract class AbstractParticipant implements IParticipant {
             final byte[] copy = new byte[payloadSize];
             System.arraycopy( frame.array(), frame.position(), copy, 0, payloadSize );
             final ByteBuffer fragment = ByteBuffer.wrap( copy );
-//            Dump.dump( fragment );
             _caches[i].updateFromNetwork( fragment );
          }
       }

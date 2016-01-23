@@ -21,7 +21,7 @@ public class UDPSubscriber extends Thread {
    UDPSubscriber( int id, InetSocketAddress addr, IRegistry registry ) throws IOException {
       super( UDPSubscriber.class.getName());
       _participant = Network.join( id, addr );
-      _participant.listen( registry, false );
+      _participant.listen( registry );
       start();
    }
 
@@ -32,7 +32,7 @@ public class UDPSubscriber extends Thread {
          final IDispatcher dispatcher = _participant.getDispatcher();
          final ICRUD       iPerson    = dispatcher.requireCRUD( Person.CLASS_ID );
          _participant.registerLocalFactory( Person.CLASS_ID, Person::new );
-         cache       .subscribe      ( Person.CLASS_ID );
+//         cache       .subscribe      ( Person.CLASS_ID );
          for( int i = 0; i < 10; ++i ) {
             System.out.printf( "subscriber|dump cache begin\n" );
             Collection<Shareable> items = cache.values();

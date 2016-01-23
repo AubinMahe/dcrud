@@ -6,9 +6,9 @@ import java.util.function.Supplier;
 
 public interface IParticipant {
 
-   void listen( NetworkInterface via, IRegistry registry, boolean dumpReceivedBuffer ) throws IOException;
+   void listen( NetworkInterface via, IRegistry registry ) throws IOException;
 
-   void listen( IRegistry registry, boolean dumpReceivedBuffer ) throws IOException;
+   void listen( IRegistry registry ) throws IOException;
 
    void registerLocalFactory ( ClassID id, Supplier<Shareable> factory );
 

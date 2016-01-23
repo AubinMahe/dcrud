@@ -6,14 +6,10 @@ import java.net.NetworkInterface;
 import java.net.ProtocolFamily;
 import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-final class MulticastParticipant extends AbstractParticipant implements IProtocol {
+final class MulticastParticipant extends AbstractParticipant {
 
-   private final ByteBuffer        _header  = ByteBuffer.allocate( HEADER_SIZE );
-   private final ByteBuffer        _payload = ByteBuffer.allocate( PAYLOAD_SIZE );
-   private final ByteBuffer        _message = ByteBuffer.allocate( 64*1024 );
    private final InetSocketAddress _target;
    private final DatagramChannel   _out;
 
@@ -23,8 +19,8 @@ final class MulticastParticipant extends AbstractParticipant implements IProtoco
          ( group.getAddress().getAddress().length > 4 )
             ? StandardProtocolFamily.INET6
             : StandardProtocolFamily.INET;
-      _target      = group;
-      _out         = DatagramChannel
+      _target = group;
+      _out    = DatagramChannel
          .open     ( family )
 //         .setOption( StandardSocketOptions.SO_REUSEADDR, true )
 //         .bind     ( group )
@@ -35,18 +31,18 @@ final class MulticastParticipant extends AbstractParticipant implements IProtoco
    }
 
    @Override
-   public void listen( NetworkInterface via, IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
+   public void listen( NetworkInterface via, IRegistry registry ) throws IOException {
       for( final InetSocketAddress other : registry.getParticipants()) {
          if( ! other.equals( _target )) {
-            new MulticastNetworkReceiver( this, other, via, dumpReceivedBuffer );
+            new MulticastNetworkReceiver( this, other, via );
          }
       }
    }
 
    @Override
-   public void listen( IRegistry registry, boolean dumpReceivedBuffer ) throws IOException {
+   public void listen( IRegistry registry ) throws IOException {
       final NetworkInterface intrfc = NetworkInterface.getNetworkInterfaces().nextElement();
-      listen( intrfc, registry, dumpReceivedBuffer );
+      listen( intrfc, registry );
    }
 
    @Override

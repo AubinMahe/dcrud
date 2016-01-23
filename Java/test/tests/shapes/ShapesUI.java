@@ -114,29 +114,28 @@ public class ShapesUI implements Controller {
 
    private void dcrudInitialize( Map<String, String> n ) throws IOException {
       _window   =                                      n.getOrDefault( "window"   , "left-top" );
-      _readonly =                Boolean.parseBoolean( n.getOrDefault( "readonly" , "false"    ));
-      final boolean ownership  = Boolean.parseBoolean( n.getOrDefault( "ownership", "false"    ));
-      final boolean periodic   = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false"    ));
-      final boolean move       = Boolean.parseBoolean( n.getOrDefault( "move"     , "false"    ));
-      final boolean perf       = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false"    ));
-      final boolean remote     = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false"    ));
-      final String  intrfcName =                       n.getOrDefault( "interface", "eth0"     );
-      final short   port       = Short  .parseShort(   n.getOrDefault( "port"     , "2416"     ));
+      _readonly =                 Boolean.parseBoolean( n.getOrDefault( "readonly" , "false"    ));
+      final boolean ownership   = Boolean.parseBoolean( n.getOrDefault( "ownership", "false"    ));
+      final boolean periodic    = Boolean.parseBoolean( n.getOrDefault( "periodic" , "false"    ));
+      final boolean move        = Boolean.parseBoolean( n.getOrDefault( "move"     , "false"    ));
+      Network.recordPerformance = Boolean.parseBoolean( n.getOrDefault( "perf"     , "false"    ));
+      final boolean remote      = Boolean.parseBoolean( n.getOrDefault( "remote"   , "false"    ));
+      final String  intrfcName  =                       n.getOrDefault( "interface", "eth0"     );
+      final short   port        = Short  .parseShort(   n.getOrDefault( "port"     , "2416"     ));
       if( intrfcName == null ) {
          throw new IllegalStateException( "--interface=<string> missing" );
       }
-      Performance.enable( perf );
       final NetworkInterface  intrfc      = NetworkInterface.getByName( intrfcName );
       final InetSocketAddress addr        = new InetSocketAddress( "224.0.0.3", port );
       final IRegistry         registry    = new StaticRegistry();
       final IParticipant      participant = Network.join( port - 2415, addr, intrfc );
-      participant.listen( intrfc, registry, false );
+      participant.listen( intrfc, registry );
       participant.registerLocalFactory( ShareableEllipse.CLASS_ID, ShareableEllipse::new );
       participant.registerLocalFactory( ShareableRect   .CLASS_ID, ShareableRect   ::new );
       _cache = participant.createCache();
       _cache.setOwnership( ownership );
-      _cache.subscribe( ShareableEllipse.CLASS_ID );
-      _cache.subscribe( ShareableRect   .CLASS_ID );
+//      _cache.subscribe( ShareableEllipse.CLASS_ID );
+//      _cache.subscribe( ShareableRect   .CLASS_ID );
       final IDispatcher dispatcher = participant.getDispatcher();
       if( remote ) {
          _remoteEllipseFactory   = dispatcher.requireCRUD( ShareableEllipse.CLASS_ID );

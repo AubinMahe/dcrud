@@ -16,7 +16,7 @@ import org.hpms.util.Performance;
 
 final class Cache implements ICache {
 
-   private final Set<ClassID>         _classes        = new HashSet<>();
+   private final Set<Topic>           _subscriptions  = new HashSet<>();
    private final Set<Shareable>       _updated        = new HashSet<>();
    private final Set<Shareable>       _deleted        = new HashSet<>();
    private final Set<ByteBuffer>      _toUpdate       = new HashSet<>();
@@ -124,8 +124,8 @@ final class Cache implements ICache {
    }
 
    @Override
-   public void subscribe( ClassID id ) {
-      _classes.add( id );
+   public void subscribe( Topic topic ) {
+      _subscriptions.add( topic );
    }
 
    @Override

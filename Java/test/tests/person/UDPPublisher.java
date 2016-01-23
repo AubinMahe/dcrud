@@ -59,7 +59,7 @@ public class UDPPublisher extends Thread {
    UDPPublisher( int id, InetSocketAddress addr, IRegistry registry ) throws IOException {
       super( UDPPublisher.class.getName());
       _participant = Network.join( id, addr );
-      _participant.listen( registry, false );
+      _participant.listen( registry );
       start();
    }
 

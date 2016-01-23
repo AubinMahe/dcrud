@@ -22,7 +22,7 @@ public class Subscriber extends Thread {
    Subscriber( int id, InetSocketAddress addr, NetworkInterface via, IRegistry registry ) throws IOException {
       super( Subscriber.class.getName());
       _participant = Network.join( id, addr, via );
-      _participant.listen( via, registry, false );
+      _participant.listen( via, registry );
       start();
    }
 
@@ -33,7 +33,7 @@ public class Subscriber extends Thread {
          final IDispatcher dispatcher = _participant.getDispatcher();
          final ICRUD       iPerson    = dispatcher.requireCRUD( Person.CLASS_ID );
          _participant.registerLocalFactory( Person.CLASS_ID, Person::new );
-         cache       .subscribe      ( Person.CLASS_ID );
+//         cache       .subscribe      ( Person.CLASS_ID );
          for( int i = 0; i < 10; ++i ) {
             System.out.printf( "subscriber|dump cache begin\n" );
             Collection<Shareable> items = cache.values();

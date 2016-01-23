@@ -6,6 +6,6 @@ import java.util.Set;
 public interface IRegistry {
 
    Set<InetSocketAddress> getParticipants();
-   Set<InetSocketAddress> getClients  ( String intrfc   );
-   Set<InetSocketAddress> getConsumers( String dataname );
+   Set<InetSocketAddress> getClients  ( String service );
+   Set<InetSocketAddress> getConsumers( String topic );
 }

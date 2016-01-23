@@ -16,6 +16,6 @@ public interface ICache {
    Collection<Shareable>   values      ();
    Set<Shareable>          select      ( Predicate<Shareable> query );
    void                    publish     () throws IOException;
-   void                    subscribe   ( ClassID id );
+   void                    subscribe   ( Topic topic );
    void                    refresh     ();
 }
