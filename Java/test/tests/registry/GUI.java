@@ -88,7 +88,7 @@ public class GUI extends Application implements IRegistryListener {
       final Map<String, String> arg  = getParameters().getNamed();
       final int port = Integer.parseInt( arg.get( "port" ));
       final int rank = Integer.parseInt( arg.get( "rank" )) - 1;
-      _registry   = new Registry( arg.get( "host" ), port );
+      _registry   = new Registry( arg.get( "host" ), port, null );
       _registry.addListener( this );
       final GridPane grid       = new GridPane();
       final Button   addTopic   = new Button( "Add" );

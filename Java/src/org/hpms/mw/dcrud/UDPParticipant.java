@@ -7,7 +7,7 @@ import java.net.ProtocolFamily;
 import java.net.StandardProtocolFamily;
 import java.nio.channels.DatagramChannel;
 
-final class UDPParticipant extends AbstractParticipant implements IProtocol {
+final class UDPParticipant extends AbstractParticipant {
 
    private final InetSocketAddress _target;
    private final DatagramChannel   _out;

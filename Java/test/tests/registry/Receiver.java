@@ -1,34 +1,55 @@
 package tests.registry;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.util.function.Consumer;
 
 final class Receiver extends Thread {
 
-   private final SocketChannel _channel;
-   private final Registry      _registry;
+   private final ReadableByteChannel  _channel;
+   private final Consumer<ByteBuffer> _consumer;
+   private final ByteBuffer           _header = ByteBuffer.allocate( Integer.BYTES );
 
-   public Receiver( SocketChannel channel, Registry registry ) {
+   public Receiver( ReadableByteChannel channel, String channelId, Consumer<ByteBuffer> consumer ) {
       _channel  = channel;
-      _registry = registry;
-      setName( String.format( "%s[%s <== %s]",
-         getClass().getName(),
-         channel.socket().getLocalSocketAddress ().toString(),
-         channel.socket().getRemoteSocketAddress().toString() ));
+      _consumer = consumer;
+      setName( String.format( "%s[%s]", getClass().getName(), channelId ));
       setDaemon( true );
       start();
    }
 
+   private ByteBuffer read() throws IOException {
+      _header.clear();
+      while( _header.position() < Integer.BYTES ) {
+         if( _channel.read( _header ) < 0 ) {
+            return null;
+         }
+      }
+      _header.flip();
+      final int        length  = _header.getInt();
+      final ByteBuffer payload = ByteBuffer.allocate( length );
+      while( payload.position() < length ) {
+         if( _channel.read( payload ) < 0 ) {
+            return null;
+         }
+      }
+      payload.flip();
+      return payload;
+   }
+
    @Override
    public void run() {
-      System.err.println( getName() + "|receiver thread running" );
+      if( Registry.LOG ) {
+         System.err.println( getName() + "|receiver thread running" );
+      }
       while( _channel.isOpen()) {
          try {
-            if( ! _registry.merge( _channel )) {
-               break;
+            final ByteBuffer payload = read();
+            if( payload != null ) {
+               _consumer.accept( payload );
             }
-            System.err.println( getName() + "|registry merged" );
          }
          catch( final ClosedChannelException x ) {
             break;
@@ -37,10 +58,12 @@ final class Receiver extends Thread {
             t.printStackTrace();
          }
       }
-      System.err.println( getName() + "|receiver thread ended" );
+      if( Registry.LOG ) {
+         System.err.println( getName() + "|receiver thread ended" );
+      }
    }
 
    public void close() throws IOException {
-      _channel.shutdownInput();
+      _channel.close();
    }
 }

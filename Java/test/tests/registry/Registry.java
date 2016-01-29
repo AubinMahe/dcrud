@@ -1,89 +1,57 @@
 package tests.registry;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 
-public class Registry implements Runnable {
+public class Registry {
 
-   private /* */ InetSocketAddress      _thisEndPoint;
-   private final Set<InetSocketAddress> _endPoints  = new TreeSet<>( new InetSocketAddressComparator());
+   public static final boolean LOG = false;
+
    private final Map<InetSocketAddress,
-      Receiver>                         _receivers  = new TreeMap<>( new InetSocketAddressComparator());
-   private final Set<Sender>            _senders    = new LinkedHashSet<>();
+      Relation>                         _relations  = new TreeMap<>( new InetSocketAddressComparator());
+   private final Set<InetSocketAddress> _endPoints  = new TreeSet<>( new InetSocketAddressComparator());
    private final Map<InetSocketAddress,
       TreeSet<Topic>>                   _topics     = new TreeMap<>( new InetSocketAddressComparator());
    private final Map<InetSocketAddress,
       TreeSet<String>>                  _interfaces = new TreeMap<>( new InetSocketAddressComparator());
    private final Set<
       IRegistryListener>                _listeners  = new HashSet<>();
-   private final int                    _bootPort;
    private final MessageDigest          _md5Builder = MessageDigest.getInstance( "md5" );
-   private final ServerSocketChannel    _server     = ServerSocketChannel.open();
+   private final IRelationsFactory      _relationsFactory;
+   private final InetSocketAddress      _thisEndPoint;
 
-   public Registry( String host, final int bootPort ) throws IOException, NoSuchAlgorithmException {
-      _bootPort = bootPort;
-      for( int port = _bootPort; true; ++port ) {
-         try {
-            _server.bind( new InetSocketAddress( host, port ));
-            System.err.printf( "%s|server listening on port %d\n",
-               getClass().getName(), port );
-            synchronized( _endPoints ) {
-               _thisEndPoint = (InetSocketAddress)_server.getLocalAddress();
-               _endPoints.add( _thisEndPoint );
-            }
-            new Thread( this ).start();
-            if( port != _bootPort ) {
-               createReceiver( new InetSocketAddress( host, _bootPort ));
-            }
-            break;
-         }
-         catch( final BindException x ) {/**/}
+   public Registry( String host, final int bootPort, Consumer<ByteBuffer> dataConsumer ) throws IOException, NoSuchAlgorithmException {
+      _relationsFactory = RelationsFactoryBuilder.createTCP( host, bootPort, this, dataConsumer );
+      _thisEndPoint     = _relationsFactory.getLocalEndPoint();
+   }
+
+   void addEndPoint( InetSocketAddress endPoint ) {
+      synchronized( _endPoints ) {
+         _endPoints.add( endPoint );
       }
    }
 
-   private static void write( ByteBuffer payload, SocketChannel channel ) throws IOException {
-      final ByteBuffer header = ByteBuffer.allocate( 4 );
-      header.putInt( payload.remaining());
-      header.flip();
-      while( header.hasRemaining()) {
-         channel.write( header );
-      }
-      while( payload.hasRemaining()) {
-         channel.write( payload );
+   void addRelation( InetSocketAddress addr, Relation relation ) {
+      synchronized( _relations ) {
+         _relations.put( addr, relation );
       }
    }
 
-   private static ByteBuffer read( SocketChannel channel ) throws IOException {
-      final ByteBuffer header   = ByteBuffer.allocate( 4 );
-      while( header.position() < 4 ) {
-         if( channel.read( header ) < 0 ) {
-            return null;
-         }
+   public Relation getRelation( InetSocketAddress endPoint ) {
+      synchronized( _relations ) {
+         return _relations.get( endPoint );
       }
-      header.flip();
-      final int length = header.getInt();
-      final ByteBuffer payload  = ByteBuffer.allocate( 64*1024 );
-      while( payload.position() < length ) {
-         if( channel.read( payload ) < 0 ) {
-            return null;
-         }
-      }
-      payload.flip();
-      return payload;
    }
 
    private static void serializeEndPoint( InetSocketAddress endPoint, ByteBuffer to ) {
@@ -102,58 +70,6 @@ public class Registry implements Runnable {
       final String host   = new String( hostB );
       final int    port   = from.getInt();
       return new InetSocketAddress( host, port );
-   }
-
-   @Override
-   public void run() {
-      System.err.printf( "%s|server thread running\n", getClass().getName());
-      for( int err = 0; err < 3; ++err ) {
-         try {
-            @SuppressWarnings("resource")
-            final SocketChannel channel = _server.accept();
-            final Sender sender = new Sender( channel, Registry.this );
-            synchronized( _senders ) {
-               _senders.add( sender );
-            }
-            final ByteBuffer payload = read( channel );
-            if( payload == null ) {
-               break;
-            }
-            createReceiver( unserializeEndPoint( payload ));
-            sender.send();
-            err = 0;
-         }
-         catch( final IOException e ) {
-            e.printStackTrace();
-         }
-      }
-      System.err.printf( "%s|server thread ended\n", getClass().getName());
-   }
-
-   private void createReceiver( InetSocketAddress endPoint ) throws IOException {
-      synchronized( _receivers ) {
-         if( _receivers.containsKey( endPoint )) {
-            return;
-         }
-      }
-      final String host = endPoint.getHostString();
-      @SuppressWarnings("resource")
-      final SocketChannel channel = SocketChannel.open();
-      for( int port = _bootPort + 1; true; ++port ) {
-         try {
-            channel.bind( new InetSocketAddress( host, port ));
-            channel.connect( endPoint );
-            synchronized( _receivers ) {
-               _receivers.put( endPoint, new Receiver( channel, this ));
-            }
-            final ByteBuffer payload = ByteBuffer.allocate( 1024 );
-            serializeEndPoint( _thisEndPoint, payload );
-            payload.flip();
-            write( payload, channel );
-            break;
-         }
-         catch( final BindException x ) {/**/}
-      }
    }
 
    private void computeMd5() {
@@ -185,8 +101,7 @@ public class Registry implements Runnable {
       }
    }
 
-   void writeTo( SocketChannel channel ) throws IOException {
-      final ByteBuffer payload = ByteBuffer.allocate( 64*1024 );
+   void serializeTo( ByteBuffer payload ) {
       computeMd5();
       final byte[] digest = _md5Builder.digest();
       payload.put((byte)digest.length );
@@ -221,16 +136,15 @@ public class Registry implements Runnable {
             }
          }
       }
-      payload.flip();
-      write( payload, channel );
    }
 
    private void send() {
-      synchronized( _senders ) {
-         System.err.println( getClass().getName() + ".send|senders.size() = " + _senders.size());
-         for( final Sender sender : _senders ) {
-            System.err.println( getClass().getName() + ".send|ask sender to send registry" );
-            sender.send();
+      synchronized( _relations ) {
+         for( final Entry<InetSocketAddress, Relation> e : _relations.entrySet()) {
+            if( ! e.getKey().equals( _thisEndPoint )) {
+               final Relation relation = e.getValue();
+               relation.sendRegistry();
+            }
          }
       }
    }
@@ -243,10 +157,9 @@ public class Registry implements Runnable {
       }
    }
 
-   boolean merge( SocketChannel from ) throws IOException {
-      final ByteBuffer payload = read( from );
-      if( payload == null ) {
-         return false;
+   boolean merge( ByteBuffer payload ) {
+      if( LOG ) {
+         System.err.printf( "%s.merge|begin\n", getClass().getName());
       }
       computeMd5(); // MD5 before merge
       boolean      modified    = false;
@@ -303,21 +216,32 @@ public class Registry implements Runnable {
                   modified = true;
                }
             }
+
          }
       }
       synchronized( _endPoints ) {
          for( final InetSocketAddress endPoint : _endPoints ) {
             if( ! _thisEndPoint.equals( endPoint )) {
-               createReceiver( endPoint );
+               try {
+                  _relationsFactory.connectTo( endPoint );
+               }
+               catch( final IOException e ) {
+                  e.printStackTrace();
+               }
             }
          }
       }
       final boolean sameSum = Arrays.equals( receivedSum, _md5Builder.digest());
-      System.err.println( "sameSum: " + sameSum );
       if( modified && ! sameSum ) {
          send();
       }
+      else if( LOG ) {
+         System.err.printf( "%s.merge|sums are equal\n", getClass().getName());
+      }
       fireRegistryHasChanged();
+      if( LOG ) {
+         System.err.printf( "%s.merge|end\n", getClass().getName());
+      }
       return true;
    }
 
@@ -362,11 +286,8 @@ public class Registry implements Runnable {
    }
 
    public void close() throws IOException {
-      for( final Receiver receiver : _receivers.values()) {
-         receiver.close();
-      }
-      for( final Sender sender: _senders ) {
-         sender.close();
+      for( final Relation relation : _relations.values()) {
+         relation.close();
       }
    }
 }
