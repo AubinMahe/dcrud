@@ -90,7 +90,11 @@ final class MulticastParticipant extends AbstractParticipant {
          SerializerHelper.putString( opName    , _message );
          _message        .putInt   ( callId );
          _message        .put      ( count );
-         if( args != null ) {
+         if( args == null ) {
+            _message.put((byte)Arguments.DEFAULT_CALL_MODE.ordinal());
+            _message.put(      Arguments.DEFAULT_QUEUE );
+         }
+         else {
             args.serialize( _message );
          }
          _message.flip();

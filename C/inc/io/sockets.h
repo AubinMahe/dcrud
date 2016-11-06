@@ -8,14 +8,16 @@ extern "C" {
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
 #  include <mswsock.h>
-#elif __linux__
+   int inet_pton( int af, const char * src, void * dst );
+#elif linux
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <netinet/ip.h>
 #  include <arpa/inet.h>
-#  include <string.h>
+#  include <netdb.h>
 #  define SOCKET int
 #  define INVALID_SOCKET (-1)
+#  define closesocket close
 #endif
 
 #ifdef __cplusplus

@@ -7,40 +7,44 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char * ioNetworkInterfaces_getFirst( bool multicastCapabilities ) {
-   static char      host[NI_MAXHOST];
+utilStatus ioNetworkInterfaces_getFirst(
+   bool     multicastCapabilities,
+   char *   host,
+   unsigned hostSize )
+{
    struct ifaddrs * ifaddr;
    struct ifaddrs * ifa;
-   int              n;
+   bool             notFound;
 
-   memset( host, 0, sizeof( host ));
-   if( getifaddrs( &ifaddr ) == -1 ) {
-      perror( "getifaddrs" );
-      exit( EXIT_FAILURE );
+   if( NULL == host ) {
+      return UTIL_STATUS_NULL_ARGUMENT;
    }
-   for( ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, ++n ) {
+   memset( host, 0, hostSize );
+   if( getifaddrs( &ifaddr ) == -1 ) {
+      return UTIL_STATUS_STD_API_ERROR;
+   }
+   for( ifa = ifaddr, notFound; ifa != NULL; ifa = ifa->ifa_next ) {
       if( ifa->ifa_addr ) {
          int family = ifa->ifa_addr->sa_family;
          if(( family == AF_INET )||( family == AF_INET6 )) {
-            const socklen_t len       = ( family == AF_INET ) ? sizeof( struct sockaddr_in ) : sizeof( struct sockaddr_in6 );
-            bool            up        = ( ifa->ifa_flags & IFF_UP        );
-            bool            loopback  = ( ifa->ifa_flags & IFF_LOOPBACK  );
-            bool            multicast = ( ifa->ifa_flags & IFF_MULTICAST );
-            int             s         =
-               getnameinfo( ifa->ifa_addr, len, host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST );
-            if( s ) {
-               printf( "getnameinfo() failed: %s\n", gai_strerror( s ));
-               exit( EXIT_FAILURE );
-            }
+            const socklen_t len = ( family == AF_INET )
+               ? sizeof( struct sockaddr_in )
+               : sizeof( struct sockaddr_in6 );
+            bool up        = ( ifa->ifa_flags & IFF_UP        );
+            bool loopback  = ( ifa->ifa_flags & IFF_LOOPBACK  );
+            bool multicast = ( ifa->ifa_flags & IFF_MULTICAST );
             if(      up
                &&  ! loopback
                &&( ! multicastCapabilities || ( multicastCapabilities && multicast )))
             {
-               break;
+               if( getnameinfo( ifa->ifa_addr, len, host, hostSize, NULL, 0, NI_NUMERICHOST )) {
+                  return UTIL_STATUS_STD_API_ERROR;
+               }
+               notFound = false;
             }
          }
       }
    }
    freeifaddrs( ifaddr );
-   return host;
+   return UTIL_STATUS_NO_ERROR;
 }

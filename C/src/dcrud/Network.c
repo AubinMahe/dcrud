@@ -1,32 +1,33 @@
 #include <dcrud/Network.h>
-#include <io/NetworkInterfaces.h>
-#include <util/Trace.h>
 
 #include "ParticipantImpl.h"
 
-dcrudIParticipant dcrudNetwork_join(
+static bool isAlive = false;
+
+utilStatus dcrudNetwork_join(
    unsigned int                publisherId,
    const ioInetSocketAddress * addr,
-   const char *                intrfc )
+   const char *                intrfc,
+   dcrudIParticipant *         target )
 {
-   ParticipantImpl * retVal = NULL;
-   dcrudStatus status = DCRUD_NO_ERROR;
-
+   utilStatus              status      = UTIL_STATUS_NO_ERROR;
+   dcrudIParticipantImpl * participant = NULL;
    if( ! intrfc ) {
-      intrfc = ioNetworkInterfaces_getFirst( true );
+      return UTIL_STATUS_NULL_ARGUMENT;
    }
-   utilTrace_entry( __func__, "publisherId: %d, intrfc: '%s'\n", publisherId, intrfc );
-   status = ParticipantImpl_new( publisherId, addr, intrfc, &retVal );
-   if( DCRUD_NO_ERROR != status ) {
-      dcrudIParticipant p = (dcrudIParticipant)retVal;
-      utilTrace_error( __func__, "ParticipantImpl_new returns %d", status );
-      dcrudIParticipant_delete( &p );
-      retVal = NULL;
+   status = dcrudIParticipantImpl_new( &participant, publisherId, addr, intrfc );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      *target = (dcrudIParticipant)participant;
+      isAlive = true;
    }
-   utilTrace_exit( __func__, "retVal: %08X", retVal );
-   return (dcrudIParticipant)retVal;
+   return status;
 }
 
-void dcrudNetwork_leave( dcrudIParticipant * participant ) {
-   dcrudIParticipant_delete( participant );
+bool dcrudNetwork_isAlive( void ) {
+   return isAlive;
+}
+
+utilStatus dcrudNetwork_leave( void ) {
+   isAlive = false;
+   return UTIL_STATUS_NO_ERROR;
 }

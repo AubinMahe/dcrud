@@ -12,10 +12,12 @@ final class Sender extends Thread {
    private final WritableByteChannel       _channel;
    private final BlockingQueue<ByteBuffer> _msgQueue = new ArrayBlockingQueue<>( 10 );
    private final ByteBuffer                _header   = ByteBuffer.allocate( Integer.BYTES );
+   private final String                    _channelId;
 
    Sender( WritableByteChannel channel, String channelId ) {
-      _channel = channel;
-      setName( String.format( "%s[%s]", getClass().getName(), channelId ));
+      _channel   = channel;
+      _channelId = channelId;
+      setName( String.format( "%s[%s]", getClass().getName(), _channelId ));
       setDaemon( true );
       start();
    }
@@ -42,14 +44,15 @@ final class Sender extends Thread {
    @Override
    public void run() {
       if( Registry.LOG ) {
-         System.err.printf( "%s|sender thread running\n", getName());
+         System.err.printf( "%s.run|running %s\n", getClass().getName(), _channelId );
       }
       while( _channel.isOpen()) {
          try {
             final ByteBuffer payload = _msgQueue.take();
             write( payload );
             if( Registry.LOG ) {
-               System.err.printf( "%s|registry sent\n", getName());
+               System.err.printf( "%s.run|%d bytes sent on %s\n", getClass().getName(),
+                  payload.position(), _channelId );
             }
          }
          catch( final InterruptedException x ) {
@@ -63,7 +66,7 @@ final class Sender extends Thread {
          }
       }
       if( Registry.LOG ) {
-         System.err.printf( "%s|sender thread ended\n", getName());
+         System.err.printf( "%s.run|ended %s\n", getClass().getName(), _channelId );
       }
    }
 

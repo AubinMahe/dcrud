@@ -3,20 +3,22 @@
 extern "C" {
 #endif
 
-#include <dcrud/Arguments.h>
+#include <util/Status.h>
 
 UTIL_ADT( dcrudICallback );
 
-typedef void (* dcrudICallback_function)(
-   dcrudICallback This,
-   const char *   intrfc,
-   const char *   operation,
-   dcrudArguments results   );
+struct dcrudArguments_s;
 
-dcrudICallback dcrudICallback_new        ( dcrudICallback_function callback, void * userData );
-void           dcrudICallback_delete     ( dcrudICallback * This );
-void           dcrudICallback_callback   ( dcrudICallback   This, const char * intrfc, const char * operation, dcrudArguments results );
-void *         dcrudICallback_getUserData( dcrudICallback   This );
+typedef void (* dcrudICallback_function)(
+   dcrudICallback            This,
+   const char *              intrfc,
+   const char *              operation,
+   struct dcrudArguments_s * results   );
+
+utilStatus dcrudICallback_new        ( dcrudICallback * This, dcrudICallback_function callback, void * userData );
+utilStatus dcrudICallback_delete     ( dcrudICallback * This );
+utilStatus dcrudICallback_callback   ( dcrudICallback   This, const char * intrfc, const char * operation, struct dcrudArguments_s * results );
+utilStatus dcrudICallback_getUserData( dcrudICallback   This, void ** userData );
 
 #ifdef __cplusplus
 }

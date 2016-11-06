@@ -6,18 +6,20 @@ public final class ClassID implements Comparable<ClassID> {
 
    enum Type {
       NULL,
-      BYTE,
       BOOLEAN,
+      BYTE,
+      CHAR,
       SHORT,
+      UNSIGNED_SHORT,
       INTEGER,
+      UNSIGNED_INTEGER,
       LONG,
+      UNSIGNED_LONG,
       FLOAT,
       DOUBLE,
       STRING,
       CLASS_ID,
       GUID,
-      CALL_MODE,
-      QUEUE_INDEX,
       SHAREABLE,
    }
 

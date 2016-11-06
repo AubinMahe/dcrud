@@ -2,4 +2,5 @@
 
 #include <dcrud/IRegistry.h>
 
-dcrudIRegistry getStaticRegistry( void );
+utilStatus getStaticRegistry    ( dcrudIRegistry * registry );
+utilStatus releaseStaticRegistry( dcrudIRegistry * registry );

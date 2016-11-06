@@ -9,11 +9,7 @@ UTIL_ADT( dcrudIProvided );
 
 typedef dcrudArguments (* dcrudIOperation)( void * context, dcrudArguments args );
 
-bool dcrudIProvided_addOperation(
-   dcrudIProvided  provided,
-   const char *    name,
-   void *          context,
-   dcrudIOperation operation );
+utilStatus dcrudIProvided_addOperation( dcrudIProvided provided, const char * name, void * context, dcrudIOperation operation );
 
 #ifdef __cplusplus
 }

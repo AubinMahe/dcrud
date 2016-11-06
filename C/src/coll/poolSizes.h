@@ -7,27 +7,18 @@ extern "C" {
 
 /*-- List -----------------------------------------------*/
 
-#define collList_MAX_COUNT            12
-#define collList_ITEM_MAX_COUNT       100
-
-extern unsigned int collLimitsListCountMax;
-extern unsigned int collLimitsListItemCountMax;
+#define collListImpl_POOL_SIZE         512
+#define collList_ITEM_MAX_COUNT        100
 
 /*-- Set ------------------------------------------------*/
 
-#define collSet_MAX_COUNT             12
-#define collSet_ITEM_MAX_COUNT        100
-
-extern unsigned int collLimitsSetCountMax;
-extern unsigned int collLimitsSetItemCountMax;
+#define collSetImpl_POOL_SIZE          512
+#define collSet_ITEM_MAX_COUNT         100
 
 /*-- Map ------------------------------------------------*/
 
-#define collMap_MAX_COUNT             12
-#define collMap_ITEM_MAX_COUNT        100
-
-extern unsigned int collLimitsMapCountMax;
-extern unsigned int collLimitsMapItemCountMax;
+#define collMapImpl_POOL_SIZE          512
+#define collMap_ITEM_MAX_COUNT         100
 
 #endif
 

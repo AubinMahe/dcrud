@@ -1,14 +1,23 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "ParticipantImpl.h"
 #include <io/InetSocketAddress.h>
 
-UTIL_ADT( NetworkReceiver );
+UTIL_ADT( dcrudNetworkReceiver );
 
-NetworkReceiver NetworkReceiver_new(
-   ParticipantImpl *           participant,
+utilStatus dcrudNetworkReceiver_new(
+   dcrudNetworkReceiver *      This,
+   dcrudIParticipantImpl *     participant,
    const ioInetSocketAddress * inetSocketAddress,
    const char *                intrfc,
    bool                        dumpReceivedBuffer );
 
-void NetworkReceiver_delete( NetworkReceiver * This );
+utilStatus dcrudNetworkReceiver_delete(
+   dcrudNetworkReceiver *      This );
+
+#ifdef __cplusplus
+}
+#endif

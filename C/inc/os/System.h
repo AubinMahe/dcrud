@@ -3,10 +3,10 @@
 extern "C" {
 #endif
 
-#include <util/types.h>
+#include <util/Status.h>
 
-uint64_t osSystem_nanotime( void );
-bool     osSystem_sleep( unsigned int milliseconds );
+utilStatus osSystem_sleep( unsigned int milliseconds );
+uint64_t   osSystem_nanotime( void );
 
 #ifdef __cplusplus
 }

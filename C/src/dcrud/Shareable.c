@@ -1,46 +1,108 @@
 #include "Shareable_private.h"
+#include "magic.h"
+#include "poolSizes.h"
 #include "GUID_private.h"
 #include "ParticipantImpl.h"
 
-dcrudShareable dcrudShareable_new( dcrudLocalFactory * meta, dcrudClassID classID ) {
-   dcrudShareableImpl * This =
-      UTIL_CAST( dcrudShareableImpl *, malloc( sizeof( dcrudShareableImpl ) + meta->size ));
-   This->classID     = classID;
-   This->id          = dcrudGUID_new();
-   This->serialize   = meta->serialize;
-   This->unserialize = meta->unserialize;
-   return UTIL_CAST( dcrudShareable, This );
-}
+#include <util/Pool.h>
 
-void dcrudShareable_delete( dcrudShareable * self ) {
-   dcrudShareableImpl * This = UTIL_CAST( dcrudShareableImpl *, *self );
-   if( This ) {
-      dcrudGUID_delete( &This->id );
-      free( This );
-      *self = NULL;
+#include <string.h>
+
+UTIL_DEFINE_SAFE_CAST( dcrudShareable     )
+UTIL_POOL_DECLARE    ( dcrudShareableImpl )
+
+utilStatus dcrudShareable_new(
+   dcrudShareable *    self,
+   dcrudClassID        classID,
+   dcrudLocalFactory * factory,
+   dcrudShareableData  data    )
+{
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == self || NULL == factory ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
+   else {
+      dcrudShareableImpl * This = NULL;
+      UTIL_ALLOCATE_ADT( dcrudShareable, self, This );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         CHK(__FILE__,__LINE__,dcrudGUID_new( &This->id ))
+         This->classID = classID;
+         This->factory = factory;
+         This->data    = data;
+      }
+   }
+   return status;
 }
 
-dcrudGUID dcrudShareable_getGUID( dcrudShareable self ) {
-   dcrudShareableImpl * This = UTIL_CAST( dcrudShareableImpl *, self );
-   return This->id;
+utilStatus dcrudShareable_delete( dcrudShareable * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == self ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudShareableImpl * This = dcrudShareable_safeCast( *self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         dcrudGUID_delete( &This->id );
+         if( This->data ) {
+            This->factory->releaseUserData( &This->data );
+         }
+         UTIL_RELEASE( dcrudShareableImpl );
+      }
+   }
+   return status;
 }
 
-dcrudClassID dcrudShareable_getClassID( dcrudShareable self ) {
-   dcrudShareableImpl * This = UTIL_CAST( dcrudShareableImpl *, self );
-   return This->classID;
+utilStatus dcrudShareable_getGUID( dcrudShareable self, dcrudGUID * result ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == result ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudShareableImpl * This = dcrudShareable_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *result = This->id;
+      }
+   }
+   return status;
+}
+
+utilStatus dcrudShareable_getClassID( dcrudShareable self, dcrudClassID * result ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == result ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudShareableImpl * This = dcrudShareable_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *result = This->classID;
+      }
+   }
+   return status;
 }
 
 int dcrudShareable_compareTo( dcrudShareable * left, dcrudShareable * right ) {
-   return UTIL_CAST( int, *left - *right );
+   return (int)( *left - *right );
 }
 
-dcrudShareableData dcrudShareable_getUserData( dcrudShareable self ) {
-   dcrudShareableImpl * This = UTIL_CAST( dcrudShareableImpl *, self );
-   return This + 1;
+utilStatus dcrudShareable_getData( dcrudShareable self, dcrudShareableData * result ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == result ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudShareableImpl * This = dcrudShareable_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *result = This->data;
+      }
+   }
+   return status;
 }
 
-dcrudShareable dcrudShareable_getShareable( dcrudShareableData user ) {
-   dcrudShareableImpl * next = UTIL_CAST(dcrudShareableImpl *, user );
-   return UTIL_CAST( dcrudShareable, next - 1 );
+utilStatus dcrudShareable_detach( dcrudShareable self ) {
+   utilStatus           status = UTIL_STATUS_NO_ERROR;
+   dcrudShareableImpl * This   = dcrudShareable_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->data = NULL;
+   }
+   return status;
 }

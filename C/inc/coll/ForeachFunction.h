@@ -3,18 +3,21 @@
 extern "C" {
 #endif
 
+#include <util/Status.h>
+
 typedef void * collForeachResult;
 
 typedef struct collForeach_s {
 
    unsigned int      index;
-   void *            item;
+   const void *      key;
+   void *            value;
    void *            user;
    collForeachResult retVal;
 
 } collForeach;
 
-typedef bool( * collForeachFunction )( collForeach * context );
+typedef utilStatus( * collForeachFunction )( collForeach * context );
 
 #ifdef __cplusplus
 }

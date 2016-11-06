@@ -8,29 +8,14 @@ extern "C" {
 #include "IDispatcher.h"
 #include "IRegistry.h"
 
-typedef dcrudShareable(* dcrudShareableFactory )();
+typedef dcrudShareable(* dcrudShareableFactory )( void );
 
 UTIL_ADT( dcrudIParticipant );
 
-typedef void     (* dcrudLocalFactory_Set         )( dcrudShareableData This, const dcrudShareableData source );
-typedef ioStatus (* dcrudLocalFactory_Serialize   )( dcrudShareableData This, ioByteBuffer target );
-typedef ioStatus (* dcrudLocalFactory_Unserialize )( dcrudShareableData This, ioByteBuffer source );
-typedef bool     (* dcrudLocalFactory_Initialize  )( dcrudShareableData This );
 struct dcrudRemoteFactory_s;
-typedef void     (* dcrudRemoteFactory_create     )( struct dcrudRemoteFactory_s * This, dcrudArguments how );
-typedef void     (* dcrudRemoteFactory_update     )( struct dcrudRemoteFactory_s * This, dcrudShareable what, dcrudArguments how );
-typedef void     (* dcrudRemoteFactory_delete     )( struct dcrudRemoteFactory_s * This, dcrudShareable what );
-
-typedef struct dcrudLocalFactory_s {
-
-   dcrudClassID                  classID;
-   size_t                        size;
-   dcrudLocalFactory_Initialize  initialize;
-   dcrudLocalFactory_Set         set;
-   dcrudLocalFactory_Serialize   serialize;
-   dcrudLocalFactory_Unserialize unserialize;
-
-} dcrudLocalFactory;
+typedef utilStatus(* dcrudRemoteFactory_create)(struct dcrudRemoteFactory_s * This, dcrudArguments how );
+typedef utilStatus(* dcrudRemoteFactory_update)(struct dcrudRemoteFactory_s * This, dcrudShareable what, dcrudArguments how );
+typedef utilStatus(* dcrudRemoteFactory_delete)(struct dcrudRemoteFactory_s * This, dcrudShareable what );
 
 typedef struct dcrudRemoteFactory_s {
 
@@ -51,15 +36,15 @@ typedef struct dcrudRemoteFactory_s {
  * in such case the first up, non loopback, multicast capable interface will be used
  * @param dumpReceivedBuffer if true, dump the received frames on stderr
  */
-void             dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc, bool dumpReceivedBuffer );
-bool             dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
-bool             dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
-dcrudICache      dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This );
-dcrudStatus      dcrudIParticipant_createCache          ( dcrudIParticipant   This, dcrudICache * target, byte * cacheId );
-dcrudICache      dcrudIParticipant_getCache             ( dcrudIParticipant   This, byte ID );
-dcrudIDispatcher dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This );
-dcrudShareable   dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID );
-void             dcrudIParticipant_run                  ( dcrudIParticipant   This );
+utilStatus dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc, bool dumpReceivedBuffer );
+utilStatus dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
+utilStatus dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
+utilStatus dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This, dcrudICache * cache );
+utilStatus dcrudIParticipant_createCache          ( dcrudIParticipant   This, unsigned int * cacheId, dcrudICache * cache );
+utilStatus dcrudIParticipant_getCache             ( dcrudIParticipant   This, unsigned int   cacheId, dcrudICache * cache );
+utilStatus dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This, dcrudIDispatcher * dispatcher );
+utilStatus dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID, dcrudShareableData data, dcrudShareable * shareable );
+utilStatus dcrudIParticipant_run                  ( dcrudIParticipant   This );
 
 #ifdef __cplusplus
 }

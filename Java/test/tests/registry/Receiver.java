@@ -11,11 +11,13 @@ final class Receiver extends Thread {
    private final ReadableByteChannel  _channel;
    private final Consumer<ByteBuffer> _consumer;
    private final ByteBuffer           _header = ByteBuffer.allocate( Integer.BYTES );
+   private final String               _channelId;
 
    public Receiver( ReadableByteChannel channel, String channelId, Consumer<ByteBuffer> consumer ) {
-      _channel  = channel;
-      _consumer = consumer;
-      setName( String.format( "%s[%s]", getClass().getName(), channelId ));
+      _channel   = channel;
+      _channelId = channelId;
+      _consumer  = consumer;
+      setName( String.format( "%s[%s]", getClass().getName(), _channelId ));
       setDaemon( true );
       start();
    }
@@ -42,12 +44,16 @@ final class Receiver extends Thread {
    @Override
    public void run() {
       if( Registry.LOG ) {
-         System.err.println( getName() + "|receiver thread running" );
+         System.err.printf( "%s.run|running %s\n", getClass().getName(), _channelId );
       }
       while( _channel.isOpen()) {
          try {
             final ByteBuffer payload = read();
             if( payload != null ) {
+               if( Registry.LOG ) {
+                  System.err.printf( "%s.run|%d bytes read on %s\n", getClass().getName(),
+                     payload.remaining(), _channelId );
+               }
                _consumer.accept( payload );
             }
          }
@@ -59,7 +65,7 @@ final class Receiver extends Thread {
          }
       }
       if( Registry.LOG ) {
-         System.err.println( getName() + "|receiver thread ended" );
+         System.err.printf( "%s.run|ended %s\n", getClass().getName(), _channelId );
       }
    }
 

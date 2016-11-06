@@ -1,109 +1,125 @@
 #include "ClassID_private.h"
+#include "magic.h"
+#include "poolSizes.h"
 
 #include <coll/Map.h>
+#include <util/Pool.h>
 
 #include <stdio.h>
 #include <string.h>
 
-dcrudClassID dcrudClassID_new( byte package1, byte package2, byte package3, byte clazz ) {
-   dcrudClassIDImpl * This = (dcrudClassIDImpl *)malloc( sizeof( dcrudClassIDImpl ));
-   memset( This, 0, sizeof( dcrudClassIDImpl ));
-   This->package_1 = package1;
-   This->package_2 = package2;
-   This->package_3 = package3;
-   This->clazz     = clazz;
-   return (dcrudClassID)This;
-}
+UTIL_DEFINE_SAFE_CAST( dcrudClassID     )
+UTIL_POOL_DECLARE    ( dcrudClassIDImpl )
 
-void dcrudClassID_delete( dcrudClassID * self ) {
-   dcrudClassIDImpl * This = (dcrudClassIDImpl *)*self;
-   if( This ) {
-      free( This );
-      *self = NULL;
-   }
-}
-
-void dcrudClassID_get( const dcrudClassID self, byte * pckg1, byte * pckg2, byte * pckg3, byte * clazz ) {
-   dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
-   *pckg1 = This->package_1;
-   *pckg2 = This->package_2;
-   *pckg3 = This->package_3;
-   *clazz = This->clazz;
-}
-
-ioStatus dcrudClassID_unserialize( ioByteBuffer source, dcrudClassID * target ) {
-   ioStatus           ioStatus = IO_STATUS_NO_ERROR;
-   dcrudClassIDImpl * This     = (dcrudClassIDImpl *)dcrudClassID_new( 0, 0, 0, 0 );
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getByte( source, &This->package_1 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getByte( source, &This->package_2 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getByte( source, &This->package_3 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_getByte( source, &This->clazz );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      *target = (dcrudClassID)This;
+utilStatus dcrudClassID_new(
+   dcrudClassID * self,
+   byte           package1,
+   byte           package2,
+   byte           package3,
+   byte           clazz     )
+{
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
    else {
-      *target = NULL;
+      dcrudClassIDImpl * This = NULL;
+      UTIL_ALLOCATE_ADT( dcrudClassID, self, This );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         This->package_1 = package1;
+         This->package_2 = package2;
+         This->package_3 = package3;
+         This->clazz     = clazz;
+      }
    }
-   if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "%s:%d:Unable to deserialize a ClassID: %s\n",
-         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
-   }
-   return ioStatus;
+   return status;
 }
 
-ioStatus dcrudClassID_serialize( const dcrudClassID self, ioByteBuffer target ) {
-   dcrudClassIDImpl * This     = (dcrudClassIDImpl *)self;
-   ioStatus           ioStatus = IO_STATUS_NO_ERROR;
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, This->package_1 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, This->package_2 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, This->package_3 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, This->clazz );
-   }
-   if( IO_STATUS_NO_ERROR != ioStatus ) {
-      fprintf( stderr, "%s:%d:Unable to serialize a ClassID: %s\n",
-         __FILE__, __LINE__, ioStatusMessages[ioStatus] );
-   }
-   return ioStatus;
+utilStatus dcrudClassID_delete( dcrudClassID * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   UTIL_RELEASE( dcrudClassIDImpl );
+   return status;
 }
 
-ioStatus dcrudClassID_serializeType( dcrudType type, ioByteBuffer target ) {
-   ioStatus ioStatus = IO_STATUS_NO_ERROR;
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, 0 );
+utilStatus dcrudClassID_get( const dcrudClassID self, byte * pckg1, byte * pckg2, byte * pckg3, byte * clazz ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   dcrudClassIDImpl * This = dcrudClassID_safeCast( self, &status );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      *pckg1 = This->package_1;
+      *pckg2 = This->package_2;
+      *pckg3 = This->package_3;
+      *clazz = This->clazz;
    }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, 0 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, 0 );
-   }
-   if( IO_STATUS_NO_ERROR == ioStatus ) {
-      ioStatus = ioByteBuffer_putByte( target, type );
-   }
-   return ioStatus;
+   return status;
 }
 
-bool dcrudClassID_toString( const dcrudClassID self, char * target, size_t targetSize ) {
-   dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
-   int                ret  =
-      snprintf( target, targetSize, "Class-%02X-%02X-%02X-%02X",
+utilStatus dcrudClassID_unserialize( dcrudClassID * self, ioByteBuffer source ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == self ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      byte p1, p2, p3, c;
+      /*     */ioByteBuffer_getByte( source, &p1 );
+      /*     */ioByteBuffer_getByte( source, &p2 );
+      /*     */ioByteBuffer_getByte( source, &p3 );
+      status = ioByteBuffer_getByte( source, &c  );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         status = dcrudClassID_new( self, p1, p2, p3, c );
+      }
+      else {
+         *self = NULL;
+      }
+   }
+   return status;
+}
+
+utilStatus dcrudClassID_serialize( const dcrudClassID self, ioByteBuffer target ) {
+   utilStatus         status = UTIL_STATUS_NO_ERROR;
+   dcrudClassIDImpl * This   = dcrudClassID_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, This->package_1 );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, This->package_2 );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, This->package_3 );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, This->clazz );
+   }
+   return status;
+}
+
+utilStatus dcrudClassID_serializeType( dcrudType type, ioByteBuffer target ) {
+   utilStatus status = ioByteBuffer_putByte( target, 0 );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, 0 );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, 0 );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( target, type );
+   }
+   return status;
+}
+
+utilStatus dcrudClassID_toString( const dcrudClassID self, char * target, size_t targetSize ) {
+   utilStatus         status = UTIL_STATUS_NO_ERROR;
+   dcrudClassIDImpl * This   = dcrudClassID_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      int ret = snprintf( target, targetSize, "Class-%02X-%02X-%02X-%02X",
          This->package_1, This->package_2, This->package_3, This->clazz );
-   return ret > 0 && ret < (int)targetSize;
+      if( ret < 0 ) {
+         status = UTIL_STATUS_STD_API_ERROR;
+      }
+      else if( ret >= (int)targetSize ) {
+         status = UTIL_STATUS_OVERFLOW;
+      }
+   }
+   return status;
 }
 
 int dcrudClassID_compareTo( const dcrudClassID * l, const dcrudClassID * r ) {
@@ -135,22 +151,31 @@ int dcrudClassID_compareTo( const dcrudClassID * l, const dcrudClassID * r ) {
    return diff;
 }
 
-dcrudType dcrudClassID_getType( const dcrudClassID self ) {
-   dcrudClassIDImpl * This = (dcrudClassIDImpl *)self;
-   if( This->package_1 != 0 || This->package_2 != 0 || This->package_3 != 0 ) {
-      return dcrudLAST_TYPE;
+utilStatus dcrudClassID_getType( const dcrudClassID self, dcrudType * result ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == result ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
-   return (dcrudType)This->clazz;
+   else {
+      dcrudClassIDImpl * This = dcrudClassID_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         if( This->package_1 != 0 || This->package_2 != 0 || This->package_3 != 0 ) {
+            *result = dcrudLAST_TYPE;
+         }
+         else {
+            *result = (dcrudType)This->clazz;
+         }
+      }
+   }
+   return status;
 }
 
-bool dcrudClassID_printMapPair( collForeach * context ) {
-   FILE *             target = (FILE *            )context->user;
-   collMapPair *      pair   = (collMapPair *     )context->item;
-   const char *       name   = (const char *      )pair->key;
-   const dcrudClassID value  = (const dcrudClassID)pair->value;
-   char               buffer[40];
-
-   dcrudClassID_toString( value, buffer, sizeof( buffer ));
+utilStatus dcrudClassID_printMapPair( collForeach * context ) {
+   char         buffer[40];
+   FILE *       target = (FILE *      )context->user;
+   const char * name   = (const char *)context->key;
+   dcrudClassID value  = (dcrudClassID)context->value;
+   utilStatus   status = dcrudClassID_toString( value, buffer, sizeof( buffer ));
    fprintf( target, "%s => %s\n", name, buffer );
-   return true;
+   return status;
 }

@@ -3,7 +3,6 @@
 extern "C" {
 #endif
 
-#include <dcrud/Status.h>
 #include <dcrud/ICallback.h>
 
 typedef enum dcrudQueueIndex_e {
@@ -25,7 +24,11 @@ typedef enum dcrudCallMode_e {
 
 UTIL_ADT( dcrudIRequired );
 
-void dcrudIRequired_call( dcrudIRequired This, const char * op, dcrudArguments args, dcrudICallback callback );
+utilStatus dcrudIRequired_call(
+   dcrudIRequired            This,
+   const char *              op,
+   struct dcrudArguments_s * args,
+   dcrudICallback            callback );
 
 #ifdef __cplusplus
 }

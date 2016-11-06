@@ -1,6 +1,9 @@
 #include <io/ByteBuffer.h>
-#include <util/CheckSysCall.h>
+#include "poolSizes.h"
+#include "magic.h"
+
 #include <util/Dump.h>
+#include <util/Pool.h>
 
 #ifdef _MSC_VER
 #  define ssize_t int
@@ -8,397 +11,637 @@
 
 typedef struct ioByteBufferImpl_s {
 
-   ioByteOrder  order;
-   unsigned int position;
-   unsigned int limit;
-   unsigned int capacity;
-   unsigned int mark;
-   byte *       bytes;
+   unsigned    magic;
+   ioByteOrder order;
+   size_t      position;
+   size_t      limit;
+   size_t      capacity;
+   size_t      mark;
+   byte *      bytes;
 
 } ioByteBufferImpl;
+
+UTIL_DEFINE_SAFE_CAST( ioByteBuffer     )
+UTIL_POOL_DECLARE    ( ioByteBufferImpl )
 
 static bool init            = true;
 static bool hostIsBigEndian = false;
 
-ioByteBuffer ioByteBuffer_wrap( unsigned int capacity, byte * array ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)malloc( sizeof( ioByteBufferImpl ));
+utilStatus ioByteBuffer_wrap( ioByteBuffer * self, size_t capacity, byte * array ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = NULL;
+   UTIL_ALLOCATE_ADT( ioByteBuffer, self, This );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->order    = ioByteOrder_BIG_ENDIAN;
+      This->position = 0;
+      This->limit    = capacity;
+      This->capacity = capacity;
+      This->mark     = capacity + 1;
+      This->bytes    = array;
+      memset( This->bytes, 0, capacity );
+   }
    if( init ) {
-      init = false;
+      init            = false;
       hostIsBigEndian = ( htonl(1) == 1 );
    }
-   This->order    = ioByteOrder_BIG_ENDIAN;
-   This->position = 0;
-   This->limit    = capacity;
-   This->capacity = capacity;
-   This->mark     = capacity + 1;
-   This->bytes    = array;
-   return (ioByteBuffer)This;
+   return status;
 }
 
-ioByteBuffer ioByteBuffer_new( unsigned int capacity ) {
-   return ioByteBuffer_wrap( capacity, (byte*)malloc( capacity ));
-}
+typedef byte ioChunk___256[  256];
+typedef byte ioChunk___512[  512];
+typedef byte ioChunk__1024[ 1024];
+typedef byte ioChunk__2048[ 2048];
+typedef byte ioChunk__4096[ 4096];
+typedef byte ioChunk__8192[ 8192];
+typedef byte ioChunk_16384[16384];
+typedef byte ioChunk_32768[32768];
+typedef byte ioChunk_65536[65536];
 
-void ioByteBuffer_delete( ioByteBuffer * self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)*self;
-   if( This ) {
-      free( This->bytes );
-      free( This );
-      *self = NULL;
+#define ioChunk___256_POOL_SIZE 4000
+#define ioChunk___512_POOL_SIZE 2000
+#define ioChunk__1024_POOL_SIZE 1000
+#define ioChunk__2048_POOL_SIZE  500
+#define ioChunk__4096_POOL_SIZE  250
+#define ioChunk__8192_POOL_SIZE  125
+#define ioChunk_16384_POOL_SIZE   50
+#define ioChunk_32768_POOL_SIZE   25
+#define ioChunk_65536_POOL_SIZE   10
+
+UTIL_POOL_DECLARE( ioChunk___256 )
+UTIL_POOL_DECLARE( ioChunk___512 )
+UTIL_POOL_DECLARE( ioChunk__1024 )
+UTIL_POOL_DECLARE( ioChunk__2048 )
+UTIL_POOL_DECLARE( ioChunk__4096 )
+UTIL_POOL_DECLARE( ioChunk__8192 )
+UTIL_POOL_DECLARE( ioChunk_16384 )
+UTIL_POOL_DECLARE( ioChunk_32768 )
+UTIL_POOL_DECLARE( ioChunk_65536 )
+
+utilStatus ioByteBuffer_new( ioByteBuffer * This, size_t capacity ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+#ifdef STATIC_ALLOCATION
+   byte * buffer = NULL;
+   if( init ) {
+      UTIL_POOL_INIT( ioChunk___256 );
+      UTIL_POOL_INIT( ioChunk___512 );
+      UTIL_POOL_INIT( ioChunk__1024 );
+      UTIL_POOL_INIT( ioChunk__2048 );
+      UTIL_POOL_INIT( ioChunk__4096 );
+      UTIL_POOL_INIT( ioChunk__8192 );
+      UTIL_POOL_INIT( ioChunk_16384 );
+      UTIL_POOL_INIT( ioChunk_32768 );
+      UTIL_POOL_INIT( ioChunk_65536 );
    }
-}
-
-ioByteBuffer ioByteBuffer_copy( ioByteBuffer self, unsigned int length ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   ioByteBufferImpl * copy = (ioByteBufferImpl *)ioByteBuffer_new( length );
-   memcpy( copy->bytes, This->bytes + This->position, length );
-   return (ioByteBuffer)copy;
-}
-
-byte * ioByteBuffer_array( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   return This->bytes;
-}
-
-void ioByteBuffer_clear( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   This->position = 0;
-   This->limit    = This->capacity;
-}
-
-void ioByteBuffer_mark( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   This->mark = This->position;
-}
-
-ioStatus ioByteBuffer_reset( ioByteBuffer self ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   ioStatus           status = IO_STATUS_NO_ERROR;
-   if( This->mark < This->limit ) {
-      This->position = This->mark;
-      This->mark     = This->capacity + 1;
-   }
+   if( false ) {}
+   else if( capacity <=   256U ) status = utilPool_reserve( &ioChunk___256Pool, &buffer );
+   else if( capacity <=   512U ) status = utilPool_reserve( &ioChunk___512Pool, &buffer );
+   else if( capacity <=  1024U ) status = utilPool_reserve( &ioChunk__1024Pool, &buffer );
+   else if( capacity <=  2048U ) status = utilPool_reserve( &ioChunk__2048Pool, &buffer );
+   else if( capacity <=  4096U ) status = utilPool_reserve( &ioChunk__4096Pool, &buffer );
+   else if( capacity <=  8192U ) status = utilPool_reserve( &ioChunk__8192Pool, &buffer );
+   else if( capacity <= 16384U ) status = utilPool_reserve( &ioChunk_16384Pool, &buffer );
+   else if( capacity <= 32768U ) status = utilPool_reserve( &ioChunk_32768Pool, &buffer );
+   else if( capacity <= 65536U ) status = utilPool_reserve( &ioChunk_65536Pool, &buffer );
    else {
-      status = IO_STATUS_NO_MARK;
+      status = UTIL_STATUS_TOO_MANY;
+   }
+#else
+   byte * buffer = (byte *)malloc( capacity );
+   if( buffer == NULL ) {
+      status = UTIL_STATUS_TOO_MANY;
+   }
+#endif
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_wrap( This, capacity, buffer );
    }
    return status;
 }
 
-void ioByteBuffer_flip( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   This->limit    = This->position;
-   This->position = 0;
-}
-
-unsigned int ioByteBuffer_getPosition( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   return This->position;
-}
-
-ioStatus ioByteBuffer_setPosition( ioByteBuffer self, unsigned int position ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   ioStatus           status = IO_STATUS_NO_ERROR;
-   if( position <= This->limit ) {
-      This->position = position;
+utilStatus ioByteBuffer_delete( ioByteBuffer * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
    else {
-      status = IO_STATUS_OVERFLOW;
+      ioByteBufferImpl * This = ioByteBuffer_safeCast( *self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+#ifdef STATIC_ALLOCATION
+         if( false ) {}
+         else if( This->capacity <=   256U ) utilPool_release( &ioChunk___256Pool, &This->bytes );
+         else if( This->capacity <=   512U ) utilPool_release( &ioChunk___512Pool, &This->bytes );
+         else if( This->capacity <=  1024U ) utilPool_release( &ioChunk__1024Pool, &This->bytes );
+         else if( This->capacity <=  2048U ) utilPool_release( &ioChunk__2048Pool, &This->bytes );
+         else if( This->capacity <=  4096U ) utilPool_release( &ioChunk__4096Pool, &This->bytes );
+         else if( This->capacity <=  8192U ) utilPool_release( &ioChunk__8192Pool, &This->bytes );
+         else if( This->capacity <= 16384U ) utilPool_release( &ioChunk_16384Pool, &This->bytes );
+         else if( This->capacity <= 32768U ) utilPool_release( &ioChunk_32768Pool, &This->bytes );
+         else if( This->capacity <= 65536U ) utilPool_release( &ioChunk_65536Pool, &This->bytes );
+#else
+         free( This->bytes );
+#endif
+         UTIL_RELEASE( ioByteBufferImpl )
+      }
    }
    return status;
 }
 
-unsigned int ioByteBuffer_getLimit( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   return This->limit;
-}
-
-unsigned int ioByteBuffer_remaining( ioByteBuffer self ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   return This->limit - This->position;
-}
-
-ioStatus ioByteBuffer_put( ioByteBuffer self, const byte * src, unsigned int from, unsigned int to ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   const unsigned int count = to - from;
-   if( This->position + count > This->limit ) {
-      return IO_STATUS_OVERFLOW;
+utilStatus ioByteBuffer_copy( ioByteBuffer self, ioByteBuffer * to, size_t length ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_new( to, length );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         ioByteBufferImpl * target = (ioByteBufferImpl *)*to;
+         memcpy( target->bytes, This->bytes + This->position, length );
+      }
    }
-   memcpy( This->bytes + This->position, src + from, count );
-   This->position += count;
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_get( ioByteBuffer self, byte * target, unsigned int from, unsigned int to ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   const unsigned int count = to - from;
-   if( This->position + count > This->limit ) {
-      return IO_STATUS_UNDERFLOW;
+utilStatus ioByteBuffer_array( ioByteBuffer self, byte ** array ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( array == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
-   memcpy( target+from, This->bytes + This->position, count );
-   This->position += count;
-   return IO_STATUS_NO_ERROR;
+   else {
+      ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *array = This->bytes;
+      }
+   }
+   return status;
 }
 
-ioStatus ioByteBuffer_putByte( ioByteBuffer self, byte value ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   if( This->position + 1 > This->limit ) {
-      return IO_STATUS_OVERFLOW;
+utilStatus ioByteBuffer_clear( ioByteBuffer self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->position = 0;
+      This->limit    = This->capacity;
    }
-   This->bytes[This->position] = value;
-   This->position += 1;
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_getByte( ioByteBuffer self, byte * target ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   if( This->position + 1 > This->limit ) {
-      return IO_STATUS_UNDERFLOW;
+utilStatus ioByteBuffer_mark( ioByteBuffer self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->mark = This->position;
    }
-   *target = This->bytes[This->position];
-   This->position += 1;
-   return IO_STATUS_NO_ERROR;
+   return status;
+}
+
+utilStatus ioByteBuffer_reset( ioByteBuffer self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->mark < This->limit ) {
+         This->position = This->mark;
+         This->mark     = This->capacity + 1;
+      }
+      else {
+         status = UTIL_STATUS_ILLEGAL_STATE;
+      }
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_flip( ioByteBuffer self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->limit    = This->position;
+      This->position = 0;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_getPosition( ioByteBuffer self, size_t * position ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( position ) {
+      ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *position = This->position;
+      }
+   }
+   else {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_setPosition( ioByteBuffer self, size_t position ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( position <= This->limit ) {
+         This->position = position;
+      }
+      else {
+         status = UTIL_STATUS_OVERFLOW;
+      }
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_getLimit( ioByteBuffer self, size_t * limit ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( limit ) {
+      ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *limit = This->limit;
+      }
+   }
+   else {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_remaining( ioByteBuffer self, size_t * remaining ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( remaining ) {
+      ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         *remaining = This->limit - This->position;
+      }
+   }
+   else {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_put( ioByteBuffer self, const byte * src, size_t from, size_t to ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      const size_t count = to - from;
+      if( This->position + count > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      memcpy( This->bytes + This->position, src + from, count );
+      This->position += count;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_get( ioByteBuffer self, byte * target, size_t from, size_t to ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      const size_t count = to - from;
+      if( This->position + count > This->limit ) {
+         return UTIL_STATUS_UNDERFLOW;
+      }
+      memcpy( target+from, This->bytes + This->position, count );
+      This->position += count;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_putByte( ioByteBuffer self, byte value ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->position + 1 > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      This->bytes[This->position] = value;
+      This->position += 1;
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_getByte( ioByteBuffer self, byte * target ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->position + 1 > This->limit ) {
+         return UTIL_STATUS_UNDERFLOW;
+      }
+      *target = This->bytes[This->position];
+      This->position += 1;
+   }
+   return status;
 }
 
 /* Endianness solution:
  * http://stackoverflow.com/questions/2182002/convert-big-endian-to-little-endian-in-c-without-using-provided-func
  */
 
-ioStatus ioByteBuffer_putShort( ioByteBuffer self, unsigned short value ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   if( This->position + sizeof( short ) > This->limit ) {
-      return IO_STATUS_OVERFLOW;
-   }
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (unsigned short)((( value & 0xFF00 ) >> 8 )|(( value & 0x00FF ) << 8 ));
-   }
-   memcpy( This->bytes + This->position, &value, sizeof( short ));
-   This->position += (unsigned int)sizeof( short );
-   return IO_STATUS_NO_ERROR;
+utilStatus ioByteBuffer_putShort( ioByteBuffer self, short value ) {
+   return ioByteBuffer_putUShort( self, (unsigned short)value );
 }
 
-ioStatus ioByteBuffer_getShort( ioByteBuffer self, unsigned short * target ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   unsigned short     value;
-   if( This->position + sizeof( short ) > This->limit ) {
-      return IO_STATUS_UNDERFLOW;
-   }
-   memcpy( &value, This->bytes + This->position, sizeof( short ));
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (unsigned short)(
-             (( value & 0xFF00 ) >> 8 )
-            |(( value & 0x00FF ) << 8 ));
-   }
-   *target = value;
-   This->position += (unsigned int)sizeof( short );
-   return IO_STATUS_NO_ERROR;
+utilStatus ioByteBuffer_getShort( ioByteBuffer self, short * target ) {
+   return ioByteBuffer_getUShort( self, (unsigned short *)target );
 }
 
-ioStatus ioByteBuffer_putInt( ioByteBuffer self, unsigned int value ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   if( This->position + sizeof( int ) > This->limit ) {
-      return IO_STATUS_OVERFLOW;
+utilStatus ioByteBuffer_putUShort( ioByteBuffer self, unsigned short value ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->position + sizeof( unsigned short ) > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (unsigned short)((( value & 0xFF00 ) >> 8 )|(( value & 0x00FF ) << 8 ));
+      }
+      memcpy( This->bytes + This->position, &value, sizeof( unsigned short ));
+      This->position += sizeof( unsigned short );
    }
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (( value & 0xFF000000 ) >> 24 )
-             |(( value & 0x00FF0000 ) >>  8 )
-             |(( value & 0x0000FF00 ) <<  8 )
-             |(  value                << 24 );
-   }
-   memcpy( This->bytes + This->position, &value, sizeof( int ));
-   This->position += (unsigned int)sizeof( int );
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_putIntAt ( ioByteBuffer self, unsigned int value, unsigned int index ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   if( index + sizeof( int ) > This->limit ) {
-      return IO_STATUS_OVERFLOW;
+utilStatus ioByteBuffer_getUShort( ioByteBuffer self, unsigned short * target ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      unsigned short     value;
+      if( This->position + sizeof( unsigned short ) > This->limit ) {
+         return UTIL_STATUS_UNDERFLOW;
+      }
+      memcpy( &value, This->bytes + This->position, sizeof( unsigned short ));
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (unsigned short)(
+                (( value & 0xFF00 ) >> 8 )
+               |(( value & 0x00FF ) << 8 ));
+      }
+      *target = value;
+      This->position += sizeof( short );
    }
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (( value & 0xFF000000 ) >> 24 )
-             |(( value & 0x00FF0000 ) >>  8 )
-             |(( value & 0x0000FF00 ) <<  8 )
-             |(  value                << 24 );
-   }
-   memcpy( This->bytes + index, &value, sizeof( int ));
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_getInt( ioByteBuffer self, unsigned int * target ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   unsigned int       value;
-   if( This->position + sizeof( int ) > This->limit ) {
-      return IO_STATUS_UNDERFLOW;
-   }
-   memcpy( &value, This->bytes + This->position, sizeof( int ));
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (( value & 0xFF000000 ) >> 24 )
-             |(( value & 0x00FF0000 ) >>  8 )
-             |(( value & 0x0000FF00 ) <<  8 )
-             |(  value                << 24 );
-   }
-   *target = value;
-   This->position += (unsigned int)sizeof( int );
-   return IO_STATUS_NO_ERROR;
+utilStatus ioByteBuffer_putInt( ioByteBuffer self, int value ) {
+   return ioByteBuffer_putUInt( self, (unsigned int)value );
 }
 
-ioStatus ioByteBuffer_putLong( ioByteBuffer self, uint64_t value ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   if( This->position + sizeof( uint64_t ) > This->limit ) {
-      return IO_STATUS_OVERFLOW;
-   }
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (( value & 0xFF00000000000000LL ) >> 56 )
-             |(( value & 0x00FF000000000000LL ) >> 40 )
-             |(( value & 0x0000FF0000000000LL ) >> 24 )
-             |(( value & 0x000000FF00000000LL ) >>  8 )
-             |(( value & 0x00000000FF000000LL ) <<  8 )
-             |(( value & 0x0000000000FF0000LL ) << 24 )
-             |(( value & 0x000000000000FF00LL ) << 40 )
-             |(  value                          << 56 );
-   }
-   memcpy( This->bytes + This->position, &value, sizeof( uint64_t ));
-   This->position += (unsigned int)sizeof( uint64_t );
-   return IO_STATUS_NO_ERROR;
+utilStatus ioByteBuffer_getInt( ioByteBuffer self, int * target ) {
+   return ioByteBuffer_getUInt( self, (unsigned int *)target );
 }
 
-ioStatus ioByteBuffer_getLong( ioByteBuffer self, uint64_t * target ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   uint64_t           value;
-   if( This->position + sizeof( uint64_t ) > This->limit ) {
-      return IO_STATUS_UNDERFLOW;
+utilStatus ioByteBuffer_putUInt( ioByteBuffer self, unsigned int value ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->position + sizeof( unsigned int ) > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (( value & 0xFF000000 ) >> 24 )
+                |(( value & 0x00FF0000 ) >>  8 )
+                |(( value & 0x0000FF00 ) <<  8 )
+                |(  value                << 24 );
+      }
+      memcpy( This->bytes + This->position, &value, sizeof( unsigned int ));
+      This->position += sizeof( unsigned int );
    }
-   memcpy( &value, This->bytes + This->position, sizeof( int64_t ));
-   if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
-     ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
-   {
-      value = (( value & 0xFF00000000000000LL ) >> 56 )
-             |(( value & 0x00FF000000000000LL ) >> 40 )
-             |(( value & 0x0000FF0000000000LL ) >> 24 )
-             |(( value & 0x000000FF00000000LL ) >>  8 )
-             |(( value & 0x00000000FF000000LL ) <<  8 )
-             |(( value & 0x0000000000FF0000LL ) << 24 )
-             |(( value & 0x000000000000FF00LL ) << 40 )
-             |(  value                          << 56 );
-   }
-   *target = value;
-   This->position += (unsigned int)sizeof( uint64_t );
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_putFloat( ioByteBuffer self, float value ) {
+utilStatus ioByteBuffer_putUIntAt( ioByteBuffer self, unsigned int value, size_t index ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( index + sizeof( unsigned int ) > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (( value & 0xFF000000 ) >> 24 )
+                |(( value & 0x00FF0000 ) >>  8 )
+                |(( value & 0x0000FF00 ) <<  8 )
+                |(  value                << 24 );
+      }
+      memcpy( This->bytes + index, &value, sizeof( unsigned int ));
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_getUInt( ioByteBuffer self, unsigned int * target ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      unsigned int       value;
+      if( This->position + sizeof( unsigned int ) > This->limit ) {
+         return UTIL_STATUS_UNDERFLOW;
+      }
+      memcpy( &value, This->bytes + This->position, sizeof( int ));
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (( value & 0xFF000000 ) >> 24 )
+                |(( value & 0x00FF0000 ) >>  8 )
+                |(( value & 0x0000FF00 ) <<  8 )
+                |(  value                << 24 );
+      }
+      *target = value;
+      This->position += sizeof( unsigned int );
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_putLong( ioByteBuffer self, int64_t value ) {
+   return ioByteBuffer_putULong( self, (uint64_t)value );
+}
+
+utilStatus ioByteBuffer_getLong( ioByteBuffer self, int64_t * target ) {
+   return ioByteBuffer_getULong( self, (uint64_t *)target );
+}
+
+utilStatus ioByteBuffer_putULong( ioByteBuffer self, uint64_t value ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      if( This->position + sizeof( uint64_t ) > This->limit ) {
+         return UTIL_STATUS_OVERFLOW;
+      }
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (( value & 0xFF00000000000000LL ) >> 56 )
+                |(( value & 0x00FF000000000000LL ) >> 40 )
+                |(( value & 0x0000FF0000000000LL ) >> 24 )
+                |(( value & 0x000000FF00000000LL ) >>  8 )
+                |(( value & 0x00000000FF000000LL ) <<  8 )
+                |(( value & 0x0000000000FF0000LL ) << 24 )
+                |(( value & 0x000000000000FF00LL ) << 40 )
+                |(  value                          << 56 );
+      }
+      memcpy( This->bytes + This->position, &value, sizeof( uint64_t ));
+      This->position += sizeof( uint64_t );
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_getULong( ioByteBuffer self, uint64_t * target ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      uint64_t value;
+      if( This->position + sizeof( uint64_t ) > This->limit ) {
+         return UTIL_STATUS_UNDERFLOW;
+      }
+      memcpy( &value, This->bytes + This->position, sizeof( int64_t ));
+      if( ( This->order == ioByteOrder_LITTLE_ENDIAN &&  hostIsBigEndian )
+        ||( This->order == ioByteOrder_BIG_ENDIAN    && !hostIsBigEndian ))
+      {
+         value = (( value & 0xFF00000000000000LL ) >> 56 )
+                |(( value & 0x00FF000000000000LL ) >> 40 )
+                |(( value & 0x0000FF0000000000LL ) >> 24 )
+                |(( value & 0x000000FF00000000LL ) >>  8 )
+                |(( value & 0x00000000FF000000LL ) <<  8 )
+                |(( value & 0x0000000000FF0000LL ) << 24 )
+                |(( value & 0x000000000000FF00LL ) << 40 )
+                |(  value                          << 56 );
+      }
+      *target = value;
+      This->position += sizeof( uint64_t );
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_putFloat( ioByteBuffer self, float value ) {
    void * ptr = &value;
-   return ioByteBuffer_putInt( self, *(unsigned int*)ptr );
+   return ioByteBuffer_putUInt( self, *(unsigned int*)ptr );
 }
 
-ioStatus ioByteBuffer_getFloat( ioByteBuffer self, float * target ) {
-   return ioByteBuffer_getInt( self, (unsigned int *)target );
+utilStatus ioByteBuffer_getFloat( ioByteBuffer self, float * target ) {
+   return ioByteBuffer_getUInt( self, (unsigned int *)target );
 }
 
-ioStatus ioByteBuffer_putDouble( ioByteBuffer self, double value ) {
+utilStatus ioByteBuffer_putDouble( ioByteBuffer self, double value ) {
    void * ptr = &value;
-   return ioByteBuffer_putLong( self, *(uint64_t*)ptr );
+   return ioByteBuffer_putULong( self, *(uint64_t*)ptr );
 }
 
-ioStatus ioByteBuffer_getDouble( ioByteBuffer self, double * target ) {
-   return ioByteBuffer_getLong( self, (uint64_t *)target );
+utilStatus ioByteBuffer_getDouble( ioByteBuffer self, double * target ) {
+   return ioByteBuffer_getULong( self, (uint64_t *)target );
 }
 
-ioStatus ioByteBuffer_putString( ioByteBuffer This, const char * source ) {
-   unsigned int len    = (unsigned int)strlen( source );
-   ioStatus      status = ioByteBuffer_putInt( This, len );
-   if( status == IO_STATUS_NO_ERROR ) {
+utilStatus ioByteBuffer_putString( ioByteBuffer This, const char * source ) {
+   size_t     len    = strlen( source );
+   utilStatus status = ioByteBuffer_putUInt( This, (unsigned int)len );
+   if( UTIL_STATUS_NO_ERROR == status ) {
       status = ioByteBuffer_put( This, (const byte *)source, 0U, len );
    }
    return status;
 }
 
-ioStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, unsigned int size ) {
-   unsigned int len    = 0U;
-   ioStatus     status = ioByteBuffer_getInt( self, &len );
-   if( status == IO_STATUS_NO_ERROR ) {
+utilStatus ioByteBuffer_getString( ioByteBuffer self, char * dest, size_t size ) {
+   unsigned int   len    = 0U;
+   utilStatus     status = ioByteBuffer_getUInt( self, &len );
+   if( UTIL_STATUS_NO_ERROR == status ) {
       if( len < size ) {
          status = ioByteBuffer_get( self, (byte *)dest, 0, len );
-         dest[len] = '\0';
+         if( UTIL_STATUS_NO_ERROR == status ) {
+            dest[len] = '\0';
+         }
       }
       else if( size >= len ) {
-         status = IO_STATUS_UNDERFLOW;
+         status = UTIL_STATUS_UNDERFLOW;
       }
    }
    return status;
 }
 
-ioStatus ioByteBuffer_putBuffer( ioByteBuffer self, ioByteBuffer other ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   ioByteBufferImpl * source = (ioByteBufferImpl *)other;
-   unsigned int             count  = source->limit - source->position;
-   if( This->position + count > This->limit ) {
-      return IO_STATUS_OVERFLOW;
+utilStatus ioByteBuffer_putBuffer( ioByteBuffer self, ioByteBuffer other ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      ioByteBufferImpl * source = ioByteBuffer_safeCast( other, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         size_t count = source->limit - source->position;
+         if( This->position + count > This->limit ) {
+            return UTIL_STATUS_OVERFLOW;
+         }
+         memcpy( This->bytes + This->position, source->bytes + source->position, count );
+         source->position += count;
+         This  ->position += count;
+      }
    }
-   memcpy( This->bytes + This->position, source->bytes + source->position, count );
-   source->position += count;
-   This  ->position += count;
-   return IO_STATUS_NO_ERROR;
+   return status;
 }
 
-ioStatus ioByteBuffer_send( ioByteBuffer self, SOCKET sckt, struct sockaddr_in * trgt ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   ioStatus           retVal = IO_STATUS_NO_ERROR;
-   unsigned int       len    = This->limit - This->position;
-   const char *       buffer = (const char *)( This->bytes + This->position );
-   ssize_t            count  =
-      sendto( sckt, buffer, len, 0, (struct sockaddr *)trgt, sizeof( struct sockaddr_in ));
-   if( count < 0 || ((int)len) != count ) {
-      retVal = IO_STATUS_SENDTO_FAILED;
+utilStatus ioByteBuffer_send( ioByteBuffer self, SOCKET sckt ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      size_t       len    = This->limit - This->position;
+      const char * buffer = (const char *)( This->bytes + This->position );
+      ssize_t      count  = send( sckt, buffer, len, 0);
+      if( count < 0 || ( len != (size_t)count )) {
+         status = UTIL_STATUS_STD_API_ERROR;
+      }
+      else {
+         This->position += (size_t)count;
+      }
    }
-   else {
-      This->position += (unsigned)count;
-   }
-   return retVal;
+   return status;
 }
 
-ioStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
-   ioByteBufferImpl * This   = (ioByteBufferImpl *)self;
-   ioStatus           retVal = IO_STATUS_NO_ERROR;
-   unsigned int       max    = This->limit-This->position;
-   void *             buffer = This->bytes+This->position;
-   int                type;
-   unsigned int       length = sizeof( type );
-   ssize_t            count;
+utilStatus ioByteBuffer_sendTo( ioByteBuffer self, SOCKET sckt, struct sockaddr_in * trgt ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      size_t       len    = This->limit - This->position;
+      const char * buffer = (const char *)( This->bytes + This->position );
+      ssize_t      count  =
+         sendto( sckt, buffer, len, 0, (struct sockaddr *)trgt, sizeof( struct sockaddr_in ));
+      if( count < 0 || ( len != (size_t)count )) {
+         status = UTIL_STATUS_STD_API_ERROR;
+      }
+      else {
+         This->position += (size_t)count;
+      }
+   }
+   return status;
+}
+
+utilStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      int       type;
+      size_t    max    = This->limit-This->position;
+      void *    buffer = This->bytes+This->position;
+      socklen_t length = sizeof( type );
+      ssize_t   count;
 #ifdef WIN32
-   getsockopt( sckt, SOL_SOCKET, SO_TYPE, (void *)&type, (int *)&length );
+      getsockopt( sckt, SOL_SOCKET, SO_TYPE, (void *)&type, (int *)&length );
 #else
-   getsockopt( sckt, SOL_SOCKET, SO_TYPE, &type, &length );
+      getsockopt( sckt, SOL_SOCKET, SO_TYPE, &type, &length );
 #endif
-   if( type == SOCK_STREAM ) {
-      count = recv( sckt, buffer, max, 0 );
+      if( type == SOCK_STREAM ) {
+         count = recv( sckt, buffer, max, 0 );
+      }
+      else {
+         count = recvfrom( sckt, buffer, max, 0, NULL, NULL );
+      }
+      if( count < 0 ) {
+         status = UTIL_STATUS_STD_API_ERROR;
+      }
+      else {
+         This->position += (size_t)count;
+      }
    }
-   else {
-      count = recvfrom( sckt, buffer, max, 0, NULL, NULL );
-   }
-   if( count < 0 ) {
-      retVal = IO_STATUS_RECV_FAILED;
-   }
-   else {
-      This->position += (unsigned)count;
-   }
-   return retVal;
+   return status;
 }
 
-ioStatus ioByteBuffer_dump( ioByteBuffer self, FILE * target ) {
-   ioByteBufferImpl * This = (ioByteBufferImpl *)self;
-   utilDump_range( target, This->bytes, 0, This->limit );
-   return IO_STATUS_NO_ERROR;
+utilStatus ioByteBuffer_dump( ioByteBuffer self, FILE * target ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   ioByteBufferImpl * This = ioByteBuffer_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      utilDump_range( target, This->bytes, 0, This->limit );
+   }
+   return status;
 }

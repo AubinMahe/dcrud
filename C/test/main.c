@@ -1,5 +1,7 @@
 #include <util/types.h>
 #include <util/Trace.h>
+#include <util/CmdLine.h>
+#include <util/Pool.h>
 
 #ifdef _WIN32
 #  include <crtdbg.h>
@@ -8,70 +10,107 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/*   test_001: Java only */
-void test_002( void );
-void test_003( void );
-void test_004( void ){}
-void test_005( void );
-void test_006( void );
-/*   test_007: Java only */
-void test_008( void );
-
-bool dumpReceivedBuffer = false;
+/* 001 Java only */
+/* 002 */ utilStatus coll( void );
+/* 003 */ utilStatus ioByteBufferTest( void );
+/* 004 */ utilStatus channelTest                       ( const utilCmdLine cmdLine );
+/* 005 */ utilStatus c_publisher_java_subscriber_Person( const utilCmdLine cmdLine );
+/* 006 */ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine );
+/* 007 Java only */
+/* 008 */ utilStatus c_publisher_java_subscriber_Shapes( const utilCmdLine cmdLine );
+/* 009 */ utilStatus poolTest( void );
+/* 010 */ utilStatus dcrudArgumentsTest( void );
 
 int main( int argc, char * argv[] ) {
-   char logname[200];
-   int  testNumber = -1;
-   int  i;
-   for( i = 1; i < argc; ++i ) {
-      if( 0 == strncmp( argv[i], "--test=", 7 )) {
-         testNumber = atoi( argv[i] + 7 );
-      }
-      else if( 0 == strcmp( argv[i], "--dump-received-buffer" )) {
-         dumpReceivedBuffer = true;
-      }
-   }
+   utilCmdLine cmdLine = NULL;
+   char        logname[200];
+   int         testNumber = -1;
 #ifdef _WIN32
+   WSADATA        wsaData;
+   int            iResult;
+
+   iResult = WSAStartup( MAKEWORD( 2, 2 ), &wsaData );
+   if( iResult ) {
+      fprintf( stderr, "WSAStartup failed: %d\n", iResult );
+      return 1;
+   }
+#  ifdef _MSCVER
    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_LEAK_CHECK_DF );
+#  endif
 #endif
+   CHK(__FILE__,__LINE__,utilCmdLine_new       ( &cmdLine ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addInt    ( cmdLine, "test"                , 0 ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addBoolean( cmdLine, "dump-received-buffer", false ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addString ( cmdLine, "interface"           , "192.168.1.7" ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addString ( cmdLine, "target-host"         , "192.168.1.7" ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addUShort ( cmdLine, "local-port"          , 2416U ))
+   CHK(__FILE__,__LINE__,utilCmdLine_addUShort ( cmdLine, "remote-port"         , 2417U ))
+   CHK(__FILE__,__LINE__,utilCmdLine_parse     ( cmdLine, argc, argv ))
+   CHK(__FILE__,__LINE__,utilCmdLine_getInt    ( cmdLine, "test"                , &testNumber ))
    sprintf( logname, "Test_%03d.log", testNumber );
    utilTrace_open( logname );
+   printf( "TEST %03d - ", testNumber );
    switch( testNumber ) {
    default:
-      fprintf( stderr, "%s --test=<nnn> where nnn is a test number > 0\n", argv[0] );
+      fprintf( stderr, "%s --test=<nnn> [--dump-received-buffer={false,true}]\n"
+         "nnn in:\n"
+         "\t1 Java only\n"
+         "\t2 collections\n"
+         "\t3 ioByteBuffer\n"
+         "\t4 channel\n"
+         "\t5 c publisher  java subscriber Person\n"
+         "\t6 c subscriber java publisher  Person\n"
+         "\t7 Java only\n"
+         "\t8 c publisher  java subscriber Shapes\n"
+         "\t9 pool\n"
+         "\t10 dcrudArguments\n",
+         argv[0] );
       break;
    case 1:
-      printf( "TEST %03d - Java only test: Person pub/sub\n", testNumber );
+      printf( "Java only test: Person pub/sub\n" );
       break;
    case 2:
-      printf( "TEST %03d - collMap, collSet, collList\n", testNumber );
-      test_002();
+      printf( "collMap, collSet, collList\n" );
+      CHK(__FILE__,__LINE__,coll());
       break;
    case 3:
-      printf( "TEST %03d - ioByteBuffer\n", testNumber );
-      test_003();
+      printf( "ioByteBuffer\n" );
+      ioByteBufferTest();
       break;
    case 4:
-      printf( "TEST %03d - Not written yet\n", testNumber );
-      test_004();
+      printf( "Channel test\n" );
+      channelTest( cmdLine );
       break;
    case 5:
-      printf( "TEST %03d - C Person publisher, Java subscriber\n", testNumber );
-      test_005();
+      printf( "C Person publisher, Java subscriber\n" );
+      c_publisher_java_subscriber_Person( cmdLine );
       break;
    case 6:
-      printf( "TEST %03d - C Person subscriber, Java publisher\n", testNumber );
-      test_006();
+      printf( "C Person subscriber, Java publisher\n" );
+      c_subscriber_java_publisher_Person( cmdLine );
       break;
    case 7:
-      printf( "TEST %03d - Java only test: Moving Shapes pub/sub\n", testNumber );
+      printf( "Java only test: Moving Shapes pub/sub\n" );
       break;
    case 8:
-      printf( "TEST %03d - C Shapes publisher, Java subscriber on moving Shapes\n", testNumber );
-      test_008();
+      printf( "C Shapes publisher, Java subscriber\n" );
+      c_publisher_java_subscriber_Shapes( cmdLine );
+      break;
+   case 9:
+      printf( "Pool test\n" );
+      poolTest();
+      break;
+   case 10:
+      printf( "dcrudArguments test\n" );
+      dcrudArgumentsTest();
       break;
    }
+   utilCmdLine_delete( &cmdLine );
    printf( "Press enter to exit\n" );
    fgetc( stdin );
+   utilPool_dumpAll( stdout );
+#ifdef _WIN32
+   WSACleanup();
+#endif
    return 0;
 }

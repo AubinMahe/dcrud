@@ -1,12 +1,22 @@
+#pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <dcrud/IParticipant.h>
 
 typedef struct dcrudShareableImpl_s {
 
-   dcrudGUID                     id;
-   dcrudClassID                  classID;
-   dcrudLocalFactory_Serialize   serialize;
-   dcrudLocalFactory_Unserialize unserialize;
+   unsigned            magic;
+   dcrudGUID           id;
+   dcrudClassID        classID;
+   dcrudLocalFactory * factory;
+   dcrudShareableData  data;
 
 } dcrudShareableImpl;
 
-dcrudShareable dcrudShareable_new( dcrudLocalFactory * meta, dcrudClassID classID );
+UTIL_DECLARE_SAFE_CAST(dcrudShareable);
+
+#ifdef __cplusplus
+}
+#endif

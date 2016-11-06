@@ -5,19 +5,13 @@ extern "C" {
 
 #include <dcrud/IParticipant.h>
 
-/**
- *
- * @param id     participant id
- * @param addr   IP address:port pair
- * @param intrfc the network interface to use, identified by its IP address, may be null
- * in such case the first up, non loopback, multicast capable interface will be used)
- */
-dcrudIParticipant dcrudNetwork_join(
+utilStatus dcrudNetwork_join(
    unsigned int                id,
    const ioInetSocketAddress * addr,
-   const char *                intrfc );
-
-void dcrudNetwork_leave( dcrudIParticipant * participant );
+   const char *                intrfc,
+   dcrudIParticipant *         participant );
+bool       dcrudNetwork_isAlive( void );
+utilStatus dcrudNetwork_leave  ( void );
 
 #ifdef __cplusplus
 }

@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 
 public class Relation implements Consumer<ByteBuffer> {
 
-   private static final short REGISTRY    = 1;
-   private static final short CMD_OR_DATA = 2;
+   private static final byte REGISTRY    = 1;
+   private static final byte CMD_OR_DATA = 2;
 
    final ByteBuffer           _payload = ByteBuffer.allocate( 64*1024 );
    final Registry             _registry;
@@ -30,14 +30,20 @@ public class Relation implements Consumer<ByteBuffer> {
 
    void sendRegistry() {
       _payload.clear();
-      _payload.putShort( REGISTRY );
+      _payload.put( REGISTRY );
       _registry.serializeTo( _payload );
+      _payload.flip();
       _sender.send( _payload );
    }
 
-   void sendCommandOrData() {
+   void send( ByteBuffer commandOrData ) {
       _payload.clear();
-      _payload.putShort( CMD_OR_DATA );
+      _payload.put( CMD_OR_DATA );
+      if( commandOrData.position() > 0 ) {
+         commandOrData.flip();
+      }
+      _payload.putInt( commandOrData.remaining());
+      _payload.put( commandOrData );
       _sender.send( _payload );
    }
 
@@ -48,11 +54,18 @@ public class Relation implements Consumer<ByteBuffer> {
 
    @Override
    public void accept( ByteBuffer payload ) {
-      final short msgId = payload.getShort();
-      switch( msgId ) {
+      final byte msgType = payload.get();
+      if( Registry.LOG ) {
+         System.err.printf( "%s.accept|Received message: %d\n", getClass().getName(),
+            msgType );
+      }
+      switch( msgType ) {
       case REGISTRY   : _registry.merge( payload ); break;
       case CMD_OR_DATA: _dataConsumer.accept( payload ); break;
-      default: System.err.printf( "%s.accept|Unexpected message: %d\n", msgId ); break;
+      default:
+         System.err.printf( "%s.accept|Unexpected message type: %d\n", getClass().getName(),
+            msgType );
+      break;
       }
    }
 }

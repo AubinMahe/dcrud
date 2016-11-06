@@ -1,38 +1,77 @@
 #include <dcrud/ICallback.h>
+#include <dcrud/Arguments.h>
+#include <util/Pool.h>
+#include "magic.h"
+#include "poolSizes.h"
+
+#include <string.h>
 
 typedef struct dcrudICallbackImpl_s {
 
+   unsigned int            magic;
    dcrudICallback_function callback;
    void *                  userData;
 
 } dcrudICallbackImpl;
 
-dcrudICallback dcrudICallback_new( dcrudICallback_function callback, void * userData ) {
-   dcrudICallbackImpl * This = (dcrudICallbackImpl *)malloc( sizeof( dcrudICallbackImpl ));
-   This->callback = callback;
-   This->userData = userData;
-   return (dcrudICallback)This;
-}
+UTIL_DEFINE_SAFE_CAST( dcrudICallback     )
+UTIL_POOL_DECLARE    ( dcrudICallbackImpl )
 
-void dcrudICallback_delete( dcrudICallback * self ) {
-   dcrudICallbackImpl * This = (dcrudICallbackImpl *)*self;
-   if( This ) {
-      free( This );
-      *self = NULL;
+utilStatus dcrudICallback_new(
+   dcrudICallback *        self,
+   dcrudICallback_function callback,
+   void *                  userData )
+{
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
+   else {
+      dcrudICallbackImpl * This = NULL;
+      UTIL_ALLOCATE_ADT( dcrudICallback, self, This );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         This->callback = callback;
+         This->userData = userData;
+      }
+   }
+   return status;
 }
 
-void dcrudICallback_callback(
+utilStatus dcrudICallback_delete( dcrudICallback * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      UTIL_RELEASE( dcrudICallbackImpl );
+   }
+   return status;
+}
+
+utilStatus dcrudICallback_callback(
    dcrudICallback self,
    const char *   intrfc,
    const char *   operation,
    dcrudArguments results   )
 {
-   dcrudICallbackImpl * This = (dcrudICallbackImpl *)self;
-   This->callback( self, intrfc, operation, results );
+   utilStatus           status = UTIL_STATUS_NO_ERROR;
+   dcrudICallbackImpl * This   = dcrudICallback_safeCast( self, &status );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      This->callback( self, intrfc, operation, results );
+   }
+   return status;
 }
 
-void * dcrudICallback_getUserData( dcrudICallback self ) {
-   dcrudICallbackImpl * This = (dcrudICallbackImpl *)self;
-   return This->userData;
+utilStatus dcrudICallback_getUserData( dcrudICallback self, void ** result ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudICallbackImpl * This = dcrudICallback_safeCast( self, &status );
+      if( status == UTIL_STATUS_NO_ERROR ) {
+         *result = This->userData;
+      }
+   }
+   return status;
 }

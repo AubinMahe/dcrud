@@ -7,9 +7,9 @@ extern "C" {
 
 UTIL_ADT( dcrudICRUD );
 
-void dcrudICRUD_create( dcrudICRUD This, dcrudArguments how );
-void dcrudICRUD_update( dcrudICRUD This, dcrudShareable what, dcrudArguments how );
-void dcrudICRUD_delete( dcrudICRUD This, dcrudShareable what );
+utilStatus dcrudICRUD_create( dcrudICRUD This, dcrudArguments how );
+utilStatus dcrudICRUD_update( dcrudICRUD This, dcrudShareable what, dcrudArguments how );
+utilStatus dcrudICRUD_delete( dcrudICRUD This, dcrudShareable what );
 
 #ifdef __cplusplus
 }

@@ -1,8 +1,15 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "ParticipantImpl.h"
 
-dcrudICache dcrudCache_new( ParticipantImpl *participant );
-void dcrudCache_delete           ( dcrudICache * This );
-void dcrudCache_updateFromNetwork( dcrudICache   This, ioByteBuffer item );
-void dcrudCache_deleteFromNetwork( dcrudICache   This, const dcrudGUID * id );
+utilStatus dcrudCache_new              ( dcrudICache * This, dcrudIParticipantImpl * participant );
+utilStatus dcrudCache_delete           ( dcrudICache * This );
+utilStatus dcrudCache_updateFromNetwork( dcrudICache   This, ioByteBuffer item );
+utilStatus dcrudCache_deleteFromNetwork( dcrudICache   This, dcrudGUID id );
+
+#ifdef __cplusplus
+}
+#endif

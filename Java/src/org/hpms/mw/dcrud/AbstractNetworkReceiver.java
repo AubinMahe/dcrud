@@ -34,24 +34,28 @@ abstract class AbstractNetworkReceiver extends Thread implements IProtocol {
       final String    opName     = SerializerHelper.getString( b );
       final int       callId     = b.getInt();
       final int       count      = b.get();
+      args.setMode ( CallMode.values()[b.get()]);
+      args.setQueue( b.get());
       for( int i = 0; i < count; ++i ) {
          final String  name    = SerializerHelper.getString( b );
          final ClassID classId = ClassID.unserialize( b );
          final Type    type    = classId.getType();
          switch( type ) {
          case NULL       : args.putNull( name );                                    break;
+         case CHAR       : args.put( name, b.get());                                break;
          case BYTE       : args.put( name, b.get());                                break;
          case BOOLEAN    : args.put( name, SerializerHelper.getBoolean( b ));       break;
          case SHORT      : args.put( name, b.getShort ());                          break;
+         case UNSIGNED_SHORT:
          case INTEGER    : args.put( name, b.getInt   ());                          break;
+         case UNSIGNED_INTEGER:
+         case UNSIGNED_LONG:
          case LONG       : args.put( name, b.getLong  ());                          break;
          case FLOAT      : args.put( name, b.getFloat ());                          break;
          case DOUBLE     : args.put( name, b.getDouble());                          break;
          case STRING     : args.put( name, SerializerHelper.getString ( b ));       break;
          case CLASS_ID   : args.put( name, ClassID        .unserialize( b ));       break;
          case GUID       : args.put( name, GUID           .unserialize( b ));       break;
-         case CALL_MODE  : args.setMode ( CallMode.values()[b.get()]);              break;
-         case QUEUE_INDEX: args.setQueue( b.get());                                 break;
          case SHAREABLE  : args.put( name, _participant.newInstance( classId, b )); break;
          default:
             throw new IllegalStateException( "Unexpected type " + type + " for argument " + name );

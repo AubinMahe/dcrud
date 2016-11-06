@@ -2,22 +2,30 @@ package tests.registry;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Enumeration;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 
 public class RelationsFactoryTCP implements IRelationsFactory, Runnable {
 
-   private final ServerSocketChannel  _server = ServerSocketChannel.open();
+   private final ServerSocketChannel  _server    = ServerSocketChannel.open();
+   private final CountDownLatch       _isStarted = new CountDownLatch( 1 );
    private final int                  _bootPort;
    private final Registry             _registry;
    private final Consumer<ByteBuffer> _dataConsumer;
    private /* */ InetSocketAddress    _thisEndPoint;
 
    RelationsFactoryTCP(
-      String               host,
+      NetworkInterface     intrfc,
+      InetAddress          registryServer,
+      int                  registryPort,
       int                  bootPort,
       Registry             registry,
       Consumer<ByteBuffer> dataConsumer ) throws IOException
@@ -25,22 +33,47 @@ public class RelationsFactoryTCP implements IRelationsFactory, Runnable {
       _bootPort     = bootPort;
       _registry     = registry;
       _dataConsumer = dataConsumer;
+      final Enumeration<InetAddress> a = intrfc.getInetAddresses();
+      String intrfcAddr = null;
+      do {
+         final InetAddress b = a.nextElement();
+         if( b.getAddress().length == registryServer.getAddress().length ) {
+            intrfcAddr = b.getHostAddress();
+         }
+      } while( intrfcAddr == null );
+      boolean isPrimary = true;
       for( int port = _bootPort; true; ++port ) {
          try {
-            _server.bind( new InetSocketAddress( host, port ));
+            _thisEndPoint = new InetSocketAddress( intrfcAddr, port );
+            _server.bind( _thisEndPoint );
             if( Registry.LOG ) {
-               System.err.printf( "%s|server listening on port %d\n",
-                  getClass().getName(), port );
+               System.err.printf( "%s.<ctor>|server listening on %s\n", getClass().getName(),
+                  _thisEndPoint );
             }
-            _thisEndPoint = (InetSocketAddress)_server.getLocalAddress();
             _registry.addEndPoint( _thisEndPoint );
             new Thread( this ).start();
-            if( port != _bootPort ) {
-               connectTo( new InetSocketAddress( host, _bootPort ));
-            }
             break;
          }
-         catch( final BindException x ) {/**/}
+         catch( final BindException x ) {
+            isPrimary = false;
+         }
+      }
+      if( ! isPrimary ) {
+         try {
+            final InetSocketAddress isa = new InetSocketAddress( registryServer, registryPort );
+            _isStarted.await();
+            connectTo( isa );
+         }
+         catch( final IOException x ) {
+            if( Registry.LOG ) {
+               System.err.printf( "%s.<ctor>|%s:%d: %s\n", getClass().getName(),
+                  registryServer, registryPort, x.getMessage());
+            }
+         }
+         catch( final InterruptedException x ) {
+            x.printStackTrace();
+            System.exit( 2 );
+         }
       }
    }
 
@@ -83,10 +116,13 @@ public class RelationsFactoryTCP implements IRelationsFactory, Runnable {
       if( Registry.LOG ) {
          System.err.printf( "%s|server thread running\n", getClass().getName());
       }
-      for( int err = 0; err < 3; ++err ) {
+      for(;;) {
          try {
+            _isStarted.countDown();
             connectTo( _server.accept()).sendRegistry();
-            err = 0;
+         }
+         catch( final ClosedChannelException x ) {
+            break;
          }
          catch( final IOException e ) {
             e.printStackTrace();

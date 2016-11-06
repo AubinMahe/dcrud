@@ -1,6 +1,8 @@
 package tests.registry;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeSet;
@@ -85,10 +87,13 @@ public class GUI extends Application implements IRegistryListener {
 
    @Override
    public void start( final Stage primaryStage ) throws Exception {
-      final Map<String, String> arg  = getParameters().getNamed();
-      final int port = Integer.parseInt( arg.get( "port" ));
-      final int rank = Integer.parseInt( arg.get( "rank" )) - 1;
-      _registry   = new Registry( arg.get( "host" ), port, null );
+      final Map<String, String> args     = getParameters().getNamed();
+      final NetworkInterface    intrfc   = NetworkInterface.getByName( args.get( "interface" ));
+      final InetAddress         host     = InetAddress.getByName( args.get( "registry-host" ));
+      final int                 port     = Integer.parseInt( args.get( "registry-port" ));
+      final int                 bootPort = Integer.parseInt( args.get( "boot-port" ));
+      final int                 rank     = Integer.parseInt( args.get( "rank" )) - 1;
+      _registry = new Registry( intrfc, host, port, bootPort, b -> {/**/});
       _registry.addListener( this );
       final GridPane grid       = new GridPane();
       final Button   addTopic   = new Button( "Add" );

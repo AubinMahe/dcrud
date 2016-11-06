@@ -1,5 +1,5 @@
 #include <os/System.h>
-#include <util/CheckSysCall.h>
+#include <util/Status.h>
 
 #if defined( WIN32 ) || defined( _WIN32 )
 #  include <windows.h>
@@ -10,10 +10,10 @@
 #  include <errno.h>
 #endif
 
-bool osSystem_sleep( unsigned int milliseconds ) {
+utilStatus osSystem_sleep( unsigned int milliseconds ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
 #ifdef WIN32
    Sleep( milliseconds );
-   return true;
 #else
    int result = 0;
    struct timespec ts_remaining;
@@ -24,12 +24,10 @@ bool osSystem_sleep( unsigned int milliseconds ) {
       result = nanosleep( &ts_sleep, &ts_remaining );
    } while( EINTR == result );
    if( result ) {
-      perror( "nanosleep" );
+      status = UTIL_STATUS_STD_API_ERROR;
    }
-   utilCheckSysCall( 0 == result,
-      __FILE__, __LINE__, "nanosleep( %u )\n", milliseconds*1000000U );
-   return result == 0;
 #endif
+   return status;
 }
 
 uint64_t osSystem_nanotime( void ) {

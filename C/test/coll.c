@@ -1,3 +1,10 @@
+/*
+ *
+ * TEST 2
+ *
+ */
+#include "Person.h"
+
 #include <coll/List.h>
 #include <coll/Map.h>
 #include <coll/Set.h>
@@ -6,256 +13,229 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef char name_t[40];
-
-typedef struct Person_s {
-
-   name_t name;
-   name_t forname;
-   int    age;
-
-} Person;
-
-static Person * Person_create(
-   const char * name,
-   const char * forname,
-   int          age      )
-{
-   Person * person = (Person *)malloc( sizeof( Person ));
-   memset( person, 0 , sizeof( Person ));
-   strncpy( person->name, name, sizeof( person->name ));
-   strncpy( person->forname, forname, sizeof( person->forname ));
-   person->age = age;
-   return person;
-}
-
-static int unsignedMapComparator( const unsigned * * left, const unsigned * * right ) {
-   return (int)( *left - *right );
-}
-
-static int personComparator( const Person * * left, const Person * * right ) {
-   const char * l = (*left )->forname;
-   const char * r = (*right)->forname;
-   return strncmp( l, r, sizeof( name_t ));
-}
-
-static bool printPerson( collForeach * context ) {
-   const Person * person = (const Person *)context->item;
+static utilStatus printPerson( collForeach * context ) {
    const char *   test   = (const char *  )context->user;
-   printf( "|%s|    |%d: { %s, %s, %d }\n",
-      test, context->index, person->forname, person->name, person->age );
+   const Person * person = (const Person *)context->value;
+   if( context->key ) {
+      if( test[3] == '1' ) {
+         const char * key = (const char * )context->key;
+         printf( "|%s|    |%d: %s -> { %s, %s, %d }\n",
+            test, context->index, key, person->forname, person->name, person->age );
+      }
+      else {
+         const unsigned * key = (const unsigned *)context->key;
+         printf( "|%s|    |%d: %d -> { %s, %s, %d }\n",
+            test, context->index, *key, person->forname, person->name, person->age );
+      }
+   }
+   else {
+      printf( "|%s|    |%d: { %s, %s, %d }\n",
+         test, context->index, person->forname, person->name, person->age );
+   }
    context->retVal = NULL;
-   return true;
+   return UTIL_STATUS_NO_ERROR;
 }
 
-static bool printPersonEntry( collForeach * context ) {
-   collMapPair * pair   = (collMapPair *)context->item;
-   const char *         test   = (const char *        )context->user;
-   const char   *       key    = (const char *        )pair->key;
-   const Person *       person = (const Person *      )pair->value;
-   printf( "|%s|    |%d: %s -> { %s, %s, %d }\n",
-      test, context->index, key, person->forname, person->name, person->age );
-   context->retVal = NULL;
-   return true;
-}
-
-static bool printPersonEntry2( collForeach * context ) {
-   collMapPair * pair   = (collMapPair *)context->item;
-   const char *         test   = (const char *        )context->user;
-   const char   *       key    = (const char *        )pair->key;
-   const Person *       person = (const Person *      )pair->value;
-   printf( "|%s|    |%d: %u -> { %s, %s, %d }\n",
-      test, context->index, *key, person->forname, person->name, person->age );
-   context->retVal = NULL;
-   return true;
-}
-
-void test_002( void ) {
-   Person *    aubin  = Person_create( "Mahe"   , "Aubin" , 49 );
-   Person *    muriel = Person_create( "Le Nain", "Muriel", 42 );
-   Person *    eve    = Person_create( "Mahe"   , "Eve"   ,  7 );
-   bool        add;
-   bool        removed;
+utilStatus coll( void ) {
+   utilStatus  status = UTIL_STATUS_NO_ERROR;
+   Person *    aubin  = NULL;
+   Person *    muriel = NULL;
+   Person *    eve    = NULL;
    Person *    person;
-   bool        alreadyExists;
    collMapPair previous;
+   unsigned    size;
+
+   CHK(__FILE__,__LINE__,Person_new( &aubin , "Mahe"   , "Aubin" , 49 ));
+   CHK(__FILE__,__LINE__,Person_new( &muriel, "Le Nain", "Muriel", 42 ));
+   CHK(__FILE__,__LINE__,Person_new( &eve   , "Mahe"   , "Eve"   ,  7 ));
    printf( "+----+----+----------------------------------------\n" );
    {
-      collList persons = collList_new();
-      collList_add( persons, muriel );
-      collList_add( persons, aubin );
-      collList_add( persons, eve );
-      collList_foreach( persons, printPerson, "List" );
-      removed = collList_remove( persons, aubin );
-      if( removed ) {
+      collList persons;
+      unsigned count;
+
+      CHK(__FILE__,__LINE__,collList_new( &persons ));
+      CHK(__FILE__,__LINE__,collList_add( persons, muriel ));
+      CHK(__FILE__,__LINE__,collList_add( persons, aubin ));
+      CHK(__FILE__,__LINE__,collList_add( persons, eve ));
+      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List", NULL ));
+      status = collList_remove( persons, aubin );
+      if( UTIL_STATUS_NO_ERROR == status ) {
          printf( "|List|OK  |remove\n" );
       }
       else {
-         printf( "|List|FAIL|remove\n" );
+         printf( "|List|FAIL|remove: %s\n", utilStatusMessages[status] );
       }
-      if( collList_size( persons ) == 2 ) {
+      CHK(__FILE__,__LINE__,collList_size( persons, &count ));
+      if( count == 2 ) {
          printf( "|List|OK  |remove: size() == 2\n" );
       }
       else {
          printf( "|List|FAIL|remove: size() != 2\n" );
       }
-      collList_foreach( persons, printPerson, "List" );
-      collList_delete( &persons );
+      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List", NULL ));
+      CHK(__FILE__,__LINE__,collList_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collSet persons = collSet_new((collComparator)personComparator );
-      collSet_add( persons, muriel );
-      collSet_add( persons, aubin );
-      collSet_add( persons, eve );
-      collSet_foreach( persons, printPerson, "Set " );
-      add = collSet_add( persons, aubin );
-      if( add == false ) {
+      unsigned size;
+      collSet persons;
+      CHK(__FILE__,__LINE__,collSet_new( &persons, (collComparator)Person_fornameCmp ));
+      CHK(__FILE__,__LINE__,collSet_add( persons, muriel ));
+      CHK(__FILE__,__LINE__,collSet_add( persons, aubin ));
+      CHK(__FILE__,__LINE__,collSet_add( persons, eve ));
+      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set ", NULL ));
+      status = collSet_add( persons, aubin );
+      if( UTIL_STATUS_DUPLICATE == status ) {
          printf( "|Set |OK  |add: doublon refused\n" );
       }
       else {
          printf( "|Set |FAIL|add: doublon accepted\n" );
       }
-      removed = collSet_remove( persons, aubin );
-      if( removed ) {
+      status = collSet_remove( persons, aubin );
+      if( UTIL_STATUS_NO_ERROR == status ) {
          printf( "|Set |OK  |remove\n" );
       }
       else {
          printf( "|Set |FAIL|remove\n" );
       }
-      if( collSet_size( persons ) == 2 ) {
+      status = collSet_size( persons, &size );
+      if( size == 2 ) {
          printf( "|Set |OK  |remove\n" );
       }
       else {
          printf( "|Set |FAIL|remove: size() != 2\n" );
       }
-      collSet_foreach( persons, printPerson, "Set " );
-      collSet_delete( &persons );
+      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set ", NULL ));
+      CHK(__FILE__,__LINE__,collSet_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collMap persons = collMap_new((collComparator)collStringComparator );
-      alreadyExists = collMap_put( persons, muriel->forname, muriel, &previous );
-      if( alreadyExists ) {
-         printf( "|Map |FAIL|put: entry already exists in an empty map!\n" );
+      collMap persons;
+      CHK(__FILE__,__LINE__,collMap_new( &persons, (collComparator)collStringCompare ));
+      CHK(__FILE__,__LINE__,collMap_put( persons, muriel->forname, muriel, &previous ));
+      if( UTIL_STATUS_DUPLICATE == status ) {
+         printf( "|Map1|FAIL|put: entry already exists in an empty map!\n" );
       }
       else {
-         printf( "|Map |OK  |put\n" );
+         printf( "|Map1|OK  |put\n" );
       }
-      alreadyExists = collMap_put( persons, aubin ->forname, aubin, &previous );
-      if( alreadyExists ) {
-         printf( "|Map |FAIL|put: entry already exists in an empty map!\n" );
-      }
-      else {
-         printf( "|Map |OK  |put\n" );
-      }
-      alreadyExists = collMap_put( persons, eve   ->forname, eve, &previous );
-      if( alreadyExists ) {
-         printf( "|Map |FAIL|put: entry already exists in an empty map!\n" );
+      status = collMap_put( persons, aubin ->forname, aubin, &previous );
+      if( UTIL_STATUS_DUPLICATE == status ) {
+         printf( "|Map1|FAIL|put: entry already exists in an empty map!\n" );
       }
       else {
-         printf( "|Map |OK  |put\n" );
+         printf( "|Map1|OK  |put\n" );
       }
-      collMap_foreach( persons, printPersonEntry, "Map " );
-      person = collMap_get( persons, "Eve" );
-      if( person == NULL ) {
-         printf( "|Map |FAIL|get: not found!\n" );
+      status = collMap_put( persons, eve   ->forname, eve, &previous );
+      if( UTIL_STATUS_DUPLICATE == status ) {
+         printf( "|Map1|FAIL|put: entry already exists in an empty map!\n" );
+      }
+      else {
+         printf( "|Map1|OK  |put\n" );
+      }
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1", NULL ));
+      CHK(__FILE__,__LINE__,collMap_get( persons, "Eve", &person ));
+      if( UTIL_STATUS_NOT_FOUND == status ) {
+         printf( "|Map1|FAIL|get: not found!\n" );
       }
       else if( person == eve ) {
-         printf( "|Map |OK  |get\n" );
+         printf( "|Map1|OK  |get\n" );
       }
       else {
-         printf( "|Map |FAIL|get: { %s, %s, %d }\n",
+         printf( "|Map1|FAIL|get: { %s, %s, %d }\n",
             person->forname, person->name, person->age );
       }
-      alreadyExists = collMap_put( persons, "Aubin", aubin, &previous );
-      if( alreadyExists ) {
-         printf( "|Map |OK  |put: previous entry already exist\n" );
+      CHK(__FILE__,__LINE__,collMap_put( persons, "Aubin", aubin, &previous ));
+      if( previous.value != aubin ) {
+         printf( "|Map1|FAIL|put: previous entry is not aubin!\n" );
+      }
+      else {
+         printf( "|Map1|OK  |put: previous is aubin\n" );
+      }
+      status = collMap_remove( persons, "Aubin", &previous );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         printf( "|Map1|OK  |remove\n" );
          if( previous.value != aubin ) {
-            printf( "|Map |FAIL|put: previous entry is not aubin!\n" );
+            person = previous.value;
+            if( person ) {
+               printf( "|Map1|FAIL|remove: previous entry is not aubin: { %s, %s, %d }!\n",
+                  person->forname, person->name, person->age );
+            }
+            else {
+               printf( "|Map1|FAIL|remove: previous entry is null!\n" );
+            }
          }
          else {
-            printf( "|Map |OK  |put: previous is aubin\n" );
+            printf( "|Map1|OK  |remove: previous is aubin\n" );
          }
       }
       else {
-         printf( "|Map |FAIL|put: { %s, %s, %d }\n",
-            person->forname, person->name, person->age );
+         printf( "|Map1|FAIL|remove: %s\n", utilStatusMessages[status] );
       }
-      alreadyExists = collMap_remove( persons, "Aubin", &previous );
-      if( alreadyExists ) {
-         printf( "|Map |OK  |remove\n" );
-         if( previous.value != aubin ) {
-            printf( "|Map |FAIL|remove: previous entry is not aubin!\n" );
-         }
-         else {
-            printf( "|Map |OK  |remove: previous is aubin\n" );
-         }
+      CHK(__FILE__,__LINE__,collMap_size( persons, &size ));
+      if( size == 2 ) {
+         printf( "|Map1|OK  |remove: size == 2\n" );
       }
       else {
-         printf( "|Map |FAIL|remove: not found\n" );
+         printf( "|Map1|FAIL|remove: size() != 2\n" );
       }
-      if( collMap_size( persons ) == 2 ) {
-         printf( "|Map |OK  |remove: size == 2\n" );
-      }
-      else {
-         printf( "|Map |FAIL|remove: size() != 2\n" );
-      }
-      collMap_foreach( persons, printPersonEntry, "Map " );
-      collMap_delete( &persons );
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1", NULL ));
+      CHK(__FILE__,__LINE__,collMap_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
    {
-      collMap persons = collMap_new((collComparator)unsignedMapComparator );
+      collMap persons;
       static unsigned keyMuriel = 12;
       static unsigned keyAubin  = 24;
       static unsigned keyEve    = 36;
 
-      collMap_put( persons, &keyMuriel, muriel, &previous );
-      collMap_put( persons, &keyAubin , aubin, &previous );
-      collMap_put( persons, &keyEve   , eve, &previous );
-      collMap_foreach( persons, printPersonEntry2, "Map " );
-      person = collMap_get( persons, &keyEve );
-      if( person == NULL ) {
-         printf( "|Map |FAIL|get: not found!\n" );
-      }
-      else if( person == eve ) {
-         printf( "|Map |OK  |get\n" );
+      CHK(__FILE__,__LINE__,collMap_new( &persons, (collComparator)collUintCompare ));
+      CHK(__FILE__,__LINE__,collMap_put( persons, &keyMuriel, muriel, &previous ));
+      CHK(__FILE__,__LINE__,collMap_put( persons, &keyAubin , aubin, &previous ));
+      CHK(__FILE__,__LINE__,collMap_put( persons, &keyEve   , eve, &previous ));
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2", NULL ));
+      status = collMap_get( persons, &keyEve, &person );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         if( person == eve ) {
+            printf( "|Map2|OK  |get\n" );
+         }
+         else {
+            printf( "|Map2|FAIL|get: found but not as expected { %s, %s, %d }\n",
+               person->forname, person->name, person->age );
+         }
       }
       else {
-         printf( "|Map |FAIL|get: { %s, %s, %d }\n",
-            person->forname, person->name, person->age );
+         printf( "|Map2|FAIL|get: not found!\n" );
       }
-      alreadyExists = collMap_put( persons, &keyAubin, aubin, &previous );
-      if( ! alreadyExists ) {
-         printf( "|Map |FAIL|put: doublon accepted!\n" );
-      }
-      else if( previous.value == aubin ) {
-         printf( "|Map |OK  |put: doublon refused\n" );
+      status = collMap_put( persons, &keyAubin, aubin, &previous );
+      if( previous.value == aubin ) {
+         printf( "|Map2|OK  |put: previous association replaced\n" );
       }
       else {
          person = (Person *)previous.value;
-         printf( "|Map |FAIL|put: { %s, %s, %d }\n",
+         printf( "|Map2|FAIL|put: { %s, %s, %d }\n",
             person->forname, person->name, person->age );
       }
-      alreadyExists = collMap_remove( persons, &keyAubin, &previous );
-      if( alreadyExists && previous.value == aubin ) {
-         printf( "|Map |OK  |remove\n" );
+      status = collMap_remove( persons, &keyAubin, &previous );
+      if(( UTIL_STATUS_NO_ERROR == status )&&( previous.value == aubin )) {
+         printf( "|Map2|OK  |remove\n" );
       }
       else {
-         printf( "|Map |FAIL|remove: unexpected removed item\n" );
+         printf( "|Map2|FAIL|remove: unexpected removed item\n" );
       }
-      if( collMap_size( persons ) == 2 ) {
-         printf( "|Map |OK  |remove\n" );
+      CHK(__FILE__,__LINE__,collMap_size( persons, &size ));
+      if( size == 2 ) {
+         printf( "|Map2|OK  |remove\n" );
       }
       else {
-         printf( "|Map |FAIL|remove: size() != 2\n" );
+         printf( "|Map2|FAIL|remove: size() != 2\n" );
       }
-      collMap_foreach( persons, printPersonEntry2, "Map " );
-      collMap_delete( &persons );
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2", NULL ));
+      CHK(__FILE__,__LINE__,collMap_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
-   free( aubin );
-   free( muriel );
-   free( eve );
+   CHK(__FILE__,__LINE__,Person_delete( &aubin ));
+   CHK(__FILE__,__LINE__,Person_delete( &muriel ));
+   CHK(__FILE__,__LINE__,Person_delete( &eve ));
+   return status;
 }

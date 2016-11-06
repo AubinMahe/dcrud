@@ -3,14 +3,14 @@
 extern "C" {
 #endif
 
-#include <util/types.h>
+#include <util/Status.h>
 
 UTIL_ADT( osMutex );
 
-int osMutex_new    ( osMutex * This );
-int osMutex_delete ( osMutex * This );
-int osMutex_take   ( osMutex   This );
-int osMutex_release( osMutex   This );
+utilStatus osMutex_new    ( osMutex * This );
+utilStatus osMutex_delete ( osMutex * This );
+utilStatus osMutex_take   ( osMutex   This );
+utilStatus osMutex_release( osMutex   This );
 
 #ifdef __cplusplus
 }

@@ -3,6 +3,8 @@
 extern "C" {
 #endif
 
+#include <util/Status.h>
+
 typedef struct ioInetSocketAddress_s {
 
    char           inetAddress[16];
@@ -10,13 +12,13 @@ typedef struct ioInetSocketAddress_s {
 
 } ioInetSocketAddress;
 
-void ioInetSocketAddress_init( ioInetSocketAddress * This, const char * host, unsigned short port );
-
-ioInetSocketAddress * ioInetSocketAddress_new( const char * host, unsigned short port );
-
-int ioInetSocketAddress_comparator(
-   const ioInetSocketAddress * left,
-   const ioInetSocketAddress * right );
+utilStatus ioInetSocketAddress_new   ( ioInetSocketAddress ** This, const char *   host,
+                                                                    unsigned short port );
+utilStatus ioInetSocketAddress_delete( ioInetSocketAddress ** This );
+utilStatus ioInetSocketAddress_init  ( ioInetSocketAddress *  This, const char *   host,
+                                                                    unsigned short port );
+int ioInetSocketAddress_comparator( const ioInetSocketAddress * left,
+                                    const ioInetSocketAddress * right );
 
 #ifdef __cplusplus
 }

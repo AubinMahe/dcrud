@@ -2,17 +2,34 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/*
+#include <util/Status.h>
+#include <coll/Comparator.h>
+#include <coll/ForeachFunction.h>
 
-#include <util/types.h>
+UTIL_ADT( collMapFuncPtr );
 
-#undef  COLL_MAP_TYPE
-#define COLL_MAP_TYPE collMapFuncPtr
-typedef void (* UTIL_CONCAT(COLL_MAP_TYPE,Value))( void * );
+typedef void * collMapFuncPtrKey;
+typedef void * collMapFuncPtrValue;
+typedef struct collMapFuncPtrPair_s {
 
-#include <coll/Map.template>
-#undef COLL_MAP_TYPE
-#undef COLL_MAP_NAME
+   collMapFuncPtrKey   key;
+   collMapFuncPtrValue value;
 
+} collMapFuncPtrPair;
+
+typedef collMapFuncPtrPair * collMapFuncPtrPairs;
+
+utilStatus collMapFuncPtr_new    ( collMapFuncPtr * This, collComparator cmp );
+utilStatus collMapFuncPtr_delete ( collMapFuncPtr * This );
+utilStatus collMapFuncPtr_clear  ( collMapFuncPtr   This );
+utilStatus collMapFuncPtr_put    ( collMapFuncPtr   This, collMapFuncPtrKey key, collMapFuncPtrValue value, collMapFuncPtrPair * previousPair );
+utilStatus collMapFuncPtr_remove ( collMapFuncPtr   This, collMapFuncPtrKey key, collMapFuncPtrPair * previousPair );
+utilStatus collMapFuncPtr_size   ( collMapFuncPtr   This, unsigned int * size );
+utilStatus collMapFuncPtr_get    ( collMapFuncPtr   This, collMapFuncPtrKey key, collMapFuncPtrValue * result );
+utilStatus collMapFuncPtr_hasKey ( collMapFuncPtr   This, collMapFuncPtrKey key, bool * result );
+utilStatus collMapFuncPtr_foreach( collMapFuncPtr   This, collForeachFunction fn, void * userData, collForeachResult * result );
+*/
 #ifdef __cplusplus
 }
 #endif

@@ -3,15 +3,18 @@
 #include "Cache.h"
 #include "ParticipantImpl.h"
 #include "IProtocol.h"
-
-#include <io/ByteBuffer.h>
-
-#include <os/System.h>
-
-#include <util/CheckSysCall.h>
+#include "magic.h"
+#include "poolSizes.h"
 
 #include <util/Dump.h>
 #include <util/Performance.h>
+#include <util/Pool.h>
+#include <util/String.h>
+
+#include <os/System.h>
+#include <os/threads.h>
+
+#include <io/ByteBuffer.h>
 
 #if defined( WIN32 ) || defined( _WIN32 )
 #  include <windows.h>
@@ -22,167 +25,203 @@
 #endif
 #include <stdio.h>
 
-typedef struct NetworkReceiverImpl_s {
+typedef struct dcrudNetworkReceiverImpl_s {
 
-   ParticipantImpl * participant;
-   SOCKET            in;
-   ioByteBuffer      inBuf;
+   unsigned                magic;
+   dcrudIParticipantImpl * participant;
+   SOCKET                  in;
+   ioByteBuffer            inBuf;
 #ifdef WIN32
-   HANDLE            thread;
+   HANDLE                  thread;
 #else
-   pthread_t         thread;
+   pthread_t               thread;
 #endif
-   bool              dumpReceivedBuffer;
+   bool                    dumpReceivedBuffer;
 
-} NetworkReceiverImpl;
+} dcrudNetworkReceiverImpl;
 
-static void dataDelete( NetworkReceiverImpl * This, ioByteBuffer frame ) {
+static void dataDelete( dcrudNetworkReceiverImpl * This, ioByteBuffer frame ) {
    dcrudGUID    id;
    unsigned int c;
 
-   dcrudGUID_unserialize( frame, &id );
+   dcrudGUID_unserialize( &id, frame );
    osMutex_take( This->participant->cachesMutex );
    for( c = 0; c < CACHES_COUNT; ++c ) {
       if( This->participant->caches[c] ) {
-         dcrudCache_deleteFromNetwork( This->participant->caches[c], &id );
-      }
-      else {
-         break;
+         dcrudCache_deleteFromNetwork( This->participant->caches[c], id );
       }
    }
    osMutex_release( This->participant->cachesMutex );
 }
 
-static void dataUpdate( NetworkReceiverImpl * This, ioByteBuffer frame ) {
-   unsigned int size = 0;
+static utilStatus dataUpdate( dcrudNetworkReceiverImpl * This, ioByteBuffer frame ) {
+   utilStatus   status = UTIL_STATUS_NO_ERROR;
+   unsigned int size   = 0;
    unsigned int c;
 
-   ioByteBuffer_getInt( frame, &size );
-   osMutex_take( This->participant->cachesMutex );
-   for( c = 0; c < CACHES_COUNT; ++c ) {
+   CHK(__FILE__,__LINE__,ioByteBuffer_getUInt( frame, &size ))
+   CHK(__FILE__,__LINE__,osMutex_take( This->participant->cachesMutex ))
+   for( c = 0; ( status == UTIL_STATUS_NO_ERROR )&&( c < CACHES_COUNT ); ++c ) {
       if( This->participant->caches[c] ) {
-         dcrudCache_updateFromNetwork(
-            This->participant->caches[c],
-            ioByteBuffer_copy( frame, GUID_SIZE + CLASS_ID_SIZE + size ));
+         ioByteBuffer copy;
+         status = ioByteBuffer_copy( frame, &copy, GUID_SIZE + CLASS_ID_SIZE + size );
+         if( UTIL_STATUS_NO_ERROR == status ) {
+            status = dcrudCache_updateFromNetwork( This->participant->caches[c], copy );
+         }
       }
       else {
          break;
       }
    }
    osMutex_release( This->participant->cachesMutex );
-   ioByteBuffer_setPosition( frame,
-      ioByteBuffer_getPosition( frame ) + GUID_SIZE + CLASS_ID_SIZE + size );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      size_t pos = 0;
+      status = ioByteBuffer_getPosition( frame, &pos );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         status = ioByteBuffer_setPosition( frame, pos + GUID_SIZE + CLASS_ID_SIZE + size );
+      }
+   }
+   return status;
 }
 
-static void operation( NetworkReceiverImpl * This, ioByteBuffer frame ) {
-   byte           count = 0;
+static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame ) {
+   utilStatus     status = UTIL_STATUS_NO_ERROR;
+   byte           count  = 0;
    char           intrfcName[INTERFACE_NAME_MAX_LENGTH];
    char           opName    [OPERATION_NAME_MAX_LENGTH];
    int            callId;
-   unsigned int   i;
-   byte           queueNdx = DCRUD_DEFAULT_QUEUE;
-   dcrudCallMode  callMode = DCRUD_ASYNCHRONOUS_DEFERRED;
-   dcrudArguments args     = dcrudArguments_new();
+   unsigned int    i;
+   dcrudQueueIndex queueNdx = DCRUD_DEFAULT_QUEUE;
+   dcrudCallMode   callMode = DCRUD_ASYNCHRONOUS_DEFERRED;
+   dcrudArguments  args     = NULL;
 
-   ioByteBuffer_getString( frame, intrfcName, sizeof( intrfcName ));
-   ioByteBuffer_getString( frame, opName    , sizeof( opName     ));
-   ioByteBuffer_getInt   ( frame, (unsigned int *)&callId );
-   ioByteBuffer_getByte  ( frame, &count );
+   CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, intrfcName, sizeof( intrfcName )))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, opName    , sizeof( opName     )))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getInt   ( frame, &callId ))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getByte  ( frame, &count  ))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getByte  ( frame, (byte *)&callMode ))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getByte  ( frame, (byte *)&queueNdx ))
+   CHK(__FILE__,__LINE__,dcrudArguments_new( &args ))
+   CHK(__FILE__,__LINE__,dcrudArguments_setMode ( args, callMode ))
+   CHK(__FILE__,__LINE__,dcrudArguments_setQueue( args, queueNdx ))
    for( i = 0; i < count; ++i ) {
       char         name[ARG_NAME_MAX_LENGTH];
       dcrudClassID classID;
       dcrudType    type;
 
-      ioByteBuffer_getString( frame, name, sizeof( name ));
-      dcrudClassID_unserialize( frame, &classID );
-      type = dcrudClassID_getType( classID );
+      CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, name, sizeof( name )))
+      CHK(__FILE__,__LINE__,dcrudClassID_unserialize( &classID, frame ))
+      CHK(__FILE__,__LINE__,dcrudClassID_getType( classID, &type ))
       switch( type ) {
-      case dcrudTYPE_NULL: dcrudArguments_putNull( args, name ); break;
+      case dcrudTYPE_NULL:
+         CHK(__FILE__,__LINE__,dcrudArguments_putNull( args, name ))
+         break;
       case dcrudTYPE_BYTE:{
          byte item;
-         ioByteBuffer_getByte( frame, &item );
-         dcrudArguments_putByte( args, name, item );
-      }break;
+         CHK(__FILE__,__LINE__,ioByteBuffer_getByte( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putByte( args, name, item ))
+      }
+      break;
       case dcrudTYPE_BOOLEAN:{
          byte item;
-         ioByteBuffer_getByte( frame, &item );
-         dcrudArguments_putBoolean( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getByte( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putBoolean( args, name, item ))
       }break;
       case dcrudTYPE_SHORT:{
+         short item;
+         CHK(__FILE__,__LINE__,ioByteBuffer_getShort( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putShort( args, name, item ))
+      }break;
+      case dcrudTYPE_UNSIGNED_SHORT:{
          unsigned short item;
-         ioByteBuffer_getShort( frame, &item );
-         dcrudArguments_putShort( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getUShort( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putUshort( args, name, item ))
       }break;
       case dcrudTYPE_INTEGER:{
          unsigned int item;
-         ioByteBuffer_getInt( frame, &item );
-         dcrudArguments_putInt( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getUInt( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putUint( args, name, item ))
+      }break;
+      case dcrudTYPE_UNSIGNED_INTEGER:{
+         unsigned int item;
+         CHK(__FILE__,__LINE__,ioByteBuffer_getUInt( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putUint( args, name, item ))
       }break;
       case dcrudTYPE_LONG:{
+         int64_t item;
+         CHK(__FILE__,__LINE__,ioByteBuffer_getLong( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putLong( args, name, item ))
+      }break;
+      case dcrudTYPE_UNSIGNED_LONG:{
          uint64_t item;
-         ioByteBuffer_getLong( frame, &item );
-         dcrudArguments_putLong( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getULong( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putUlong( args, name, item ))
       }break;
       case dcrudTYPE_FLOAT:{
          float item;
-         ioByteBuffer_getFloat( frame, &item );
-         dcrudArguments_putFloat( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getFloat( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putFloat( args, name, item ))
       }break;
       case dcrudTYPE_DOUBLE:{
          double item;
-         ioByteBuffer_getDouble( frame, &item );
-         dcrudArguments_putDouble( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getDouble( frame, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putDouble( args, name, item ))
       }break;
       case dcrudTYPE_STRING:{
          char item[64*1024];
-         ioByteBuffer_getString( frame, item, sizeof( item ));
-         dcrudArguments_putString( args, name, item );
+         CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, item, sizeof( item )))
+         CHK(__FILE__,__LINE__,dcrudArguments_putString( args, name, item ))
       }break;
       case dcrudTYPE_CLASS_ID:{
-         dcrudClassID item;
-         dcrudClassID_unserialize( frame, &item );
-         dcrudArguments_putClassID( args, name, item );
+         dcrudClassID item = NULL;
+         CHK(__FILE__,__LINE__,dcrudClassID_unserialize( &item, frame ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putClassID( args, name, item ))
       }break;
       case dcrudTYPE_GUID:{
-         dcrudGUID item;
-         dcrudGUID_unserialize( frame, &item );
-         dcrudArguments_putGUID( args, name, item );
-      }break;
-      case dcrudTYPE_CALL_MODE:{
-         byte item;
-         ioByteBuffer_getByte( frame, &item );
-         dcrudArguments_setMode( args, item );
-      }break;
-      case dcrudTYPE_QUEUE_INDEX:{
-         byte item;
-         ioByteBuffer_getByte( frame, &item );
-         dcrudArguments_setQueue( args, item );
+         dcrudGUID item = NULL;
+         CHK(__FILE__,__LINE__,dcrudGUID_unserialize( &item, frame ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putGUID( args, name, item ))
       }break;
       case dcrudTYPE_SHAREABLE:{
-         dcrudShareable item = ParticipantImpl_newInstance( This->participant, frame );
-         dcrudArguments_putShareable( args, name, item );
+         dcrudShareable item = NULL;
+         CHK(__FILE__,__LINE__,
+            dcrudIParticipantImpl_newInstance( This->participant, frame, NULL, &item ))
+         CHK(__FILE__,__LINE__,dcrudArguments_putShareable( args, name, item ))
       }break;
-      default:
-         fprintf( stderr, "%s:%d:Unexpected class ID: %d\n", __FILE__, __LINE__, (int)type );
-      break;
+      default:{
+         char cidas[100];
+         dcrudClassID_toString( classID, cidas, sizeof( cidas ));
+         fprintf( stderr,
+            "%s:%d:Unexpected type: %3d (%02X), intrfcName: '%s', operation: '%s',"
+            " call-id: %d, arg-count: %d, arg-name: '%s', class-id: %s\n",
+            __FILE__, __LINE__, (int)type, (int)type, intrfcName, opName,
+            callId, count, name, cidas );
+      }break;
       }
+      CHK(__FILE__,__LINE__,dcrudClassID_delete( &classID ))
    }
    if( 0 ==  strcmp( intrfcName, ICRUD_INTERFACE_NAME )) {
-      dcrudIDispatcher_executeCrud( This->participant->dispatcher, opName, args );
+      CHK(__FILE__,__LINE__,
+         dcrudIDispatcher_executeCrud( This->participant->dispatcher, opName, args ))
    }
    else if( callId >= 0 ) {
-      dcrudIDispatcher_execute( This->participant->dispatcher,
-         intrfcName, opName, args, callId, queueNdx, callMode );
+      CHK(__FILE__,__LINE__,dcrudIDispatcher_execute( This->participant->dispatcher,
+         intrfcName, opName, args, callId, queueNdx, callMode ))
    }
    else if( callId < 0 ) {
-      ParticipantImpl_callback( This->participant, intrfcName, opName, args, -callId );
+      CHK(__FILE__,__LINE__,
+         dcrudIParticipantImpl_callback( This->participant, intrfcName, opName, args, -callId ))
    }
+   return status;
 }
 
-static void * run( NetworkReceiverImpl * This ) {
+static void * run( dcrudNetworkReceiverImpl * This ) {
    char     signa[DCRUD_SIGNATURE_SIZE];
 #ifdef PERFORMANCE
    uint64_t atStart = 0;
+#endif
+#ifdef linux
+   pthread_detach( pthread_self());
 #endif
    while( true ) {
 #ifdef PERFORMANCE
@@ -191,7 +230,7 @@ static void * run( NetworkReceiverImpl * This ) {
       }
 #endif
       ioByteBuffer_clear( This->inBuf );
-      if( IO_STATUS_NO_ERROR == ioByteBuffer_receive( This->inBuf, This->in )) {
+      if( UTIL_STATUS_NO_ERROR == ioByteBuffer_receive( This->inBuf, This->in )) {
 #ifdef PERFORMANCE
          atStart = osSystem_nanotime();
 #endif
@@ -201,8 +240,8 @@ static void * run( NetworkReceiverImpl * This ) {
          }
          ioByteBuffer_get( This->inBuf, (byte *)signa, 0, sizeof( signa ));
          if( 0 == strncmp( signa, (const char *)DCRUD_SIGNATURE, DCRUD_SIGNATURE_SIZE )) {
-            FrameType    frameType = FRAMETYPE_NO_OP;
-            unsigned int ignored = 0;
+            FrameType frameType = FRAMETYPE_NO_OP;
+            size_t ignored = 0;
             ioByteBuffer_getByte( This->inBuf, (byte*)&frameType );
             switch( frameType ) {
             case FRAMETYPE_DATA_CREATE_OR_UPDATE: dataUpdate( This, This->inBuf ); break;
@@ -213,15 +252,17 @@ static void * run( NetworkReceiverImpl * This ) {
                   __FILE__, __LINE__, frameType );
                break;
             }
-            ignored = ioByteBuffer_remaining( This->inBuf );
+            ioByteBuffer_remaining( This->inBuf, &ignored );
             if( ignored != 0 ) {
-               fprintf( stderr, "%s:%d:%d received byte%s ignored\n",
+               fprintf( stderr, "%s:%d:%lu received byte%s ignored\n",
                   __FILE__, __LINE__, ignored, ignored > 1 ? "s": "" );
             }
          }
          else {
-            fprintf( stderr, "%s:%d:Garbage received, %d bytes discarded!\n",
-               __FILE__, __LINE__, ioByteBuffer_getLimit( This->inBuf ));
+            size_t limit;
+            ioByteBuffer_getLimit( This->inBuf, &limit );
+            fprintf( stderr, "%s:%d:Garbage received, %lu bytes discarded!\n",
+               __FILE__, __LINE__, limit );
          }
       }
       else {
@@ -233,68 +274,51 @@ static void * run( NetworkReceiverImpl * This ) {
 
 typedef void * ( * pthread_routine_t )( void * );
 
-NetworkReceiver NetworkReceiver_new(
-   ParticipantImpl *           participant,
+UTIL_DEFINE_SAFE_CAST( dcrudNetworkReceiver     )
+UTIL_POOL_DECLARE    ( dcrudNetworkReceiverImpl )
+
+utilStatus dcrudNetworkReceiver_new(
+   dcrudNetworkReceiver *      self,
+   dcrudIParticipantImpl *     participant,
    const ioInetSocketAddress * addr,
    const char *                intrfc,
    bool                        dumpReceivedBuffer )
 {
-   NetworkReceiverImpl * This = (NetworkReceiverImpl *)malloc( sizeof( NetworkReceiverImpl ));
-   int                   trueValue = 1;
-   struct sockaddr_in    local_sin;
-   struct ip_mreq        mreq;
-
-   memset( &local_sin, 0, sizeof( local_sin ));
-   memset( &mreq     , 0, sizeof( mreq ));
-   memset( This, 0, sizeof( NetworkReceiverImpl ));
-   This->participant        = participant;
-   This->inBuf              = ioByteBuffer_new( 64*1024 );
-   This->in                 = socket( AF_INET, SOCK_DGRAM, 0 );
-   This->dumpReceivedBuffer = dumpReceivedBuffer;
-   if( ! utilCheckSysCall( This->in != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
-      return (NetworkReceiver)This;
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == self || NULL == participant || NULL == addr || NULL == intrfc ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
    }
-   if( ! utilCheckSysCall( 0 ==
-      setsockopt( This->in, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
-      __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" ))
-   {
-      return (NetworkReceiver)This;
+   else {
+      dcrudNetworkReceiverImpl * This = NULL;
+      UTIL_ALLOCATE_ADT( dcrudNetworkReceiver, self, This );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         struct sockaddr_in local_sin;
+         struct ip_mreq     mreq;
+         int                T = 1;
+         osThread           thread;
+         memset( &local_sin, 0, sizeof( local_sin ));
+         memset( &mreq     , 0, sizeof( mreq ));
+         local_sin.sin_family      = AF_INET;
+         local_sin.sin_port        = htons( addr->port );
+         local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
+         mreq.imr_multiaddr.s_addr = inet_addr( addr->inetAddress );
+         mreq.imr_interface.s_addr = inet_addr( intrfc );
+         CHK(__FILE__,__LINE__,((This->in = socket( AF_INET, SOCK_DGRAM, 0 ))<0)?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         CHK(__FILE__,__LINE__,setsockopt( This->in, SOL_SOCKET, SO_REUSEADDR, (char*)&T, sizeof( T ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         CHK(__FILE__,__LINE__,bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         CHK(__FILE__,__LINE__,setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         CHK(__FILE__,__LINE__,ioByteBuffer_new( &This->inBuf, 64*1024 ));
+         This->participant        = participant;
+         This->dumpReceivedBuffer = dumpReceivedBuffer;
+         CHK(__FILE__,__LINE__,osCreateThread((osThreadRoutine)run, &thread, This )?UTIL_STATUS_NO_ERROR:UTIL_STATUS_STD_API_ERROR );
+      }
    }
-   local_sin.sin_family      = AF_INET;
-   local_sin.sin_port        = htons( addr->port );
-   local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
-   if( ! utilCheckSysCall( 0 ==
-      bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin )),
-      __FILE__, __LINE__, "bind(%s,%d)", intrfc, addr->port ))
-   {
-      return (NetworkReceiver)This;
-   }
-   mreq.imr_multiaddr.s_addr = inet_addr( addr->inetAddress );
-   mreq.imr_interface.s_addr = inet_addr( intrfc );
-   if( ! utilCheckSysCall( 0 ==
-      setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq )),
-      __FILE__, __LINE__, "setsockopt(IP_ADD_MEMBERSHIP,%s)", addr->inetAddress ))
-   {
-      return (NetworkReceiver)This;
-   }
-   printf( "Receiving from %s, bound to %s:%d\n", addr->inetAddress, intrfc, addr->port );
-#ifdef WIN32
-   DWORD tid;
-   This->thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)run, This, 0, &tid );
-   if( ! utilCheckSysCall( This->thread != NULL, __FILE__, __LINE__, "CreateThread" ))
-#else
-   if( ! utilCheckSysCall( 0 ==
-      pthread_create( &This->thread, NULL, (pthread_routine_t)run, This ),
-      __FILE__, __LINE__, "pthread_create" ))
-#endif
-   {
-      return (NetworkReceiver)This;
-   }
-   return (NetworkReceiver)This;
+   return status;
 }
 
-void NetworkReceiver_delete( NetworkReceiver * self ) {
-   NetworkReceiverImpl * This = *(NetworkReceiverImpl **)self;
+utilStatus dcrudNetworkReceiver_delete( dcrudNetworkReceiver * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   dcrudNetworkReceiverImpl * This = *(dcrudNetworkReceiverImpl **)self;
    void * retVal = NULL;
 
 #ifdef WIN32
@@ -306,7 +330,7 @@ void NetworkReceiver_delete( NetworkReceiver * self ) {
    pthread_join( This->thread, &retVal );
    close( This->in );
 #endif
-   ioByteBuffer_delete( &This->inBuf );
-   free( This );
-   *self = 0;
+   status = ioByteBuffer_delete( &This->inBuf );
+   UTIL_RELEASE( dcrudNetworkReceiverImpl );
+   return status;
 }

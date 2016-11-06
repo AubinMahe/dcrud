@@ -3,23 +3,25 @@
 extern "C" {
 #endif
 
-#include <util/types.h>
-#include <coll/Comparator.h>
+#include "Comparator.h"
 #include "ForeachFunction.h"
+
+#include <util/Status.h>
 
 UTIL_ADT( collSet );
 
 typedef void *        collSetItem;
 typedef collSetItem * collSetValues;
 
-collSet           collSet_new    ( collComparator cmp );
-void              collSet_delete ( collSet * This );
-void              collSet_clear  ( collSet   This );
-bool              collSet_add    ( collSet   This, collSetItem item );
-bool              collSet_remove ( collSet   This, collSetItem item );
-unsigned int      collSet_size   ( collSet   This );
-collForeachResult collSet_foreach( collSet   This, collForeachFunction fn, void * userData );
-collSetValues     collSet_values ( collSet   This );
+utilStatus collSet_new     ( collSet * This, collComparator cmp );
+utilStatus collSet_delete  ( collSet * This );
+utilStatus collSet_clear   ( collSet   This );
+utilStatus collSet_add     ( collSet   This, collSetItem item );
+utilStatus collSet_remove  ( collSet   This, collSetItem item );
+utilStatus collSet_size    ( collSet   This, unsigned int * size );
+utilStatus collSet_contains( collSet   This, collSetItem item, bool * result );
+utilStatus collSet_foreach ( collSet   This, collForeachFunction fn, void * userData, collForeachResult * result );
+utilStatus collSet_values  ( collSet   This, collSetValues * result );
 
 #ifdef __cplusplus
 }

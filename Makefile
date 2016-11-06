@@ -23,10 +23,10 @@ Test_%:
 	cd Java ; ant $@ 
 
 C/Debug/dcrud-c-test:
-	cd C ; make Debug/dcrud-c-test
+	cd C ; make Static-Debug/dcrud-c-test
 
 C/Release/dcrud-c-test:
-	cd C ; make Release/dcrud-c-test
+	cd C ; make Static-Release/dcrud-c-test
 
 cpp/Debug/dcrud-cpp-test:
 	cd cpp ; make Debug/dcrud-cpp-test

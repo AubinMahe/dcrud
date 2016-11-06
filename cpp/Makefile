@@ -1,4 +1,24 @@
-include ../flags.mak
+CCC             = g++
+CPPFLAGS_COMMON = -I ../C/inc -I inc
+CPPFLAGS_DEBUG  = $(CPPFLAGS_COMMON)\
+ -g -Wall -Weffc++ -pedantic -pedantic-errors -Wextra\
+ -Wcast-align -Wcast-qual -Wconversion\
+ -O -Wdisabled-optimization\
+ -Werror -Wfloat-equal\
+ -Wimport -Winit-self\
+ -Wno-long-long\
+ -Wmissing-field-initializers\
+ -Wmissing-include-dirs -Winline -Wstrict-aliasing=2\
+ -Wmissing-noreturn\
+ -Wpointer-arith\
+ -Wredundant-decls\
+ -Wshadow -Wstack-protector\
+ -Wswitch-default -Wswitch-enum\
+ -Wunreachable-code -Wunused -Wunused-parameter\
+ -Wvariadic-macros\
+ -Wwrite-strings
+
+CPPFLAGS_RELEASE = $(CPPFLAGS_COMMON) -O3
 
 LIB_SRCS =\
  src/dcrud/Arguments.cpp\
@@ -15,18 +35,24 @@ EXE_SRCS =\
  test/ShareableShape.cpp\
  test/shapes_publisher.cpp
 
+LIB_DEPS_DEBUG   = $(patsubst %.cpp,Debug/%.d,$(LIB_SRCS))
 LIB_OBJS_DEBUG   = $(patsubst %.cpp,Debug/%.o,$(LIB_SRCS))
-LIB_OBJS_RELEASE = $(patsubst %.cpp,Release/%.o,$(LIB_SRCS))
-
+EXE_DEPS_DEBUG   = $(patsubst %.cpp,Debug/%.d,$(EXE_SRCS))
 EXE_OBJS_DEBUG   = $(patsubst %.cpp,Debug/%.o,$(EXE_SRCS))
+
+LIB_DEPS_RELEASE = $(patsubst %.cpp,Release/%.d,$(LIB_SRCS))
+LIB_OBJS_RELEASE = $(patsubst %.cpp,Release/%.o,$(LIB_SRCS))
+EXE_DEPS_RELEASE = $(patsubst %.cpp,Release/%.d,$(EXE_SRCS))
 EXE_OBJS_RELEASE = $(patsubst %.cpp,Release/%.o,$(EXE_SRCS))
 
-.PHONY: all clean tests shapes
+.PHONY: debug release all clean tests shapes
 
-all:\
- Debug/dcrud-cpp-test\
- Release/dcrud-cpp-test
+all: debug release
+debug: Debug/dcrud-cpp-test
+release: Release/dcrud-cpp-test
 
+-include $(LIB_OBJS_DEBUG:.o=.d)
+-include $(EXE_OBJS_DEBUG:.o=.d)
 -include $(LIB_OBJS_DEBUG:.o=.d)
 -include $(EXE_OBJS_DEBUG:.o=.d)
 
@@ -42,10 +68,10 @@ shapes: Debug/dcrud-cpp-test
 	LD_LIBRARY_PATH=Debug Debug/dcrud-cpp-test shapes --pub-id 1 --interface 192.168.1.7
 
 ../C/Debug/libdcrud-c-lib.so:
-	cd ../C ; make Debug/libdcrud-c-lib.so
+	cd ../C ; make debug
 
 ../C/Release/libdcrud-c-lib.so:
-	cd ../C ; make Release/libdcrud-c-lib.so
+	cd ../C ; make release
 
 Debug/dcrud-cpp-test: ../C/Debug/libdcrud-c-lib.so Debug/libdcrud-cpp-lib.so $(EXE_OBJS_DEBUG)
 	$(CCC) -o $@ $(EXE_OBJS_DEBUG) -LDebug -ldcrud-cpp-lib -L../C/Debug -ldcrud-c-lib -pthread
@@ -61,11 +87,16 @@ Release/libdcrud-cpp-lib.so: $(LIB_OBJS_RELEASE)
 
 Debug/%.d: %.cpp
 	@mkdir -p $$(dirname $@)
-	$(CCC) $(CFLAGS_DEBUG) -MM $< > $@
+	@$(CCC) -MM -MP $(CPPFLAGS_DEBUG) $< >$@
 
 Debug/%.o: %.cpp
-	$(CCC) $(CFLAGS_DEBUG) -c $< -o $@
+	@mkdir -p $$(dirname $@)
+	$(CCC) $(CPPFLAGS_DEBUG) -c $< -o $@
+
+Release/%.d: %.cpp
+	@mkdir -p $$(dirname $@)
+	@$(CCC) -MM -MP $(CPPFLAGS_RELEASE) $< >$@
 
 Release/%.o: %.cpp
 	@mkdir -p $$(dirname $@)
-	$(CCC) $(CFLAGS_RELEASE) -c $< -o $@
+	$(CCC) $(CPPFLAGS_RELEASE) -c $< -o $@
