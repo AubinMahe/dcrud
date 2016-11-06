@@ -1,0 +1,71 @@
++-------------------------+----+----+
+| Fichier                 |c++ |pool|
++-------------------------+----+----+
+| util/CmdLine            | OK | OK |
+| util/Dump               | OK | -- |
+| util/Performance        | OK | -- |
+| util/Pool               | OK | -- |
+| util/Status             | OK | -- |
+| util/Trace              | OK | -- |
+| util/magic              | OK | -- |
+| util/poolSizes          | OK | -- |
+| util/toString           | OK | -- |
+| util/types              | OK | -- |
++-------------------------+----+----+
+| os/Mutex                | OK | OK |
+| os/System               | OK | -- |
+| os/magic                | OK | -- |
+| os/poolSizes            | OK | -- |
+| os/threads              | OK | -- |
++-------------------------+----+----+
+| coll/Comparator         | OK | -- |
+| coll/ForeachFunction    | OK | -- |
+| coll/List               | OK | OK | items : utiliser la même solution que pour ioByteBuffer ?
+| coll/Map                | OK | OK | items : utiliser la même solution que pour ioByteBuffer ?
+| coll/Set                | OK | OK | items : utiliser la même solution que pour ioByteBuffer ?
+| coll/magic              | OK | OK |
+| coll/poolSizes          | OK | OK |
++-------------------------+----+----+
+| io/ByteBuffer           | OK | OK |
+| io/InetSocketAddress    | OK | OK |
+| io/NetworkInterfaces    | OK | -- |
+| io/magic                | OK | -- |
+| io/poolSizes            | OK | -- |
+| io/sockets              | OK | -- |
++-------------------------+----+----+
+| dcrud/Arguments         | OK | OK |
+| dcrud/Cache             | OK | OK |
+| dcrud/Callback          | OK | OK |
+| dcrud/ClassID           | OK | OK |
+| dcrud/ClassID_private   | OK | OK |
+| dcrud/Dispatcher        | OK |    |
+| dcrud/GUID              | OK |    |
+| dcrud/GUID_private      | OK |    |
+| dcrud/ICRUD             | OK |    |
+| dcrud/ICache            | OK |    |
+| dcrud/ICallback         | OK |    |
+| dcrud/IDispatcher       | OK |    |
+| dcrud/IParticipant      | OK |    |
+| dcrud/IProtocol         | OK |    |
+| dcrud/IProvided         | OK |    |
+| dcrud/IRegistry         | OK |    |
+| dcrud/IRequired         | OK |    |
+| dcrud/Network           | OK |    |
+| dcrud/NetworkReceiver   | OK |    |
+| dcrud/ParticipantImpl   | OK |    |
+| dcrud/Shareable         | OK |    |
+| dcrud/Shareable_private | OK |    |
+| dcrud/Status            | OK |    |
+| dcrud/magic             | OK |    |
+| dcrud/poolSizes         | OK |    |
++-------------------------+----+----+
+| channel/CoDec           | OK |    |
+| channel/Factories       | OK |    |
+| channel/List            | OK |    |
+| channel/Status.h        | OK |    |
+| channel/UDPChannel      | OK |    |
+| channel/magic           | OK |    |
+| channel/poolSizes       | OK |    |
++-------------------------+----+----+
+| Fichier                 |c++ |pool|
++-------------------------+----+----+
