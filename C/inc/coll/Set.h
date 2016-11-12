@@ -20,7 +20,7 @@ utilStatus collSet_add     ( collSet   This, collSetItem item );
 utilStatus collSet_remove  ( collSet   This, collSetItem item );
 utilStatus collSet_size    ( collSet   This, unsigned int * size );
 utilStatus collSet_contains( collSet   This, collSetItem item, bool * result );
-utilStatus collSet_foreach ( collSet   This, collForeachFunction fn, void * userData, collForeachResult * result );
+utilStatus collSet_foreach ( collSet   This, collForeachFunction fn, void * userData );
 utilStatus collSet_values  ( collSet   This, collSetValues * result );
 
 #ifdef __cplusplus

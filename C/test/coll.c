@@ -32,7 +32,6 @@ static utilStatus printPerson( collForeach * context ) {
       printf( "|%s|    |%d: { %s, %s, %d }\n",
          test, context->index, person->forname, person->name, person->age );
    }
-   context->retVal = NULL;
    return UTIL_STATUS_NO_ERROR;
 }
 
@@ -57,7 +56,7 @@ utilStatus coll( void ) {
       CHK(__FILE__,__LINE__,collList_add( persons, muriel ));
       CHK(__FILE__,__LINE__,collList_add( persons, aubin ));
       CHK(__FILE__,__LINE__,collList_add( persons, eve ));
-      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List", NULL ));
+      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List" ));
       status = collList_remove( persons, aubin );
       if( UTIL_STATUS_NO_ERROR == status ) {
          printf( "|List|OK  |remove\n" );
@@ -72,7 +71,7 @@ utilStatus coll( void ) {
       else {
          printf( "|List|FAIL|remove: size() != 2\n" );
       }
-      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List", NULL ));
+      CHK(__FILE__,__LINE__,collList_foreach( persons, printPerson, "List" ));
       CHK(__FILE__,__LINE__,collList_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
@@ -83,7 +82,7 @@ utilStatus coll( void ) {
       CHK(__FILE__,__LINE__,collSet_add( persons, muriel ));
       CHK(__FILE__,__LINE__,collSet_add( persons, aubin ));
       CHK(__FILE__,__LINE__,collSet_add( persons, eve ));
-      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set ", NULL ));
+      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set " ));
       status = collSet_add( persons, aubin );
       if( UTIL_STATUS_DUPLICATE == status ) {
          printf( "|Set |OK  |add: doublon refused\n" );
@@ -105,7 +104,7 @@ utilStatus coll( void ) {
       else {
          printf( "|Set |FAIL|remove: size() != 2\n" );
       }
-      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set ", NULL ));
+      CHK(__FILE__,__LINE__,collSet_foreach( persons, printPerson, "Set " ));
       CHK(__FILE__,__LINE__,collSet_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
@@ -133,7 +132,7 @@ utilStatus coll( void ) {
       else {
          printf( "|Map1|OK  |put\n" );
       }
-      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1", NULL ));
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1" ));
       CHK(__FILE__,__LINE__,collMap_get( persons, "Eve", &person ));
       if( UTIL_STATUS_NOT_FOUND == status ) {
          printf( "|Map1|FAIL|get: not found!\n" );
@@ -179,7 +178,7 @@ utilStatus coll( void ) {
       else {
          printf( "|Map1|FAIL|remove: size() != 2\n" );
       }
-      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1", NULL ));
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map1" ));
       CHK(__FILE__,__LINE__,collMap_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );
@@ -193,7 +192,7 @@ utilStatus coll( void ) {
       CHK(__FILE__,__LINE__,collMap_put( persons, &keyMuriel, muriel, &previous ));
       CHK(__FILE__,__LINE__,collMap_put( persons, &keyAubin , aubin, &previous ));
       CHK(__FILE__,__LINE__,collMap_put( persons, &keyEve   , eve, &previous ));
-      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2", NULL ));
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2" ));
       status = collMap_get( persons, &keyEve, &person );
       if( UTIL_STATUS_NO_ERROR == status ) {
          if( person == eve ) {
@@ -230,7 +229,7 @@ utilStatus coll( void ) {
       else {
          printf( "|Map2|FAIL|remove: size() != 2\n" );
       }
-      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2", NULL ));
+      CHK(__FILE__,__LINE__,collMap_foreach( persons, printPerson, "Map2" ));
       CHK(__FILE__,__LINE__,collMap_delete( &persons ));
    }
    printf( "+----+----+----------------------------------------\n" );

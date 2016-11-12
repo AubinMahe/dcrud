@@ -4,9 +4,13 @@
  *
  */
 #include <dcrud/Network.h>
+#include <dcrud/DebugSettings.h>
+
 #include <os/System.h>
+
 #include <util/CmdLine.h>
 #include <util/Pool.h>
+
 #include <io/NetworkInterfaces.h>
 
 #include "Person.h"
@@ -39,10 +43,13 @@ utilStatus c_publisher_java_subscriber_Person( const utilCmdLine cmdLine ) {
       dcrudRemoteFactory * remoteFactory;
       bool                 dumpReceivedBuffer;
       dcrudIRegistry       registry = NULL;
-      CHK(__FILE__,__LINE__,getStaticRegistry( &registry ))
+
       CHK(__FILE__,__LINE__,utilCmdLine_getBoolean( cmdLine, "dump-received-buffer", &dumpReceivedBuffer ))
+      dcrudDebugSettings->dumpNetworkReceiverOperations = dumpReceivedBuffer;
+
+      CHK(__FILE__,__LINE__,getStaticRegistry( &registry ))
       CHK(__FILE__,__LINE__,Person_initFactories( participant, &localFactory, &remoteFactory ))
-      CHK(__FILE__,__LINE__,dcrudIParticipant_listen( participant, registry, NETWORK_INTERFACE, dumpReceivedBuffer ))
+      CHK(__FILE__,__LINE__,dcrudIParticipant_listen( participant, registry, NETWORK_INTERFACE ))
       CHK(__FILE__,__LINE__,dcrudIParticipant_getDispatcher( participant, &dispatcher ))
       CHK(__FILE__,__LINE__,dcrudIDispatcher_provide( dispatcher, "IMonitor", &monitor ))
       CHK(__FILE__,__LINE__,dcrudIProvided_addOperation(

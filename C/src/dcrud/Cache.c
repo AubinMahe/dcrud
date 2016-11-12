@@ -134,9 +134,9 @@ utilStatus dcrudCache_delete( dcrudICache * self ) {
    else {
       dcrudICacheImpl * This = dcrudICache_safeCast( *self, &status );
       if( UTIL_STATUS_NO_ERROR == status ) {
-         collMap_foreach( This->local, deleteShareable, NULL, NULL );
-         collSet_foreach( This->toUpdate, releaseByteBuffer, NULL, NULL );
-         collSet_foreach( This->toDelete, releaseGUID, NULL, NULL );
+         collMap_foreach( This->local, deleteShareable, NULL );
+         collSet_foreach( This->toUpdate, releaseByteBuffer, NULL );
+         collSet_foreach( This->toDelete, releaseGUID, NULL );
          collSet_delete( &This->classes       );
          collSet_delete( &This->updated       );
          collSet_delete( &This->deleted       );
@@ -277,21 +277,12 @@ utilStatus dcrudICache_delete( dcrudICache self, dcrudShareable item ) {
    return status;
 }
 
-utilStatus dcrudICache_foreach(
-   dcrudICache         self,
-   collForeachFunction fn,
-   void *              uData,
-   collForeachResult * result )
-{
+utilStatus dcrudICache_foreach( dcrudICache self, collForeachFunction fn, void * uData ) {
    utilStatus       status = UTIL_STATUS_NO_ERROR;
    dcrudICacheImpl * This   = dcrudICache_safeCast( self, &status );
    if( UTIL_STATUS_NO_ERROR == status ) {
-      collForeachResult fer;
       osMutex_take( This->localMutex );
-      status = collMap_foreach( This->local, fn, uData, &fer );
-      if(( result != NULL ) && ( status == UTIL_STATUS_NO_ERROR )) {
-         *result = fer;
-      }
+      status = collMap_foreach( This->local, fn, uData );
       osMutex_release( This->localMutex );
    }
    return status;
@@ -327,7 +318,7 @@ utilStatus dcrudICache_select( dcrudICache self, dcrudPredicate query, collSet r
          ctxt.query     = query;
          ctxt.selection = result;
          CHK(__FILE__,__LINE__,osMutex_take( This->localMutex ))
-         status = collMap_foreach( This->local, selectItem, &ctxt, NULL );
+         status = collMap_foreach( This->local, selectItem, &ctxt );
          osMutex_release( This->localMutex );
       }
    }
@@ -351,7 +342,7 @@ utilStatus dcrudICache_publish( dcrudICache self ) {
          CHK(__FILE__,__LINE__,osMutex_take( This->deletedMutex ))
          status = dcrudIParticipantImpl_publishDeleted( This->participant, This->deleted );
          if( UTIL_STATUS_NO_ERROR == status ) {
-            status = collSet_foreach( This->deleted, releaseShareable, NULL, NULL );
+            status = collSet_foreach( This->deleted, releaseShareable, NULL );
             collSet_clear( This->deleted );
          }
          osMutex_release( This->deletedMutex );
@@ -379,7 +370,9 @@ utilStatus dcrudICache_refresh( dcrudICache self ) {
    collSetValues     toDelete = NULL;
    unsigned int      size     = 0U;
    unsigned int      i        = 0U;
-   CHK(__FILE__,__LINE__,status)
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      return status;
+   }
    CHK(__FILE__,__LINE__,osMutex_take( This->localMutex ))
    status = osMutex_take( This->toUpdateMutex );
    if( UTIL_STATUS_NO_ERROR == status ) {

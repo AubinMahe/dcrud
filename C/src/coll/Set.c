@@ -184,12 +184,7 @@ utilStatus collSet_contains( collSet self, collSetItem item, bool * result ) {
    return status;
 }
 
-utilStatus collSet_foreach(
-   collSet             self,
-   collForeachFunction fn,
-   void *              userData,
-   collForeachResult * result   )
-{
+utilStatus collSet_foreach( collSet self, collForeachFunction fn, void * userData ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    collSetImpl * This = collSet_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
@@ -202,9 +197,6 @@ utilStatus collSet_foreach(
       {
          context.value = This->items[context.index];
          status = fn( &context );
-      }
-      if( result ) {
-         *result = context.retVal;
       }
    }
    return status;

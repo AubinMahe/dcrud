@@ -46,7 +46,7 @@ utilStatus dcrudArgumentsTest( void ) {
    dcrudShareable  dcrudShareableValue;
    dcrudType       dcrudTypeValue = dcrudLAST_TYPE;
 
-   CHK(__FILE__,__LINE__,dcrudClassID_new( &CLASS_ID_VALUE, 1, 2, 3, 4 ))
+   CHK(__FILE__,__LINE__,dcrudClassID_resolve( &CLASS_ID_VALUE, 1, 2, 3, 4 ))
    CHK(__FILE__,__LINE__,dcrudGUID_new( &GUID_VALUE ))
    CHK(__FILE__,__LINE__,dcrudGUID_init( GUID_VALUE, 42, 84 ))
    SHAREABLE_VALUE = NULL;

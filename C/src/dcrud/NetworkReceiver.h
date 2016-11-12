@@ -12,8 +12,7 @@ utilStatus dcrudNetworkReceiver_new(
    dcrudNetworkReceiver *      This,
    dcrudIParticipantImpl *     participant,
    const ioInetSocketAddress * inetSocketAddress,
-   const char *                intrfc,
-   bool                        dumpReceivedBuffer );
+   const char *                intrfc );
 
 utilStatus dcrudNetworkReceiver_delete(
    dcrudNetworkReceiver *      This );

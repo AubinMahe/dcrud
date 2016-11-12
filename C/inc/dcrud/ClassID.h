@@ -31,7 +31,7 @@ typedef enum Type_e {
 
 } dcrudType;
 
-utilStatus dcrudClassID_new          ( /* */ dcrudClassID * This, byte package1, byte package2, byte package3, byte clazz );
+utilStatus dcrudClassID_resolve      ( /* */ dcrudClassID * This, byte package1, byte package2, byte package3, byte clazz );
 utilStatus dcrudClassID_delete       ( /* */ dcrudClassID * This );
 utilStatus dcrudClassID_get          ( const dcrudClassID   This, byte * pckg1, byte * pckg2, byte * pckg3, byte * clazz );
 utilStatus dcrudClassID_unserialize  ( /* */ dcrudClassID * This, ioByteBuffer source );
@@ -40,6 +40,7 @@ utilStatus dcrudClassID_serializeType( dcrudType type, ioByteBuffer target );
 utilStatus dcrudClassID_toString     ( const dcrudClassID   This, char * target, size_t targetSize );
 utilStatus dcrudClassID_getType      ( const dcrudClassID   This, dcrudType * result );
 utilStatus dcrudClassID_printMapPair ( collForeach * context );
+utilStatus dcrudClassID_done         ( void );
 int        dcrudClassID_compareTo    ( const dcrudClassID * left, const dcrudClassID * right );
 
 #ifdef __cplusplus

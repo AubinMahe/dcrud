@@ -21,7 +21,7 @@ public class Network {
               e.hasMoreElements(); )
          {
             final NetworkInterface candidate = e.nextElement();
-            if(   !candidate.isLoopback()
+            if( ! candidate.isLoopback()
                && candidate.isUp()
                && candidate.supportsMulticast())
             {

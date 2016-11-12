@@ -17,23 +17,16 @@ typedef struct collMapPair_s {
 } collMapPair;
 typedef collMapPair * collMapValues;
 
-utilStatus collMap_new    ( collMap * This, collComparator      cmp );
+utilStatus collMap_new    ( collMap * This, collComparator cmp );
 utilStatus collMap_delete ( collMap * This );
 utilStatus collMap_clear  ( collMap   This );
-utilStatus collMap_put    ( collMap   This, collMapKey          key,
-                                            collMapValue        value,
-                                            collMapPair *       previousPair );
-utilStatus collMap_remove ( collMap   This, collMapKey          key,
-                                            collMapPair *       previousPair );
-utilStatus collMap_get    ( collMap   This, collMapKey          key,
-                                            void *              result );
-utilStatus collMap_size   ( collMap   This, unsigned int *      size );
-utilStatus collMap_hasKey ( collMap   This, collMapKey          key,
-                                            bool *              result );
-utilStatus collMap_foreach( collMap   This, collForeachFunction fn,
-                                            void *              userData,
-                                            collForeachResult * result );
-utilStatus collMap_values ( collMap   This, collMapValues *     result );
+utilStatus collMap_put    ( collMap   This, collMapKey key, collMapValue value, collMapPair * prevPair );
+utilStatus collMap_remove ( collMap   This, collMapKey key, collMapPair * previousPair );
+utilStatus collMap_get    ( collMap   This, collMapKey key, void * result );
+utilStatus collMap_size   ( collMap   This, unsigned int * size );
+utilStatus collMap_hasKey ( collMap   This, collMapKey key, bool * result );
+utilStatus collMap_foreach( collMap   This, collForeachFunction fn, void * userData );
+utilStatus collMap_values ( collMap   This, collMapValues * result );
 
 #ifdef __cplusplus
 }

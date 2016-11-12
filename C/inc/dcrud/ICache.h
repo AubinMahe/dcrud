@@ -17,7 +17,7 @@ utilStatus dcrudICache_create      ( dcrudICache This, dcrudShareable item );
 utilStatus dcrudICache_read        ( dcrudICache This, dcrudGUID id, dcrudShareable * target );
 utilStatus dcrudICache_update      ( dcrudICache This, dcrudShareable item );
 utilStatus dcrudICache_delete      ( dcrudICache This, dcrudShareable item );
-utilStatus dcrudICache_foreach     ( dcrudICache This, collForeachFunction fn, void * userData, collForeachResult * result );
+utilStatus dcrudICache_foreach     ( dcrudICache This, collForeachFunction fn, void * userData );
 utilStatus dcrudICache_select      ( dcrudICache This, dcrudPredicate query, collSet result );
 utilStatus dcrudICache_publish     ( dcrudICache This );
 utilStatus dcrudICache_subscribe   ( dcrudICache This, dcrudClassID id );

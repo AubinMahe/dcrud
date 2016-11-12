@@ -8,7 +8,6 @@ extern "C" {
 #define dcrudArgumentsImpl_POOL_SIZE             250
 #define dcrudArgumentsValue_POOL_SIZE            200
 #define dcrudClassIDImpl_POOL_SIZE               1000
-#define dcrudGUIDImpl_POOL_SIZE                  1000
 #define dcrudICRUDImpl_POOL_SIZE                 1000
 #define dcrudICacheImpl_POOL_SIZE                10
 #define dcrudICallbackImpl_POOL_SIZE             250
@@ -24,6 +23,8 @@ extern "C" {
 #define dcrudShareableImpl_POOL_SIZE             10000
 
 #endif
+
+#define dcrudGUIDImpl_POOL_SIZE                  1000
 
 #ifdef __cplusplus
 }

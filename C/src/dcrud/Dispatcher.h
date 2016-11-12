@@ -9,7 +9,7 @@ extern "C" {
 utilStatus dcrudIDispatcher_new        ( dcrudIDispatcher * This, dcrudIParticipantImpl * participant );
 utilStatus dcrudIDispatcher_delete     ( dcrudIDispatcher * This );
 utilStatus dcrudIDispatcher_executeCrud( dcrudIDispatcher   This, const char * opName, dcrudArguments args);
-utilStatus dcrudIDispatcher_execute    ( dcrudIDispatcher   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId, unsigned queueNdx, dcrudCallMode callMode );
+utilStatus dcrudIDispatcher_execute    ( dcrudIDispatcher   This, const char * intrfcName, const char * opName, dcrudArguments args, int callId );
 
 #ifdef __cplusplus
 }

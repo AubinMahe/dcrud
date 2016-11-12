@@ -36,7 +36,7 @@ typedef struct dcrudRemoteFactory_s {
  * in such case the first up, non loopback, multicast capable interface will be used
  * @param dumpReceivedBuffer if true, dump the received frames on stderr
  */
-utilStatus dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc, bool dumpReceivedBuffer );
+utilStatus dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc );
 utilStatus dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
 utilStatus dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
 utilStatus dcrudIParticipant_getDefaultCache      ( dcrudIParticipant   This, dcrudICache * cache );

@@ -207,7 +207,7 @@ static utilStatus dcrudIProvidedImpl_delete( dcrudIProvided * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    dcrudIProvidedImpl * This = dcrudIProvided_safeCast( *self, &status );
    if( UTIL_STATUS_NO_ERROR == status ) {
-      collMap_foreach( This->opsInOut, deleteOperation, NULL, NULL );
+      collMap_foreach( This->opsInOut, deleteOperation, NULL );
       collMap_delete( &This->opsInOut );
       UTIL_RELEASE(dcrudIProvidedImpl);
    }
@@ -244,8 +244,11 @@ utilStatus dcrudIRequired_call(
    utilStatus           status = UTIL_STATUS_NO_ERROR;
    dcrudIRequiredImpl * This   = dcrudIRequired_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
-      status = dcrudIParticipantImpl_call(
-         This->participant, This->name, opName, arguments, callback );
+      if( NULL == arguments ) {
+         CHK(__FILE__,__LINE__,dcrudArguments_new( &arguments ))
+      }
+      CHK(__FILE__,__LINE__,dcrudIParticipantImpl_call(
+            This->participant, This->name, opName, arguments, callback ))
    }
    return status;
 }
@@ -285,7 +288,7 @@ utilStatus dcrudIDispatcher_delete( dcrudIDispatcher * self ) {
       dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( *self, &status );
       if( status == UTIL_STATUS_NO_ERROR ) {
          unsigned int i;
-         collMap_foreach( This->provided, deleteProvided, NULL, NULL );
+         collMap_foreach( This->provided, deleteProvided, NULL );
          collMap_delete( &This->provided );
          for( i = 0; i < OPERATION_QUEUE_COUNT; ++i ) {
             collList_delete(&(This->operationQueues[i]));
@@ -443,39 +446,42 @@ utilStatus dcrudIDispatcher_execute(
    const char *     intrfcName,
    const char *     opName,
    dcrudArguments   args,
-   int              callId,
-   unsigned         queueNdx,
-   dcrudCallMode    callMode )
+   int              callId )
 {
    utilStatus             status = UTIL_STATUS_NO_ERROR;
    dcrudIDispatcherImpl * This   = dcrudIDispatcher_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
       dcrudIProvidedImpl * provided = NULL;
       status = collMap_get( This->provided, (collMapKey)intrfcName, &provided );
-      if( status == UTIL_STATUS_NO_ERROR ) {
+      if( status == UTIL_STATUS_NOT_FOUND ) {
+         status = UTIL_STATUS_NO_ERROR;
+      }
+      else if( UTIL_STATUS_NO_ERROR == status ) {
          dcrudOperation * operation = NULL;
-         status = collMap_get( provided->opsInOut, (collMapKey)opName, &operation );
-         if( status == UTIL_STATUS_NO_ERROR ) {
-            if( callMode == DCRUD_SYNCHRONOUS ) {
-               dcrudArguments results = operation->function( operation->context, args );
-               if( callId ) {
-                  dcrudIParticipantImpl_sendCall(
-                     This->participant, intrfcName, opName, results, -callId );
-               }
+         dcrudCallMode    callMode;
+         dcrudQueueIndex  queueNdx;
+         CHK(__FILE__,__LINE__,collMap_get( provided->opsInOut, (collMapKey)opName, &operation ))
+         CHK(__FILE__,__LINE__,dcrudArguments_getMode ( args, &callMode ))
+         CHK(__FILE__,__LINE__,dcrudArguments_getQueue( args, &queueNdx ))
+         if( DCRUD_SYNCHRONOUS == callMode ) {
+            dcrudArguments results = operation->function( operation->context, args );
+            if( callId ) {
+               dcrudIParticipantImpl_sendCall(
+                  This->participant, intrfcName, opName, results, -callId );
             }
-            else {
-               status = osMutex_take( This->operationQueuesMutex );
+         }
+         else {
+            status = osMutex_take( This->operationQueuesMutex );
+            if( status == UTIL_STATUS_NO_ERROR ) {
+               dcrudOperationCall * opCall = NULL;
+               status =
+                  dcrudOperationCall_new(
+                     &opCall, operation, intrfcName, opName, callId, args );
                if( status == UTIL_STATUS_NO_ERROR ) {
-                  dcrudOperationCall * opCall = NULL;
-                  status =
-                     dcrudOperationCall_new(
-                        &opCall, operation, intrfcName, opName, callId, args );
-                  if( status == UTIL_STATUS_NO_ERROR ) {
-                     status = collList_add( This->operationQueues[queueNdx], opCall );
-                     osMutex_release( This->operationQueuesMutex );
-                     if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
-                        dcrudIDispatcher_handleRequests( self );
-                     }
+                  status = collList_add( This->operationQueues[queueNdx], opCall );
+                  osMutex_release( This->operationQueuesMutex );
+                  if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
+                     dcrudIDispatcher_handleRequests( self );
                   }
                }
             }
@@ -545,10 +551,7 @@ utilStatus dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
            ++queueNdx )
       {
          status = collList_foreach(
-            This->operationQueues[queueNdx],
-            runAllPendingOperations,
-            This->participant,
-            NULL );
+            This->operationQueues[queueNdx], runAllPendingOperations, This->participant );
          collList_clear( This->operationQueues[queueNdx] );
       }
       osMutex_release( This->operationQueuesMutex );

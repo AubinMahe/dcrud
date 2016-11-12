@@ -105,7 +105,6 @@ typedef struct createReceiverParams_s {
 
    dcrudIParticipantImpl * participant;
    char                    networkInterface[NI_MAXHOST];
-   bool                    dumpReceivedBuffer;
 
 } createReceiverParams;
 
@@ -114,12 +113,7 @@ static utilStatus createReceiver( collForeach * context ) {
    createReceiverParams *      p      = (createReceiverParams *     )context->user;
    dcrudNetworkReceiver        rcvr   = NULL;
    utilStatus                  status =
-      dcrudNetworkReceiver_new(
-         &rcvr,
-         p->participant,
-         addr,
-         p->networkInterface,
-         p->dumpReceivedBuffer );
+      dcrudNetworkReceiver_new( &rcvr, p->participant, addr, p->networkInterface );
    if( UTIL_STATUS_NO_ERROR == status ) {
       status = collList_add( p->participant->receivers, rcvr );
    }
@@ -129,8 +123,7 @@ static utilStatus createReceiver( collForeach * context ) {
 utilStatus dcrudIParticipant_listen(
    dcrudIParticipant self,
    dcrudIRegistry    registry,
-   const char *      networkInterface,
-   bool              dumpReceivedBuffer )
+   const char *      networkInterface )
 {
    utilStatus              status = UTIL_STATUS_NO_ERROR;
    dcrudIParticipantImpl * This   = dcrudIParticipant_safeCast( self, &status );
@@ -143,11 +136,10 @@ utilStatus dcrudIParticipant_listen(
          status = dcrudIRegistry_getParticipants( registry, &participants );
          if( UTIL_STATUS_NO_ERROR == status ) {
             createReceiverParams p;
-            p.participant        = This;
-            p.dumpReceivedBuffer = dumpReceivedBuffer;
+            p.participant = This;
             strncpy( p.networkInterface, networkInterface, NI_MAXHOST );
             if( UTIL_STATUS_NO_ERROR == status ) {
-               status = collSet_foreach( participants, createReceiver, &p, NULL );
+               status = collSet_foreach( participants, createReceiver, &p );
             }
          }
       }
@@ -465,7 +457,7 @@ static utilStatus pushCreateOrUpdateItem( collForeach * context ) {
 utilStatus dcrudIParticipantImpl_publishUpdated( dcrudIParticipantImpl * This, collSet updated ) {
    utilStatus status = osMutex_take( This->outMutex );
    if( UTIL_STATUS_NO_ERROR == status ) {
-      status = collSet_foreach( updated, pushCreateOrUpdateItem, This, NULL );
+      status = collSet_foreach( updated, pushCreateOrUpdateItem, This );
       osMutex_release( This->outMutex );
    }
    return status;
@@ -503,7 +495,7 @@ static utilStatus pushDeleteItem( collForeach * context ) {
 utilStatus dcrudIParticipantImpl_publishDeleted( dcrudIParticipantImpl * This, collSet deleted ) {
    utilStatus status = osMutex_take( This->outMutex );
    if( UTIL_STATUS_NO_ERROR == status ) {
-      status = collSet_foreach( deleted, pushDeleteItem, This, NULL );
+      status = collSet_foreach( deleted, pushDeleteItem, This );
       osMutex_release( This->outMutex );
    }
    return status;
@@ -518,43 +510,37 @@ utilStatus dcrudIParticipantImpl_sendCall(
 {
    utilStatus   status = UTIL_STATUS_NO_ERROR;
    unsigned int count  = 0U;
-   if( args ) {
-      status = dcrudArguments_getCount( args, &count );
+   CHK(__FILE__,__LINE__,dcrudArguments_getCount( args, &count ))
+   CHK(__FILE__,__LINE__,osMutex_take( This->outMutex ))
+   status = ioByteBuffer_clear( This->message );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_put( This->message, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
    }
    if( UTIL_STATUS_NO_ERROR == status ) {
-      utilStatus status = osMutex_take( This->outMutex );
-      if( UTIL_STATUS_NO_ERROR == status ) {
-         status = ioByteBuffer_clear( This->message );
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_put( This->message, DCRUD_SIGNATURE, 0, DCRUD_SIGNATURE_SIZE );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_putByte( This->message, FRAMETYPE_OPERATION );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_putString( This->message, intrfcName );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_putString( This->message, opName );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_putInt( This->message, callId );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_putByte( This->message, count );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = dcrudArguments_serialize( args, This->message );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            status = ioByteBuffer_flip( This->message );
-         }
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            ioByteBuffer_sendTo( This->message, This->out, &This->target );
-         }
-         osMutex_release( This->outMutex );
-      }
+      status = ioByteBuffer_putByte( This->message, FRAMETYPE_OPERATION );
    }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putString( This->message, intrfcName );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putString( This->message, opName );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putInt( This->message, callId );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_putByte( This->message, count );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = dcrudArguments_serialize( args, This->message );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_flip( This->message );
+   }
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      status = ioByteBuffer_sendTo( This->message, This->out, &This->target );
+   }
+   CHK(__FILE__,__LINE__,osMutex_release( This->outMutex ))
    return status;
 }
 
@@ -587,11 +573,9 @@ utilStatus dcrudIParticipantImpl_callback(
    int                     callId )
 {
    dcrudICallback callback = NULL;
-   utilStatus     status   = collMap_get( This->callbacks, &callId, &callback );
-   if( UTIL_STATUS_NO_ERROR == status ) {
-      status = dcrudICallback_callback( callback, intrfcName, opName, args );
-   }
-   return status;
+   CHK(__FILE__,__LINE__,collMap_get( This->callbacks, &callId, &callback ))
+   CHK(__FILE__,__LINE__,dcrudICallback_callback( callback, intrfcName, opName, args ))
+   return UTIL_STATUS_NO_ERROR;
 }
 
 utilStatus dcrudIParticipantImpl_createData(
@@ -601,7 +585,8 @@ utilStatus dcrudIParticipantImpl_createData(
 {
    dcrudRemoteFactory * factory = NULL;
    CHK(__FILE__,__LINE__,collMap_get( This->publishers, classId, &factory ))
-   return factory->create( factory, how );
+   CHK(__FILE__,__LINE__,factory->create( factory, how ))
+   return UTIL_STATUS_NO_ERROR;
 }
 
 utilStatus dcrudIParticipantImpl_updateData(
@@ -612,20 +597,13 @@ utilStatus dcrudIParticipantImpl_updateData(
    utilStatus status = UTIL_STATUS_NO_ERROR;
    byte i;
    for( i = 0; i < This->cacheCount; ++i ) {
-      dcrudShareable what = NULL;
-      status = dcrudICache_read( This->caches[i], guid, &what );
-      if( UTIL_STATUS_NO_ERROR == status ) {
-         dcrudClassID classID;
-         status = dcrudShareable_getClassID( what, &classID );
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            dcrudRemoteFactory * factory;
-            status = collMap_get( This->publishers, classID, &factory );
-            if( UTIL_STATUS_NO_ERROR == status ) {
-               status = factory->update( factory, what, how );
-               break;
-            }
-         }
-      }
+      dcrudShareable       what = NULL;
+      dcrudClassID         classID;
+      dcrudRemoteFactory * factory;
+      CHK(__FILE__,__LINE__,dcrudICache_read( This->caches[i], guid, &what ))
+      CHK(__FILE__,__LINE__,dcrudShareable_getClassID( what, &classID ))
+      CHK(__FILE__,__LINE__,collMap_get( This->publishers, classID, &factory ))
+      CHK(__FILE__,__LINE__,factory->update( factory, what, how ))
    }
    return status;
 }
@@ -634,20 +612,13 @@ utilStatus dcrudIParticipantImpl_deleteData( dcrudIParticipantImpl * This, dcrud
    utilStatus status = UTIL_STATUS_NO_ERROR;
    byte i;
    for( i = 0; i < This->cacheCount; ++i ) {
-      dcrudShareable what = NULL;
-      status = dcrudICache_read( This->caches[i], guid, &what );
-      if( UTIL_STATUS_NO_ERROR == status ) {
-         dcrudClassID classID;
-         status = dcrudShareable_getClassID( what, &classID );
-         if( UTIL_STATUS_NO_ERROR == status ) {
-            dcrudRemoteFactory * factory;
-            status = collMap_get( This->publishers, classID, &factory );
-            if( UTIL_STATUS_NO_ERROR == status ) {
-               status = factory->delete( factory, what );
-               break;
-            }
-         }
-      }
+      dcrudShareable       what = NULL;
+      dcrudClassID         classID;
+      dcrudRemoteFactory * factory;
+      CHK(__FILE__,__LINE__,dcrudICache_read( This->caches[i], guid, &what ))
+      CHK(__FILE__,__LINE__,dcrudShareable_getClassID( what, &classID ))
+      CHK(__FILE__,__LINE__,collMap_get( This->publishers, classID, &factory ))
+      CHK(__FILE__,__LINE__,factory->delete( factory, what ))
    }
    return status;
 }

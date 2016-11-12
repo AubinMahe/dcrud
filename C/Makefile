@@ -37,6 +37,7 @@ LIB_SRCS =\
  src/dcrud/Cache.c\
  src/dcrud/Callback.c\
  src/dcrud/ClassID.c\
+ src/dcrud/DebugSettings.c\
  src/dcrud/Dispatcher.c\
  src/dcrud/GUID.c\
  src/dcrud/IRegistry.c\
@@ -156,12 +157,26 @@ ms4: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=4
 
 ts5: Static-Debug/dcrud-c-test
-	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=5
 
 ms5: Debug/dcrud-c-test
-	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=5
+
+dtj6: Static-Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 --dump-received-buffer=true &
+
+dts6: Static-Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=6 --dump-received-buffer=true
+
+ts6: Static-Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
+	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=6
+
+ms6: Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
+	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=6
 
 #-- Dynamic
 
@@ -189,6 +204,10 @@ t5: Debug/dcrud-c-test
 m5: Debug/dcrud-c-test
 	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
 	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=5
+
+m6: Debug/dcrud-c-test
+	gnome-terminal -x java -cp ../Java/bin tests.person.Test_006&
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=6
 
 #------------------------------- BUILD -------------------------------
 

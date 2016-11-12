@@ -89,7 +89,7 @@ static utilStatus saveSamplesToText( collForeach * context ) {
    double       avg       = 0.0;
    unsigned     count     = 0U;
 
-   collList_foreach( samples, computeSample, &minMaxAvg, NULL );
+   collList_foreach( samples, computeSample, &minMaxAvg );
    collList_size( samples, &count );
    avg = minMaxAvg.sum / count;
    fprintf( out, "| %-10s | %9.2f | %9.2f | %9.2f |\n",
@@ -131,8 +131,8 @@ utilStatus utilPerformance_saveToDisk( void ) {
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
    fprintf( out, "| Attribute  |    Min µs |    Max µs |    Avg µs |\n" );
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
-   collMap_foreach( s_samplesByAttribute, saveSamplesToText, out, NULL );
+   collMap_foreach( s_samplesByAttribute, saveSamplesToText, out );
    fprintf( out, "+------------+-----------+-----------+-----------+\n" );
    fclose( out );
-   return collMap_foreach( s_samplesByAttribute, saveSamplesToGnuPlot, out, NULL );
+   return collMap_foreach( s_samplesByAttribute, saveSamplesToGnuPlot, out );
 }

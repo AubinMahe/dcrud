@@ -6,6 +6,8 @@
 #include "magic.h"
 #include "poolSizes.h"
 
+#include <dcrud/DebugSettings.h>
+
 #include <util/Dump.h>
 #include <util/Performance.h>
 #include <util/Pool.h>
@@ -104,6 +106,15 @@ static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame
    CHK(__FILE__,__LINE__,dcrudArguments_new( &args ))
    CHK(__FILE__,__LINE__,dcrudArguments_setMode ( args, callMode ))
    CHK(__FILE__,__LINE__,dcrudArguments_setQueue( args, queueNdx ))
+   if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+      fprintf( stderr, "NetworkReceiver.operation\n" );
+      fprintf( stderr, "\tintrfcName: %s\n", intrfcName );
+      fprintf( stderr, "\t    opName: %s\n", opName );
+      fprintf( stderr, "\t    callId: %d\n", callId );
+      fprintf( stderr, "\t     count: %d\n", count );
+      fprintf( stderr, "\t  callMode: %d\n", callMode );
+      fprintf( stderr, "\t  queueNdx: %d\n", queueNdx );
+   }
    for( i = 0; i < count; ++i ) {
       char         name[ARG_NAME_MAX_LENGTH];
       dcrudClassID classID;
@@ -112,6 +123,13 @@ static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame
       CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, name, sizeof( name )))
       CHK(__FILE__,__LINE__,dcrudClassID_unserialize( &classID, frame ))
       CHK(__FILE__,__LINE__,dcrudClassID_getType( classID, &type ))
+      if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+         char szClassID[40];
+         CHK(__FILE__,__LINE__,dcrudClassID_toString( classID, szClassID, sizeof( szClassID )))
+         fprintf( stderr, "\t\t%d:                name: %s\n", i, name );
+         fprintf( stderr, "\t\t%d:             classID: %s\n", i, szClassID );
+         fprintf( stderr, "\t\t%d:                type: %d\n", i, type );
+      }
       switch( type ) {
       case dcrudTYPE_NULL:
          CHK(__FILE__,__LINE__,dcrudArguments_putNull( args, name ))
@@ -120,67 +138,110 @@ static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame
          byte item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getByte( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putByte( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:          byte value: %d\n", i, item );
+         }
       }
       break;
       case dcrudTYPE_BOOLEAN:{
          byte item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getByte( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putBoolean( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:       boolean value: %d\n", i, item );
+         }
       }break;
       case dcrudTYPE_SHORT:{
          short item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getShort( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putShort( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:         short value: %d\n", i, item );
+         }
       }break;
       case dcrudTYPE_UNSIGNED_SHORT:{
          unsigned short item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getUShort( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putUshort( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:unsigned short value: %d\n", i, item );
+         }
       }break;
       case dcrudTYPE_INTEGER:{
          unsigned int item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getUInt( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putUint( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:           int value: %d\n", i, item );
+         }
       }break;
       case dcrudTYPE_UNSIGNED_INTEGER:{
          unsigned int item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getUInt( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putUint( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:  unsigned int value: %d\n", i, item );
+         }
       }break;
       case dcrudTYPE_LONG:{
          int64_t item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getLong( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putLong( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:          long value: %"PRId64"\n", i, item );
+         }
       }break;
       case dcrudTYPE_UNSIGNED_LONG:{
          uint64_t item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getULong( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putUlong( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d: unsigned long value: %"PRIu64"\n", i, item );
+         }
       }break;
       case dcrudTYPE_FLOAT:{
          float item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getFloat( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putFloat( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:               float: %f\n", i, item );
+         }
       }break;
       case dcrudTYPE_DOUBLE:{
          double item;
          CHK(__FILE__,__LINE__,ioByteBuffer_getDouble( frame, &item ))
          CHK(__FILE__,__LINE__,dcrudArguments_putDouble( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:              double: %f\n", i, item );
+         }
       }break;
       case dcrudTYPE_STRING:{
          char item[64*1024];
          CHK(__FILE__,__LINE__,ioByteBuffer_getString( frame, item, sizeof( item )))
          CHK(__FILE__,__LINE__,dcrudArguments_putString( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:              string: %s\n", i, item );
+         }
       }break;
       case dcrudTYPE_CLASS_ID:{
          dcrudClassID item = NULL;
+         char szClassID[40];
          CHK(__FILE__,__LINE__,dcrudClassID_unserialize( &item, frame ))
+         CHK(__FILE__,__LINE__,dcrudClassID_toString   ( classID, szClassID, sizeof( szClassID )))
          CHK(__FILE__,__LINE__,dcrudArguments_putClassID( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:             classID: %s\n", i, szClassID );
+         }
       }break;
       case dcrudTYPE_GUID:{
          dcrudGUID item = NULL;
+         char szGUID[40];
          CHK(__FILE__,__LINE__,dcrudGUID_unserialize( &item, frame ))
+         CHK(__FILE__,__LINE__,dcrudGUID_toString   ( item, szGUID, sizeof( szGUID )))
          CHK(__FILE__,__LINE__,dcrudArguments_putGUID( args, name, item ))
+         if( dcrudDebugSettings->dumpNetworkReceiverOperations ) {
+            fprintf( stderr, "\t\t%d:                GUID: %s\n", i, szGUID );
+         }
       }break;
       case dcrudTYPE_SHAREABLE:{
          dcrudShareable item = NULL;
@@ -196,6 +257,7 @@ static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame
             " call-id: %d, arg-count: %d, arg-name: '%s', class-id: %s\n",
             __FILE__, __LINE__, (int)type, (int)type, intrfcName, opName,
             callId, count, name, cidas );
+         status = UTIL_STATUS_ILLEGAL_STATE;
       }break;
       }
       CHK(__FILE__,__LINE__,dcrudClassID_delete( &classID ))
@@ -206,7 +268,7 @@ static utilStatus operation( dcrudNetworkReceiverImpl * This, ioByteBuffer frame
    }
    else if( callId >= 0 ) {
       CHK(__FILE__,__LINE__,dcrudIDispatcher_execute( This->participant->dispatcher,
-         intrfcName, opName, args, callId, queueNdx, callMode ))
+         intrfcName, opName, args, callId ))
    }
    else if( callId < 0 ) {
       CHK(__FILE__,__LINE__,
@@ -281,8 +343,7 @@ utilStatus dcrudNetworkReceiver_new(
    dcrudNetworkReceiver *      self,
    dcrudIParticipantImpl *     participant,
    const ioInetSocketAddress * addr,
-   const char *                intrfc,
-   bool                        dumpReceivedBuffer )
+   const char *                intrfc )
 {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( NULL == self || NULL == participant || NULL == addr || NULL == intrfc ) {
@@ -308,8 +369,7 @@ utilStatus dcrudNetworkReceiver_new(
          CHK(__FILE__,__LINE__,bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
          CHK(__FILE__,__LINE__,setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
          CHK(__FILE__,__LINE__,ioByteBuffer_new( &This->inBuf, 64*1024 ));
-         This->participant        = participant;
-         This->dumpReceivedBuffer = dumpReceivedBuffer;
+         This->participant = participant;
          CHK(__FILE__,__LINE__,osCreateThread((osThreadRoutine)run, &thread, This )?UTIL_STATUS_NO_ERROR:UTIL_STATUS_STD_API_ERROR );
       }
    }

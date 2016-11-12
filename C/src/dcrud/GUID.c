@@ -109,7 +109,7 @@ utilStatus dcrudGUID_toString( const dcrudGUID self, char * target, size_t targe
       int count = snprintf( target, targetSize, "Instance-%08X-%08X",
          This->publisher, This->instance );
       target[targetSize-1] = '\0';
-      if( count < (int)targetSize ) {
+      if( count >= (int)targetSize ) {
          status = UTIL_STATUS_OVERFLOW;
       }
    }

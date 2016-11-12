@@ -26,13 +26,32 @@ public class Publisher extends Thread {
 
       @Override
       public void create( Arguments how ) throws IOException {
-         final String forname   = how.get( "forname" );
-         final String name      = how.get( "name" );
-         final String birthdate = how.get( "birthdate" );
-         final Person person    = new Person( forname, name, LocalDate.parse( birthdate ));
-         _cache.create( person );
-         _cache.publish();
-         System.err.printf( "%s.create|%s\n", getClass().getName(), person );
+         try {
+            final String forname   = how.get( "forname" );
+            final String name      = how.get( "name" );
+            final String birthdate = how.get( "birthdate" );
+            final Person person    = new Person( forname, name, LocalDate.parse( birthdate ));
+            _cache.create( person );
+            _cache.publish();
+            System.err.printf( "%s.create|%s\n", getClass().getName(), person );
+         }
+         catch( final Throwable t ) {
+            t.printStackTrace();
+            try {
+               System.err.println( how.toString());
+            }
+            catch( final Throwable tt ){
+               tt.printStackTrace();
+            }
+            try {
+               System.err.println( "Press <enter>" );
+               System.in.read();
+            }
+            catch( final Throwable tt ){
+               tt.printStackTrace();
+            }
+            System.exit(0);
+         }
       }
 
       @Override
@@ -66,6 +85,7 @@ public class Publisher extends Thread {
 
    @Override
    public void run() {
+      System.err.println( getClass().getName() + ".run|entry" );
       final ICache          cache      = _participant.getDefaultCache();
       final IDispatcher     dispatcher = _participant.getDispatcher();
       final PersonPublisher publisher  = new PersonPublisher( cache );
@@ -74,6 +94,7 @@ public class Publisher extends Thread {
             .addOperation( "exit", args -> { System.exit(0); return null; });
       _participant.registerLocalFactory ( Person.CLASS_ID, Person::new );
       _participant.registerRemoteFactory( Person.CLASS_ID, publisher );
+      System.err.println( getClass().getName() + ".run|enter infinite loop" );
       for(;;) {
          try {
             Thread.sleep( 100 );
@@ -81,6 +102,13 @@ public class Publisher extends Thread {
          }
          catch( final Throwable t ) {
             t.printStackTrace();
+            try {
+               System.err.println( "Press <enter>" );
+               System.in.read();
+            }
+            catch( final IOException e ){
+               e.printStackTrace();
+            }
          }
       }
    }

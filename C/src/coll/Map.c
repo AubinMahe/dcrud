@@ -240,12 +240,7 @@ utilStatus collMap_hasKey( collMap self, collMapKey key, bool * result ) {
    return status;
 }
 
-utilStatus collMap_foreach(
-   collMap             self,
-   collForeachFunction fn,
-   void *              userData,
-   collForeachResult * result   )
-{
+utilStatus collMap_foreach( collMap self, collForeachFunction fn, void * userData ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    collMapImpl * This = collMap_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
@@ -260,9 +255,6 @@ utilStatus collMap_foreach(
          context.key   = pair->key;
          context.value = pair->value;
          status = fn( &context );
-      }
-      if( result ) {
-         *result = context.retVal;
       }
    }
    return status;

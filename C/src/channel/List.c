@@ -7,7 +7,7 @@
 
 #ifdef STATIC_ALLOCATION
 typedef void * channelListItems[channelListItems_POOL_SIZE];
-UTIL_POOL_DECLARE( channelListItems );
+UTIL_POOL_DECLARE( channelListItems )
 #endif
 
 utilStatus channelList_init( channelList * list ) {

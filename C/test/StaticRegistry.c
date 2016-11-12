@@ -3,6 +3,7 @@
 
 #include <coll/Map.h>
 #include <io/InetSocketAddress.h>
+#include <dcrud/ClassID.h>
 
 #include <string.h>
 
@@ -67,5 +68,6 @@ utilStatus releaseStaticRegistry( dcrudIRegistry * registry ) {
    collMap_delete( &context.clients      );
    collMap_delete( &context.consumers    );
    dcrudIRegistry_delete( registry );
+   dcrudClassID_done();
    return UTIL_STATUS_NO_ERROR;
 }

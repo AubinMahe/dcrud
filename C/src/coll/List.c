@@ -209,12 +209,7 @@ utilStatus collList_contains(
    return status;
 }
 
-utilStatus collList_foreach(
-   collList            self,
-   collForeachFunction fn,
-   void *              userData,
-   collForeachResult * result   )
-{
+utilStatus collList_foreach( collList self, collForeachFunction fn, void * userData ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    collListImpl * This = collList_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
@@ -227,9 +222,6 @@ utilStatus collList_foreach(
       {
          context.value = This->items[context.index];
          status = fn( &context );
-      }
-      if( result ) {
-         *result = context.retVal;
       }
    }
    return status;

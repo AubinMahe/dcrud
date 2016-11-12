@@ -166,4 +166,45 @@ public class Arguments {
    public int getCount() {
       return _args.size();
    }
+
+   @Override
+   public String toString() {
+      final StringBuilder message = new StringBuilder();
+      message.append( "   mode: " );
+      message.append( _mode.name());
+      message.append( '\n' );
+      message.append( "   queue: " );
+      message.append( _queue );
+      message.append( '\n' );
+      message.append( "   pairs:\n" );
+      for( final Entry<String, Object> e : _args.entrySet()) {
+         final String name  = e.getKey();
+         final Object value = e.getValue();
+         final ClassID.Type type = _types.get( name );
+         message.append( "      " );
+         message.append( name );
+         message.append( " ==> (" );
+         message.append( type );
+         message.append( ") " );
+         if( type == Type.STRING ) {
+            final String s = (String)value;
+            final byte[] bytes = s.getBytes();
+            message.append( "String, length = " );
+            message.append( bytes.length );
+            message.append( ":\n" );
+            for( int i = 0; i < bytes.length; ++i ) {
+               message.append( '\t' );
+               message.append( i );
+               message.append( ": 0x" );
+               message.append( Integer.toHexString( bytes[i] ));
+               message.append( '\n' );
+            }
+         }
+         else {
+            message.append( value.toString());
+         }
+         message.append( '\n' );
+      }
+      return message.toString();
+   }
 }

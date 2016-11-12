@@ -135,8 +135,8 @@ utilStatus dcrudArguments_delete( dcrudArguments * self ) {
    else {
       dcrudArgumentsImpl * This = dcrudArguments_safeCast( *self, &status );
       if( status == UTIL_STATUS_NO_ERROR ) {
-         collMap_foreach( This->args, releaseValue, This, NULL );
-         collMap_foreach( This->args, releaseKey  , This, NULL );
+         collMap_foreach( This->args, releaseValue, This );
+         collMap_foreach( This->args, releaseKey  , This );
          collMap_delete( &This->args );
          collMap_delete( &This->types );
          UTIL_RELEASE( dcrudArgumentsImpl );
@@ -149,7 +149,7 @@ utilStatus dcrudArguments_clear( dcrudArguments self ) {
    utilStatus           status = UTIL_STATUS_NO_ERROR;
    dcrudArgumentsImpl * This   = dcrudArguments_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
-      collMap_foreach( This->args, releaseValue, This, NULL );
+      collMap_foreach( This->args, releaseValue, This );
       status = collMap_clear( This->args );
    }
    return status;
@@ -254,7 +254,6 @@ static utilStatus serializePair( collForeach * context ) {
    dcrudType                   type;
    utilStatus                  status;
 
-   context->retVal = NULL;
    if( NULL == value ) {
       status = UTIL_STATUS_NULL_ARGUMENT;
    }
@@ -277,18 +276,18 @@ static utilStatus serializePair( collForeach * context ) {
                   case dcrudTYPE_NULL            : /* No Data. */ break;
                   case dcrudTYPE_BOOLEAN         :
                   case dcrudTYPE_BYTE            :
-                  case dcrudTYPE_CHAR            : status = ioByteBuffer_putByte  ( target, *(byte *          )value ); break;
-                  case dcrudTYPE_SHORT           : status = ioByteBuffer_putShort ( target, *(short *)         value ); break;
-                  case dcrudTYPE_UNSIGNED_SHORT  : status = ioByteBuffer_putUShort( target, *(unsigned short *)value ); break;
-                  case dcrudTYPE_INTEGER         : status = ioByteBuffer_putInt   ( target, *(int *)           value ); break;
-                  case dcrudTYPE_UNSIGNED_INTEGER: status = ioByteBuffer_putUInt  ( target, *(unsigned int *  )value ); break;
-                  case dcrudTYPE_LONG            : status = ioByteBuffer_putLong  ( target, *(int64_t *)       value ); break;
-                  case dcrudTYPE_UNSIGNED_LONG   : status = ioByteBuffer_putULong ( target, *(uint64_t *)      value ); break;
-                  case dcrudTYPE_FLOAT           : status = ioByteBuffer_putFloat ( target, *(float *)         value ); break;
-                  case dcrudTYPE_DOUBLE          : status = ioByteBuffer_putDouble( target, *(double *)        value ); break;
-                  case dcrudTYPE_STRING          : status = ioByteBuffer_putString( target, (const char *)     value ); break;
-                  case dcrudTYPE_CLASS_ID        : status = dcrudClassID_serialize((const dcrudClassID)value, target ); break;
-                  case dcrudTYPE_GUID            : status = dcrudGUID_serialize   ((const dcrudGUID   )value, target ); break;
+                  case dcrudTYPE_CHAR            : status = ioByteBuffer_putByte  ( target, value->Byte    ); break;
+                  case dcrudTYPE_SHORT           : status = ioByteBuffer_putShort ( target, value->Short   ); break;
+                  case dcrudTYPE_UNSIGNED_SHORT  : status = ioByteBuffer_putUShort( target, value->Ushort  ); break;
+                  case dcrudTYPE_INTEGER         : status = ioByteBuffer_putInt   ( target, value->Int     ); break;
+                  case dcrudTYPE_UNSIGNED_INTEGER: status = ioByteBuffer_putUInt  ( target, value->Uint    ); break;
+                  case dcrudTYPE_LONG            : status = ioByteBuffer_putLong  ( target, value->Long    ); break;
+                  case dcrudTYPE_UNSIGNED_LONG   : status = ioByteBuffer_putULong ( target, value->Ulong   ); break;
+                  case dcrudTYPE_FLOAT           : status = ioByteBuffer_putFloat ( target, value->Float   ); break;
+                  case dcrudTYPE_DOUBLE          : status = ioByteBuffer_putDouble( target, value->Double  ); break;
+                  case dcrudTYPE_STRING          : status = ioByteBuffer_putString( target, value->String  ); break;
+                  case dcrudTYPE_CLASS_ID        : status = dcrudClassID_serialize( value->ClassID, target ); break;
+                  case dcrudTYPE_GUID            : status = dcrudGUID_serialize   ( value->GUID   , target ); break;
                   case dcrudTYPE_SHAREABLE       : /* Already handled before this switch. */
                   case dcrudLAST_TYPE            : status = UTIL_STATUS_ILLEGAL_STATE; break;
                   }
@@ -308,17 +307,13 @@ utilStatus dcrudArguments_serialize( dcrudArguments self, ioByteBuffer target ) 
    else {
       dcrudArgumentsImpl * This = dcrudArguments_safeCast( self, &status );
       if( status == UTIL_STATUS_NO_ERROR ) {
-         status = ioByteBuffer_putByte( target, *(byte *)This->mode );
-         if( status == UTIL_STATUS_NO_ERROR ) {
-            status = ioByteBuffer_putByte( target, *(byte *)This->queue );
-            if( status == UTIL_STATUS_NO_ERROR ) {
-               Context   ctxt;
-               ctxt.source = This;
-               ctxt.buffer = target;
-               ctxt.file   = 0;
-               status = collMap_foreach( This->args, serializePair, &ctxt, NULL );
-            }
-         }
+         Context ctxt;
+         CHK(__FILE__,__LINE__,ioByteBuffer_putByte( target, This->mode ))
+         CHK(__FILE__,__LINE__,ioByteBuffer_putByte( target, This->queue ))
+         ctxt.source = This;
+         ctxt.buffer = target;
+         ctxt.file   = NULL;
+         status = collMap_foreach( This->args, serializePair, &ctxt );
       }
    }
    return status;
@@ -404,7 +399,7 @@ utilStatus dcrudArguments_dump( dcrudArguments self, FILE * target ) {
          fprintf( target, "mode : %d\n", This->mode );
          fprintf( target, "queue: %d\n", This->queue );
          fprintf( target, "#%d\n", count );
-         status = collMap_foreach( This->args, printPair, &ctxt, NULL );
+         status = collMap_foreach( This->args, printPair, &ctxt );
       }
    }
    return status;

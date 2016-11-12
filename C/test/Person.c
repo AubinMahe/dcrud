@@ -161,7 +161,7 @@ utilStatus Person_initFactories(
    dcrudLocalFactory **  localFactory,
    dcrudRemoteFactory ** remoteFactory )
 {
-   dcrudClassID_new( &PersonLocalFactory.classID, 1, 1, 1, 1 );
+   dcrudClassID_resolve( &PersonLocalFactory.classID, 1, 1, 1, 1 );
    PersonLocalFactory.allocateUserData = (dcrudLocalFactory_Allocate   )allocate;
    PersonLocalFactory.serialize        = (dcrudLocalFactory_Serialize  )serialize;
    PersonLocalFactory.unserialize      = (dcrudLocalFactory_Unserialize)unserialize;
@@ -186,15 +186,17 @@ utilStatus Person_releaseFactories( void ) {
 }
 
 utilStatus Person_print( collForeach * context ) {
-   FILE *         target    = (FILE *        )context->user;
-   const char *   key       = (const char *  )context->key;
-   dcrudShareable shareable = (dcrudShareable)context->value;
-   Person *       person    = NULL;
+   FILE *               target    = (FILE *              )context->user;
+   const dcrudGUID      key       = (const dcrudGUID     )context->key;
+   const dcrudShareable shareable = (const dcrudShareable)context->value;
+   const Person *       person    = NULL;
 
    CHK(__FILE__,__LINE__,dcrudShareable_getData( shareable, (dcrudShareableData *)&person ))
    if( key ) {
+      char szGUID[27];
+      CHK(__FILE__,__LINE__,dcrudGUID_toString( key, szGUID, sizeof( szGUID ) ))
       fprintf( target, "%s ==> %s %s %d-%d-%d\n",
-         key,
+         szGUID,
          person->forname,
          person->name,
          person->birthdate_year,
