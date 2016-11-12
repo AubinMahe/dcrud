@@ -136,78 +136,79 @@ clean:
 	rm -fr Release
 
 #------------------------------- TESTS -------------------------------
-#-- Static
+# tn  test n
+# tsn test n without dynamic allocation
+# mn  test n under Valgrind
+# msn test n without dynamic allocation and under Valgrind
+#----------------------------------------------------------
+
+t2: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=2
 
 ts2: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=2
 
+m2: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=2
+
 ms2: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=2
+
+t3: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=3
 
 ts3: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=3
 
+m3: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=3
+
 ms3: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=3
+
+t4: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=4
 
 ts4: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=4
 
+m4: Debug/dcrud-c-test
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=4
+
 ms4: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=4
+
+t5: Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
+	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=5
 
 ts5: Static-Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=5
 
+m5: Debug/dcrud-c-test
+	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=5
+
 ms5: Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=5
 
-dtj6: Static-Debug/dcrud-c-test
-	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 --dump-received-buffer=true &
-
-dts6: Static-Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=6 --dump-received-buffer=true
+t6: Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
+	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=6
 
 ts6: Static-Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=6
 
+m6: Debug/dcrud-c-test
+	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
+	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=6
+
 ms6: Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=6
-
-#-- Dynamic
-
-t2: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=2
-
-m2: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=2
-
-t3: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=3
-
-m3: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=3
-
-t4: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=4
-
-m4: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=4
-
-t5: Debug/dcrud-c-test
-	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=5
-
-m5: Debug/dcrud-c-test
-	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
-	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=5
-
-m6: Debug/dcrud-c-test
-	gnome-terminal -x java -cp ../Java/bin tests.person.Test_006&
-	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=6
 
 #------------------------------- BUILD -------------------------------
 

@@ -63,7 +63,11 @@ utilStatus dcrudClassID_done( void ) {
    unsigned i;
    for( i = 0U; i < allClassesCount; ++i ) {
       dcrudClassIDImpl * classID = allClasses[i];
+#ifdef STATIC_ALLOCATION
       utilPool_release( &dcrudClassIDImplPool, &classID );
+#else
+      free( classID );
+#endif
    }
    allClassesCount = 0U;
    return UTIL_STATUS_NO_ERROR;
