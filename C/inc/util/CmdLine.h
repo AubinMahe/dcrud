@@ -3,7 +3,6 @@
 extern "C" {
 #endif
 
-#include "types.h"
 #include "Status.h"
 
 UTIL_ADT(utilCmdLine);

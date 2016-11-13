@@ -10,15 +10,16 @@ extern "C" {
 #     define STRICT 1
 #  endif
 #  include <windows.h>
-   typedef DWORD                    utilThread;
-   typedef LPTHREAD_START_ROUTINE   utilthreadRoutine;
+   typedef HANDLE                   osThread;
+   typedef LPTHREAD_START_ROUTINE   osThreadRoutine;
 #else
 #  include <pthread.h>
-   typedef pthread_t osThread;
-   typedef void *( * osThreadRoutine )( void * );
+   typedef pthread_t                osThread;
+   typedef void *( *                osThreadRoutine )( void * );
 #endif
 
-bool osCreateThread( osThreadRoutine entry, osThread * thread, void * arg );
+bool osThread_create( osThread * thread, osThreadRoutine entry, void * arg );
+bool osThread_join  ( osThread   thread );
 
 #ifdef __cplusplus
 }

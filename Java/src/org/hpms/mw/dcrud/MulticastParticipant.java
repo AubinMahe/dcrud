@@ -8,6 +8,8 @@ import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.channels.DatagramChannel;
 
+import org.hpms.util.SerializerHelper;
+
 final class MulticastParticipant extends AbstractParticipant {
 
    private final InetSocketAddress _target;

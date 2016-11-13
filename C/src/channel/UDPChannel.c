@@ -1,8 +1,12 @@
 #include <channel/UDPChannel.h>
+
+utilStatus channelFactories_done( void );
+
 #include "poolSizes.h"
 #include "magic.h"
 
 #include <util/Pool.h>
+#include <util/DebugSettings.h>
 
 #include <os/threads.h>
 
@@ -27,6 +31,7 @@ typedef struct __ {
    unsigned     magic;
    int          sckt;
    ioByteBuffer decoder;
+   osThread     thread;
    unsigned     maxHandlersCount;
    unsigned     handlersCount;
 #ifdef STATIC_ALLOCATION
@@ -48,32 +53,40 @@ static int handlerCmp( const void * l, const void * r ) {
 
 static void * channelUDPChannel_run( void * self ) {
    channelUDPChannelImpl * This = (channelUDPChannelImpl *)self;
-#ifdef linux
-   pthread_detach( pthread_self());
-#endif
-   fprintf( stderr, "channelUDPChannel_run()\n" );
-   while( This->sckt ) {
-      short msgId;
-      bool  ok;
-
-      fprintf( stderr, "channelUDPChannel_run(): waiting for message\n" );
-      ok =
-         ioByteBuffer_receive( This->decoder, This->sckt ) &&
-         ioByteBuffer_getShort( This->decoder, &msgId );
-      if( ok ) {
-         handler_t   key;
-         handler_t * handler;
-         key.msgId = msgId;
-         handler = (handler_t *)
+   utilStatus status;
+   short msgId;
+   for(;;) {
+      status = ioByteBuffer_clear( This->decoder );
+      if( UTIL_STATUS_NO_ERROR != status ) {
+         utilStatus_checkAndLog( status, __FILE__, __LINE__, "ioByteBuffer_clear" );
+         return NULL;
+      }
+      status = ioByteBuffer_receive( This->decoder, This->sckt );
+      if( UTIL_STATUS_NO_ERROR != status ) {
+         utilStatus_checkAndLog( status, __FILE__, __LINE__, "ioByteBuffer_receive" );
+         return NULL;
+      }
+      status = ioByteBuffer_flip( This->decoder );
+      if( UTIL_STATUS_NO_ERROR != status ) {
+         utilStatus_checkAndLog( status, __FILE__, __LINE__, "ioByteBuffer_flip" );
+         return NULL;
+      }
+      status = ioByteBuffer_getShort( This->decoder, &msgId );
+      if( UTIL_STATUS_NO_ERROR != status ) {
+         utilStatus_checkAndLog( status, __FILE__, __LINE__, "ioByteBuffer_getShort" );
+      }
+      else {
+         handler_t   key     = { msgId, NULL, NULL };
+         handler_t * handler = (handler_t *)
             bsearch( &key, This->handlers, This->handlersCount, sizeof( handler_t ), handlerCmp );
-         fprintf( stderr, "channelUDPChannel_run(): message '%d' received, dump follows\n", msgId );
-         ioByteBuffer_dump( This->decoder, stderr );
+         if( utilDebugSettings->dumpReceivedBuffer ) {
+            ioByteBuffer_dump( This->decoder, stderr );
+         }
          if( handler ) {
-            fprintf( stderr, "channelUDPChannel_run(): message '%d' received\n", msgId );
             handler->fn( msgId, This->decoder, handler->userData );
          }
          else {
-            fprintf( stderr, "channelUDPChannel_run(): No handler declared for message '%d'\n", msgId );
+            fprintf( stderr, "Unexpected msg id: %d", msgId );
          }
       }
    }
@@ -132,13 +145,12 @@ utilStatus channelUDPChannel_new(
                         UTIL_RELEASE( channelUDPChannelImpl );
                      }
                      else {
-                        osThread thread;
 #ifndef STATIC_ALLOCATION
                         size_t size = This->maxHandlersCount * sizeof( handler_t );
                         This->handlers = (handler_t *)malloc( size );
                         memset( This->handlers, 0, size );
 #endif
-                        if( ! osCreateThread( channelUDPChannel_run, &thread, This )) {
+                        if( ! osThread_create( &This->thread, channelUDPChannel_run, This )) {
                            status = UTIL_STATUS_STD_API_ERROR;
                            UTIL_RELEASE( channelUDPChannelImpl );
                         }
@@ -159,7 +171,12 @@ utilStatus channelUDPChannel_send( channelUDPChannel self, ioByteBuffer encoder 
    utilStatus              status = UTIL_STATUS_NO_ERROR;
    channelUDPChannelImpl * This   = channelUDPChannel_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
-      status = ioByteBuffer_send( encoder, This->sckt );
+      size_t pos = 0U;
+      CHK(__FILE__,__LINE__,ioByteBuffer_getPosition( encoder, &pos ));
+      if( pos > 0U ) {
+         CHK(__FILE__,__LINE__,ioByteBuffer_flip( encoder ));
+      }
+      CHK(__FILE__,__LINE__,ioByteBuffer_send( encoder, This->sckt ))
    }
    return status;
 }
@@ -186,16 +203,15 @@ utilStatus channelUDPChannel_addHandler(
          status = UTIL_STATUS_TOO_MANY;
       }
 #endif
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         handler_t * cell = &(This->handlers[This->handlersCount++]);
-         cell->msgId    = msgId;
-         cell->fn       = handler;
-         cell->userData = userData;
-         qsort( This->handlers, This->handlersCount, sizeof( handler_t ), handlerCmp );
-      }
    }
-   fprintf( stderr, "channelUDPChannel_addHandler(): %s\n",
-      ( status == UTIL_STATUS_NO_ERROR ) ? "successful" : "FAILURE" );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      handler_t * cell = This->handlers + This->handlersCount;
+      ++This->handlersCount;
+      cell->msgId    = msgId;
+      cell->fn       = handler;
+      cell->userData = userData;
+      qsort( This->handlers, This->handlersCount, sizeof( handler_t ), handlerCmp );
+   }
    return status;
 }
 
@@ -207,11 +223,15 @@ utilStatus channelUDPChannel_delete( channelUDPChannel * self ) {
    else {
       channelUDPChannelImpl * This = channelUDPChannel_safeCast( *self, &status );
       if( UTIL_STATUS_NO_ERROR == status ) {
+         shutdown( This->sckt, SHUT_RD );
+         osThread_join( This->thread );
+         closesocket( This->sckt );
          ioByteBuffer_delete( &This->decoder );
 #ifndef STATIC_ALLOCATION
          free( This->handlers );
 #endif
          UTIL_RELEASE( channelUDPChannelImpl )
+         CHK(__FILE__,__LINE__,channelFactories_done())
       }
    }
    return status;

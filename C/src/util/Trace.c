@@ -98,6 +98,7 @@ utilStatus utilPrintStackTrace( void ) {
       }
    }
    printf( "\n" );
+   free( symbols );
 #endif
    return UTIL_STATUS_NO_ERROR;
 }

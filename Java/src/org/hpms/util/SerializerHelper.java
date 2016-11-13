@@ -1,4 +1,4 @@
-package org.hpms.mw.dcrud;
+package org.hpms.util;
 
 import java.nio.ByteBuffer;
 

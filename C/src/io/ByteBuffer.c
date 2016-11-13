@@ -630,6 +630,9 @@ utilStatus ioByteBuffer_receive( ioByteBuffer self, SOCKET sckt ) {
       if( count < 0 ) {
          status = UTIL_STATUS_STD_API_ERROR;
       }
+      else if( count == 0 ) {
+         status = UTIL_STATUS_ILLEGAL_STATE;
+      }
       else {
          This->position += (size_t)count;
       }

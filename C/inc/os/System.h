@@ -3,6 +3,10 @@
 extern "C" {
 #endif
 
+#ifdef linux
+#  include <unistd.h>
+#endif
+
 #include <util/Status.h>
 
 utilStatus osSystem_sleep( unsigned int milliseconds );

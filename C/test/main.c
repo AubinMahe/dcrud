@@ -1,7 +1,7 @@
-#include <util/types.h>
-#include <util/Trace.h>
+#include <util/DebugSettings.h>
 #include <util/CmdLine.h>
 #include <util/Pool.h>
+#include <util/Trace.h>
 
 #ifdef _WIN32
 #  include <crtdbg.h>
@@ -47,6 +47,7 @@ int main( int argc, char * argv[] ) {
    CHK(__FILE__,__LINE__,utilCmdLine_addUShort ( cmdLine, "remote-port"         , 2417U ))
    CHK(__FILE__,__LINE__,utilCmdLine_parse     ( cmdLine, argc, argv ))
    CHK(__FILE__,__LINE__,utilCmdLine_getInt    ( cmdLine, "test"                , &testNumber ))
+   CHK(__FILE__,__LINE__,utilDebugSettings->init( cmdLine ));
    sprintf( logname, "Test_%03d.log", testNumber );
    utilTrace_open( logname );
    printf( "TEST %03d - ", testNumber );

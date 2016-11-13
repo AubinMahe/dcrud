@@ -19,6 +19,10 @@ static unsigned     poolMapCount;
 utilStatus utilPool_dumpAll( FILE * target ) {
 #ifdef STATIC_ALLOCATION
    unsigned i;
+
+   if( NULL == target ) {
+      target = stderr;
+   }
    fprintf( target,
       "+------------------------------+----------+----------+----------+----------+--------------+\n"
       "|             Pool             | Capacity | Reserved | Reserve# | Release# | Max Reserved |\n"
@@ -170,7 +174,7 @@ utilStatus utilPool_release( utilPool * This, void * arg ) {
          status = UTIL_STATUS_NO_ERROR;
       }
       else {
-         status = UTIL_STATUS_ILLEGAL_STATE;
+         status = UTIL_STATUS_DUPLICATE;
       }
    }
    return status;

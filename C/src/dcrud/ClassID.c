@@ -146,16 +146,21 @@ utilStatus dcrudClassID_serializeType( dcrudType type, ioByteBuffer target ) {
 }
 
 utilStatus dcrudClassID_toString( const dcrudClassID self, char * target, size_t targetSize ) {
-   utilStatus         status = UTIL_STATUS_NO_ERROR;
-   dcrudClassIDImpl * This   = dcrudClassID_safeCast( self, &status );
-   if( UTIL_STATUS_NO_ERROR == status ) {
-      int ret = snprintf( target, targetSize, "Class-%02X-%02X-%02X-%02X",
-         This->package_1, This->package_2, This->package_3, This->clazz );
-      if( ret < 0 ) {
-         status = UTIL_STATUS_STD_API_ERROR;
-      }
-      else if( ret >= (int)targetSize ) {
-         status = UTIL_STATUS_OVERFLOW;
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == target ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudClassIDImpl * This = dcrudClassID_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         int ret = snprintf( target, targetSize, "Class-%02X-%02X-%02X-%02X",
+            This->package_1, This->package_2, This->package_3, This->clazz );
+         if( ret < 0 ) {
+            status = UTIL_STATUS_STD_API_ERROR;
+         }
+         else if( ret >= (int)targetSize ) {
+            status = UTIL_STATUS_OVERFLOW;
+         }
       }
    }
    return status;
@@ -220,11 +225,9 @@ utilStatus dcrudClassID_printMapPair( collForeach * context ) {
    const char * name   = (const char *)context->key;
    dcrudClassID value  = (dcrudClassID)context->value;
    utilStatus   status = dcrudClassID_toString( value, buffer, sizeof( buffer ));
-   if( target ) {
-      fprintf( target, "%s => %s\n", name, buffer );
+   if( NULL == target ) {
+      target = stderr;
    }
-   else {
-      printf( "%s => %s\n", name, buffer );
-   }
+   fprintf( target, "%s => %s\n", name, buffer );
    return status;
 }

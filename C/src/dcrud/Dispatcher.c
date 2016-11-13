@@ -1,5 +1,4 @@
 #include "Dispatcher.h"
-#include <dcrud/Network.h>
 #include "ParticipantImpl.h"
 #include "IProtocol.h"
 #include "magic.h"
@@ -19,6 +18,8 @@ typedef struct dcrudIDispatcherImpl_s {
    unsigned int            magic;
    dcrudIParticipantImpl * participant;
    collMap                 provided;
+   collSet                 required;
+   collSet                 dcrud;
    collList                operationQueues[OPERATION_QUEUE_COUNT];
    osMutex                 operationQueuesMutex;
 
@@ -80,7 +81,7 @@ typedef struct dcrudICRUDImpl_s {
 UTIL_DEFINE_SAFE_CAST(dcrudICRUD)
 UTIL_POOL_DECLARE(dcrudICRUDImpl)
 
-static utilStatus dcrudOperation_new(
+utilStatus dcrudOperation_new(
    dcrudOperation ** self,
    void *            context,
    dcrudIOperation   function )
@@ -100,7 +101,7 @@ static utilStatus dcrudOperation_new(
    return status;
 }
 
-static utilStatus dcrudOperation_delete( dcrudOperation ** self ) {
+utilStatus dcrudOperation_delete( dcrudOperation ** self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( self == NULL ) {
       status = UTIL_STATUS_NULL_ARGUMENT;
@@ -111,7 +112,7 @@ static utilStatus dcrudOperation_delete( dcrudOperation ** self ) {
    return status;
 }
 
-static utilStatus dcrudOperationCall_new(
+utilStatus dcrudOperationCall_new(
    dcrudOperationCall ** self,
    dcrudOperation *      operation,
    const char *          intrfcName,
@@ -137,7 +138,7 @@ static utilStatus dcrudOperationCall_new(
    return status;
 }
 
-static utilStatus dcrudOperationCall_delete( dcrudOperationCall ** self ) {
+utilStatus dcrudOperationCall_delete( dcrudOperationCall ** self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( self == NULL ) {
       status = UTIL_STATUS_NULL_ARGUMENT;
@@ -152,7 +153,7 @@ static utilStatus dcrudOperationCall_delete( dcrudOperationCall ** self ) {
    return status;
 }
 
-static utilStatus dcrudIRequiredImpl_new(
+utilStatus dcrudIRequiredImpl_new(
    dcrudIRequired *        self,
    dcrudIParticipantImpl * participant,
    const char *            name        )
@@ -172,7 +173,7 @@ static utilStatus dcrudIRequiredImpl_new(
    return status;
 }
 
-static utilStatus dcrudIRequiredImpl_delete( dcrudIRequired * self ) {
+utilStatus dcrudIRequiredImpl_delete( dcrudIRequired * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( self == NULL ) {
       status = UTIL_STATUS_NULL_ARGUMENT;
@@ -183,7 +184,7 @@ static utilStatus dcrudIRequiredImpl_delete( dcrudIRequired * self ) {
    return status;
 }
 
-static utilStatus dcrudIProvidedImpl_new( dcrudIProvided * self ) {
+utilStatus dcrudIProvidedImpl_new( dcrudIProvided * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( self == NULL ) {
       status = UTIL_STATUS_NULL_ARGUMENT;
@@ -198,19 +199,25 @@ static utilStatus dcrudIProvidedImpl_new( dcrudIProvided * self ) {
    return status;
 }
 
-static utilStatus deleteOperation( collForeach * context ) {
+utilStatus dcrudIProvidedImpl_deleteOperation( collForeach * context ) {
    dcrudOperation * op = (dcrudOperation *)context->value;
    return dcrudOperation_delete( &op );
 }
 
-static utilStatus dcrudIProvidedImpl_delete( dcrudIProvided * self ) {
+utilStatus dcrudIProvidedImpl_delete( dcrudIProvided * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    dcrudIProvidedImpl * This = dcrudIProvided_safeCast( *self, &status );
    if( UTIL_STATUS_NO_ERROR == status ) {
-      collMap_foreach( This->opsInOut, deleteOperation, NULL );
+      collMap_foreach( This->opsInOut, dcrudIProvidedImpl_deleteOperation, NULL );
       collMap_delete( &This->opsInOut );
       UTIL_RELEASE(dcrudIProvidedImpl);
    }
+   return status;
+}
+
+utilStatus dcrudICRUDImpl_delete( dcrudICRUDImpl ** self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   UTIL_RELEASE(dcrudICRUDImpl);
    return status;
 }
 
@@ -244,11 +251,16 @@ utilStatus dcrudIRequired_call(
    utilStatus           status = UTIL_STATUS_NO_ERROR;
    dcrudIRequiredImpl * This   = dcrudIRequired_safeCast( self, &status );
    if( status == UTIL_STATUS_NO_ERROR ) {
+      bool allocatedHere = false;
       if( NULL == arguments ) {
+         allocatedHere = true;
          CHK(__FILE__,__LINE__,dcrudArguments_new( &arguments ))
       }
       CHK(__FILE__,__LINE__,dcrudIParticipantImpl_call(
-            This->participant, This->name, opName, arguments, callback ))
+         This->participant, This->name, opName, arguments, callback ))
+      if( allocatedHere ) {
+         CHK(__FILE__,__LINE__,dcrudArguments_delete( &arguments ))
+      }
    }
    return status;
 }
@@ -265,6 +277,8 @@ utilStatus dcrudIDispatcher_new( dcrudIDispatcher * self, dcrudIParticipantImpl 
          unsigned int i;
          This->participant = participant;
          CHK(__FILE__,__LINE__,collMap_new( &(This->provided), (collComparator)collStringCompare ))
+         CHK(__FILE__,__LINE__,collSet_new( &(This->required), (collComparator)collPointerCompare ))
+         CHK(__FILE__,__LINE__,collSet_new( &(This->dcrud   ), (collComparator)collPointerCompare ))
          for( i = 0; (status == UTIL_STATUS_NO_ERROR) && (i < OPERATION_QUEUE_COUNT); ++i ) {
             CHK(__FILE__,__LINE__,collList_new(&(This->operationQueues[i])))
          }
@@ -274,9 +288,24 @@ utilStatus dcrudIDispatcher_new( dcrudIDispatcher * self, dcrudIParticipantImpl 
    return status;
 }
 
-utilStatus deleteProvided( collForeach * context ) {
+utilStatus dcrudIDispatcher_deleteProvided( collForeach * context ) {
    dcrudIProvided self = context->value;
    return dcrudIProvidedImpl_delete( &self );
+}
+
+utilStatus dcrudIDispatcher_deleteRequired( collForeach * context ) {
+   dcrudIRequired self = context->value;
+   return dcrudIRequiredImpl_delete( &self );
+}
+
+utilStatus dcrudIDispatcher_deleteDcrud( collForeach * context ) {
+   dcrudICRUDImpl * dcrud = context->value;
+   return dcrudICRUDImpl_delete( &dcrud );
+}
+
+utilStatus dcrudIDispatcher_deleteOpCall( collForeach * context ) {
+   dcrudOperationCall * opCall = context->value;
+   return dcrudOperationCall_delete( &opCall );
 }
 
 utilStatus dcrudIDispatcher_delete( dcrudIDispatcher * self ) {
@@ -288,9 +317,14 @@ utilStatus dcrudIDispatcher_delete( dcrudIDispatcher * self ) {
       dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( *self, &status );
       if( status == UTIL_STATUS_NO_ERROR ) {
          unsigned int i;
-         collMap_foreach( This->provided, deleteProvided, NULL );
+         collMap_foreach( This->provided, dcrudIDispatcher_deleteProvided, NULL );
          collMap_delete( &This->provided );
+         collSet_foreach( This->required, dcrudIDispatcher_deleteRequired, NULL );
+         collSet_delete( &This->required );
+         collSet_foreach( This->dcrud   , dcrudIDispatcher_deleteDcrud, NULL );
+         collSet_delete( &This->dcrud );
          for( i = 0; i < OPERATION_QUEUE_COUNT; ++i ) {
+            collList_foreach( This->operationQueues[i], dcrudIDispatcher_deleteOpCall, NULL );
             collList_delete(&(This->operationQueues[i]));
          }
          osMutex_delete(&(This->operationQueuesMutex));
@@ -306,23 +340,12 @@ utilStatus dcrudIDispatcher_provide(
    dcrudIProvided * result )
 {
    utilStatus status = UTIL_STATUS_NO_ERROR;
-   if( result == NULL ) {
-      status = UTIL_STATUS_NULL_ARGUMENT;
-   }
-   else {
-      dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( self, &status );
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         dcrudIProvided provided = NULL;
-         status = dcrudIProvidedImpl_new( &provided );
-         if( status == UTIL_STATUS_NO_ERROR ) {
-            status = collMap_put( This->provided, (collMapKey)interfaceName, provided, NULL );
-         }
-         if( status != UTIL_STATUS_NO_ERROR ) {
-            dcrudIProvidedImpl_delete( &provided );
-            provided = NULL;
-         }
-         *result = (dcrudIProvided)provided;
-      }
+   dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      dcrudIProvided provided = NULL;
+      CHK(__FILE__,__LINE__,dcrudIProvidedImpl_new( &provided ))
+      CHK(__FILE__,__LINE__,collMap_put( This->provided, (collMapKey)interfaceName, provided, NULL ))
+      *result = (dcrudIProvided)provided;
    }
    return status;
 }
@@ -333,69 +356,12 @@ utilStatus dcrudIDispatcher_require(
    dcrudIRequired * result )
 {
    utilStatus status = UTIL_STATUS_NO_ERROR;
-   if( result == NULL ) {
-      status = UTIL_STATUS_NULL_ARGUMENT;
-   }
-   else {
-      dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( self, &status );
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         status = dcrudIRequiredImpl_new( result, This->participant, name );
-      }
-      if( status != UTIL_STATUS_NO_ERROR ) {
-         dcrudIRequiredImpl_delete( result );
-      }
-   }
-   return status;
-}
-
-utilStatus dcrudICRUD_create( dcrudICRUD self, dcrudArguments how ) {
-   utilStatus       status = UTIL_STATUS_NO_ERROR;
-   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
-   if( status == UTIL_STATUS_NO_ERROR ) {
-      status = dcrudArguments_putClassID( how, ICRUD_INTERFACE_CLASSID, This->classID );
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         status = dcrudIParticipantImpl_sendCall(
-            This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_CREATE, how, 0 );
-      }
-   }
-   return status;
-}
-
-utilStatus dcrudICRUD_update( dcrudICRUD self, dcrudShareable what, dcrudArguments how ) {
-   utilStatus       status = UTIL_STATUS_NO_ERROR;
-   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
-   if( status == UTIL_STATUS_NO_ERROR ) {
-      dcrudGUID guid;
-      status = dcrudShareable_getGUID( what, &guid );
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         status = dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, guid );
-         if( status == UTIL_STATUS_NO_ERROR ) {
-            status = dcrudIParticipantImpl_sendCall(
-               This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_UPDATE, how, 0 );
-         }
-      }
-   }
-   return status;
-}
-
-utilStatus dcrudICRUD_delete( dcrudICRUD self, dcrudShareable what ) {
-   utilStatus       status = UTIL_STATUS_NO_ERROR;
-   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
-   if( status == UTIL_STATUS_NO_ERROR ) {
-      dcrudArguments how  = NULL;
-      status = dcrudArguments_new( &how );
-      if( status == UTIL_STATUS_NO_ERROR ) {
-         dcrudGUID guid;
-         status = dcrudShareable_getGUID( what, &guid );
-         if( status == UTIL_STATUS_NO_ERROR ) {
-            status = dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, guid );
-            if( status == UTIL_STATUS_NO_ERROR ) {
-               status =
-                  dcrudIParticipantImpl_sendCall(
-                     This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_DELETE, how, 0 );
-            }
-         }
-      }
+   dcrudIDispatcherImpl * This = dcrudIDispatcher_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      dcrudIRequired required = NULL;
+      CHK(__FILE__,__LINE__,dcrudIRequiredImpl_new( &required, This->participant, name ))
+      CHK(__FILE__,__LINE__,collSet_add( This->required, required ))
+      *result = (dcrudIRequired)required;
    }
    return status;
 }
@@ -413,6 +379,47 @@ utilStatus dcrudIDispatcher_requireCRUD(
       crud->classID     = classID;
       crud->participant = This->participant;
       *iCrud = (dcrudICRUD)crud;
+      CHK(__FILE__,__LINE__,collSet_add( This->dcrud, crud ))
+   }
+   return status;
+}
+
+utilStatus dcrudICRUD_create( dcrudICRUD self, dcrudArguments how ) {
+   utilStatus       status = UTIL_STATUS_NO_ERROR;
+   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      CHK(__FILE__,__LINE__,dcrudArguments_putClassID( how, ICRUD_INTERFACE_CLASSID, This->classID ))
+      CHK(__FILE__,__LINE__,dcrudIParticipantImpl_sendCall(
+         This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_CREATE, how, 0 ))
+   }
+   return status;
+}
+
+utilStatus dcrudICRUD_update( dcrudICRUD self, dcrudShareable what, dcrudArguments how ) {
+   utilStatus       status = UTIL_STATUS_NO_ERROR;
+   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      dcrudGUID guid;
+      CHK(__FILE__,__LINE__,dcrudShareable_getGUID( what, &guid ))
+      CHK(__FILE__,__LINE__,dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, guid ))
+      CHK(__FILE__,__LINE__,dcrudIParticipantImpl_sendCall(
+         This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_UPDATE, how, 0 ))
+   }
+   return status;
+}
+
+utilStatus dcrudICRUD_delete( dcrudICRUD self, dcrudShareable what ) {
+   utilStatus       status = UTIL_STATUS_NO_ERROR;
+   dcrudICRUDImpl * This   = dcrudICRUD_safeCast( self, &status );
+   if( status == UTIL_STATUS_NO_ERROR ) {
+      dcrudArguments how = NULL;
+      dcrudGUID      guid;
+      CHK(__FILE__,__LINE__,dcrudArguments_new( &how ))
+      CHK(__FILE__,__LINE__,dcrudShareable_getGUID( what, &guid ))
+      CHK(__FILE__,__LINE__,dcrudArguments_putGUID( how, ICRUD_INTERFACE_GUID, guid ))
+      CHK(__FILE__,__LINE__,dcrudIParticipantImpl_sendCall(
+         This->participant, ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_DELETE, how, 0 ))
+      CHK(__FILE__,__LINE__,dcrudArguments_delete( &how ))
    }
    return status;
 }
@@ -453,8 +460,10 @@ utilStatus dcrudIDispatcher_execute(
    if( status == UTIL_STATUS_NO_ERROR ) {
       dcrudIProvidedImpl * provided = NULL;
       status = collMap_get( This->provided, (collMapKey)intrfcName, &provided );
+      utilStatus_checkAndLog(status,__FILE__,__LINE__,"collMap_get");
       if( status == UTIL_STATUS_NOT_FOUND ) {
          status = UTIL_STATUS_NO_ERROR;
+         dcrudArguments_delete( &args );
       }
       else if( UTIL_STATUS_NO_ERROR == status ) {
          dcrudOperation * operation = NULL;
@@ -469,21 +478,24 @@ utilStatus dcrudIDispatcher_execute(
                dcrudIParticipantImpl_sendCall(
                   This->participant, intrfcName, opName, results, -callId );
             }
+            dcrudArguments_delete( &args );
          }
          else {
-            status = osMutex_take( This->operationQueuesMutex );
-            if( status == UTIL_STATUS_NO_ERROR ) {
-               dcrudOperationCall * opCall = NULL;
-               status =
-                  dcrudOperationCall_new(
-                     &opCall, operation, intrfcName, opName, callId, args );
-               if( status == UTIL_STATUS_NO_ERROR ) {
-                  status = collList_add( This->operationQueues[queueNdx], opCall );
-                  osMutex_release( This->operationQueuesMutex );
-                  if( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE ) {
-                     dcrudIDispatcher_handleRequests( self );
-                  }
-               }
+            dcrudOperationCall * opCall = NULL;
+            CHK(__FILE__,__LINE__,osMutex_take( This->operationQueuesMutex ))
+            status = dcrudOperationCall_new( &opCall, operation, intrfcName, opName, callId, args );
+            if( UTIL_STATUS_NO_ERROR != status ) {
+               utilStatus_checkAndLog( status, __FILE__,__LINE__,
+                  "dcrudOperationCall_new( %s.%s, %d )", intrfcName, opName, callId );
+            }
+            status = collList_add( This->operationQueues[queueNdx], opCall );
+            if( UTIL_STATUS_NO_ERROR != status ) {
+               utilStatus_checkAndLog( status, __FILE__,__LINE__,
+                  "collList_add( This->operationQueues[%d], opCall )", queueNdx );
+            }
+            osMutex_release( This->operationQueuesMutex );
+            if(( UTIL_STATUS_NO_ERROR == status )&&( callMode == DCRUD_ASYNCHRONOUS_IMMEDIATE )) {
+               CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( self ))
             }
          }
       }
@@ -491,17 +503,12 @@ utilStatus dcrudIDispatcher_execute(
    return status;
 }
 
-static utilStatus runAllPendingOperations( collForeach * context ) {
+utilStatus dcrudIDispatcher_runAllPendingOperations( collForeach * context ) {
    utilStatus              status      = UTIL_STATUS_NO_ERROR;
-   dcrudOperationCall *    opCall;
-   dcrudIParticipantImpl * participant;
-   dcrudOperation *        op;
-   CHK(__FILE__,__LINE__,(NULL == context    ) ? UTIL_STATUS_NULL_ARGUMENT : UTIL_STATUS_NO_ERROR)
-   opCall      = (dcrudOperationCall *   )context->value;
-   participant = (dcrudIParticipantImpl *)context->user;
-   CHK(__FILE__,__LINE__,(NULL == opCall     ) ? UTIL_STATUS_NULL_ARGUMENT : UTIL_STATUS_NO_ERROR)
-   CHK(__FILE__,__LINE__,(NULL == participant) ? UTIL_STATUS_NULL_ARGUMENT : UTIL_STATUS_NO_ERROR)
-   op = opCall->operation;
+   dcrudOperationCall *    opCall      = (dcrudOperationCall *   )context->value;
+   dcrudIParticipantImpl * participant = (dcrudIParticipantImpl *)context->user;
+   dcrudOperation *        op          = opCall ? opCall->operation : NULL;
+
    if( op == NULL ) {
       CHK(__FILE__,__LINE__,(NULL == opCall->opName) ? UTIL_STATUS_ILLEGAL_STATE : UTIL_STATUS_NO_ERROR)
       if( 0 == strcmp( opCall->opName, ICRUD_INTERFACE_CREATE )) {
@@ -520,45 +527,47 @@ static utilStatus runAllPendingOperations( collForeach * context ) {
          CHK(__FILE__,__LINE__,dcrudIParticipantImpl_deleteData( participant, id ))
       }
       else {
-         fprintf( stderr, "%s:%d: Unexpected Publisher operation '"ICRUD_INTERFACE_NAME".%s'\n",
+         fprintf( stderr, "%s:%d: Unexpected operation '"ICRUD_INTERFACE_NAME".%s'\n",
             __FILE__, __LINE__, opCall->opName );
       }
    }
    else {
       dcrudArguments results = op->function( op->context, opCall->arguments );
       if( opCall->callId ) {
-         status = dcrudIParticipantImpl_sendCall(
-            participant, opCall->intrfcName, opCall->opName, results, -opCall->callId );
+         CHK(__FILE__,__LINE__,dcrudIParticipantImpl_sendCall(
+            participant, opCall->intrfcName, opCall->opName, results, -opCall->callId ))
       }
       if( results ) {
-         dcrudArguments_delete( &results );
+         CHK(__FILE__,__LINE__,dcrudArguments_delete( &results ))
       }
    }
-   dcrudOperationCall_delete( &opCall );
+   CHK(__FILE__,__LINE__,dcrudOperationCall_delete( &opCall ))
    return status;
 }
 
 utilStatus dcrudIDispatcher_handleRequests( dcrudIDispatcher self ) {
    utilStatus             status = UTIL_STATUS_NO_ERROR;
    dcrudIDispatcherImpl * This   = dcrudIDispatcher_safeCast( self, &status );
-   if( status == UTIL_STATUS_NO_ERROR ) {
-      unsigned queueNdx;
-      status = osMutex_take( This->operationQueuesMutex );
-      for( queueNdx = 0;
-           dcrudNetwork_isAlive()
-           &&( status == UTIL_STATUS_NO_ERROR   )
-           &&( queueNdx < OPERATION_QUEUE_COUNT );
-           ++queueNdx )
+
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      unsigned q;
+      bool     alive = true;
+
+      CHK(__FILE__,__LINE__,osMutex_take( This->operationQueuesMutex ))
+      for( q = 0, alive = true;
+           alive &&( UTIL_STATUS_NO_ERROR == status )&&( q < OPERATION_QUEUE_COUNT );
+           ++q )
       {
-         status = collList_foreach(
-            This->operationQueues[queueNdx], runAllPendingOperations, This->participant );
-         collList_clear( This->operationQueues[queueNdx] );
+         if( alive && ( UTIL_STATUS_NO_ERROR == status )) {
+            status = collList_foreach(
+               This->operationQueues[q],
+               dcrudIDispatcher_runAllPendingOperations,
+               This->participant );
+            collList_clear( This->operationQueues[q] );
+         }
+         status = dcrudIParticipant_isAlive((dcrudIParticipant)This->participant, &alive );
       }
-      osMutex_release( This->operationQueuesMutex );
-   }
-   if( ! dcrudNetwork_isAlive()) {
-      dcrudIParticipantImpl * ptr = This->participant;
-      dcrudIParticipantImpl_delete( &ptr );
+      CHK(__FILE__,__LINE__,osMutex_release( This->operationQueuesMutex ))
    }
    return status;
 }

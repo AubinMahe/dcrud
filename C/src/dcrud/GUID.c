@@ -103,14 +103,19 @@ utilStatus dcrudGUID_init( dcrudGUID self, unsigned int publisher, unsigned int 
 }
 
 utilStatus dcrudGUID_toString( const dcrudGUID self, char * target, size_t targetSize ) {
-   utilStatus     status = UTIL_STATUS_NO_ERROR;
-   dcrudGUIDImpl * This   = dcrudGUID_safeCast( self, &status );
-   if( status == UTIL_STATUS_NO_ERROR ) {
-      int count = snprintf( target, targetSize, "Instance-%08X-%08X",
-         This->publisher, This->instance );
-      target[targetSize-1] = '\0';
-      if( count >= (int)targetSize ) {
-         status = UTIL_STATUS_OVERFLOW;
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( NULL == target ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudGUIDImpl * This = dcrudGUID_safeCast( self, &status );
+      if( status == UTIL_STATUS_NO_ERROR ) {
+         int count = snprintf( target, targetSize, "Instance-%08X-%08X",
+            This->publisher, This->instance );
+         target[targetSize-1] = '\0';
+         if( count >= (int)targetSize ) {
+            status = UTIL_STATUS_OVERFLOW;
+         }
       }
    }
    return status;

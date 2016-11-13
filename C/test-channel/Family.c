@@ -83,7 +83,14 @@ utilStatus channelTestFamily_init( channelTestFamily * This ) {
 utilStatus channelTestFamily_done( channelTestFamily * This ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if( This ) {
-      CHK(__FILE__,__LINE__,channelList_done((channelList *)&( This->children )))
+      unsigned i;
+      if( This->parent2 ) {
+         CHK(__FILE__,__LINE__,channelTestPerson_delete( &This->parent2 ))
+      }
+      for( i = 0; i < This->children.count; ++i ) {
+         CHK(__FILE__,__LINE__,channelTestPerson_delete( &This->children.items[i] ))
+      }
+      CHK(__FILE__,__LINE__,channelList_done((channelList *)&This->children ))
    }
    else {
       status = UTIL_STATUS_NULL_ARGUMENT;

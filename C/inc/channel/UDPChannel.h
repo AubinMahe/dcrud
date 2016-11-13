@@ -7,7 +7,7 @@ extern "C" {
 
 UTIL_ADT( channelUDPChannel );
 
-typedef void (* channelMsgConsumerFn)( short msgId, ioByteBuffer decoder, void * userData );
+typedef utilStatus (* channelMsgConsumerFn)( short msgId, ioByteBuffer decoder, void * userData );
 
 utilStatus channelUDPChannel_new       ( channelUDPChannel * This, const char * intrfc, unsigned short local, const char * host, unsigned short remote );
 utilStatus channelUDPChannel_send      ( channelUDPChannel   This, ioByteBuffer encoder );

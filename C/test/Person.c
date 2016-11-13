@@ -214,14 +214,21 @@ utilStatus Person_print( collForeach * context ) {
    return UTIL_STATUS_NO_ERROR;
 }
 
-utilStatus Person_toString( const Person * person, char * buffer, size_t bufferSize ) {
-   size_t result = snprintf( buffer, bufferSize, "%s %s %d-%d-%d",
-      person->forname,
-      person->name,
-      person->birthdate_year,
-      person->birthdate_month,
-      person->birthdate_day    );
-   return ( result < bufferSize ) ? UTIL_STATUS_NO_ERROR : UTIL_STATUS_OVERFLOW;
+utilStatus Person_toString( const Person * person, char * target, size_t bufferSize ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if(( NULL == person )||( NULL == target )) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      size_t result = snprintf( target, bufferSize, "%s %s %d-%d-%d",
+         person->forname,
+         person->name,
+         person->birthdate_year,
+         person->birthdate_month,
+         person->birthdate_day    );
+      status = ( result < bufferSize ) ? UTIL_STATUS_NO_ERROR : UTIL_STATUS_OVERFLOW;
+   }
+   return status;
 }
 
 int Person_fornameCmp( const Person ** left, const Person ** right ) {

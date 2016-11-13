@@ -19,9 +19,8 @@ typedef struct channelFactory_s {
 
 } channelFactory;
 
-utilStatus channelFactories_add ( channelFactory * factory );
-utilStatus channelFactories_get ( int id, channelFactory ** result );
-utilStatus channelFactories_done( void );
+utilStatus channelFactories_add( channelFactory * factory );
+utilStatus channelFactories_get( int id, channelFactory ** result );
 
 #ifdef __cplusplus
 }

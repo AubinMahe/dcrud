@@ -7,9 +7,10 @@ ifeq ($(UNAME_S),Linux)
 endif
 CFLAGS_DEBUG   = $(CFLAGS_COMMON) -O0 -g3 -Wno-long-long -pedantic -W -Wall
 CFLAGS_RELEASE = $(CFLAGS_COMMON) -O3
-VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
+VALGRIND = valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
 LIB_SRCS =\
  src/util/CmdLine.c\
+ src/util/DebugSettings.c\
  src/util/Dump.c\
  src/util/magic.c\
  src/util/Performance.c\
@@ -37,12 +38,10 @@ LIB_SRCS =\
  src/dcrud/Cache.c\
  src/dcrud/Callback.c\
  src/dcrud/ClassID.c\
- src/dcrud/DebugSettings.c\
  src/dcrud/Dispatcher.c\
  src/dcrud/GUID.c\
  src/dcrud/IRegistry.c\
  src/dcrud/magic.c\
- src/dcrud/Network.c\
  src/dcrud/NetworkReceiver.c\
  src/dcrud/ParticipantImpl.c\
  src/dcrud/Shareable.c\
@@ -167,15 +166,36 @@ ms3: Static-Debug/dcrud-c-test
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=3
 
 t4: Debug/dcrud-c-test
+	java -cp ../Java/bin tests.channel.Test_004\
+   	--interface=192.168.1.7\
+   	--target-host=192.168.1.7\
+   	--local-port=2417\
+   	--remote-port=2416 &
 	LD_LIBRARY_PATH=Debug Debug/dcrud-c-test --test=4
 
 ts4: Static-Debug/dcrud-c-test
+	java -cp ../Java/bin tests.channel.Test_004\
+   	--dump-received-buffer=true\
+   	--interface=192.168.1.7\
+   	--target-host=192.168.1.7\
+   	--local-port=2417\
+   	--remote-port=2416 &
 	LD_LIBRARY_PATH=Static-Debug Static-Debug/dcrud-c-test --test=4
 
 m4: Debug/dcrud-c-test
+	java -cp ../Java/bin tests.channel.Test_004\
+   	--interface=192.168.1.7\
+   	--target-host=192.168.1.7\
+   	--local-port=2417\
+   	--remote-port=2416 &
 	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=4
 
 ms4: Static-Debug/dcrud-c-test
+	java -cp ../Java/bin tests.channel.Test_004\
+   	--interface=192.168.1.7\
+   	--target-host=192.168.1.7\
+   	--local-port=2417\
+   	--remote-port=2416 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=4
 
 t5: Debug/dcrud-c-test
@@ -190,7 +210,7 @@ m5: Debug/dcrud-c-test
 	gnome-terminal -x java -cp ../Java/bin tests.person.Test_005&
 	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=5
 
-ms5: Debug/dcrud-c-test
+ms5: Static-Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_005 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=5
 
@@ -206,7 +226,7 @@ m6: Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
 	LD_LIBRARY_PATH=Debug $(VALGRIND) Debug/dcrud-c-test --test=6
 
-ms6: Debug/dcrud-c-test
+ms6: Static-Debug/dcrud-c-test
 	gnome-terminal --geometry=80x60-0+0 -x java -cp ../Java/bin tests.person.Test_006 &
 	LD_LIBRARY_PATH=Static-Debug $(VALGRIND) Static-Debug/dcrud-c-test --test=6
 

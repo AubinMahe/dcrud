@@ -14,6 +14,10 @@ void utilDump_range( FILE * target, const byte * bytes, size_t from, size_t to )
    char   hexa  [200] = "";
    char   ascii [200];
    size_t i;
+
+   if( NULL == target ) {
+      target = stderr;
+   }
    memset( hexStr, 0, sizeof( hexStr ));
    memset( addStr, 0, sizeof( addStr ));
    memset( hexa  , 0, sizeof( hexa   ));

@@ -3,11 +3,9 @@
  * TEST 6
  *
  */
-#include <dcrud/Network.h>
 #include <os/System.h>
 #include <util/CmdLine.h>
 #include <io/NetworkInterfaces.h>
-
 #include "Person.h"
 #include "Settings.h"
 #include "StaticRegistry.h"
@@ -60,13 +58,12 @@ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine ) {
    ioInetSocketAddress  p2;
    char                 c = '\0';
    int                  i;
-   bool                 dumpReceivedBuffer;
    dcrudIRegistry       registry = NULL;
 
+   (void)cmdLine;
    CHK(__FILE__,__LINE__,getStaticRegistry( &registry ));
    CHK(__FILE__,__LINE__,ioInetSocketAddress_init( &p1, MCAST_ADDRESS, 2417 ));
-   CHK(__FILE__,__LINE__,dcrudNetwork_join( 2, &p1, NETWORK_INTERFACE, &participant ));
-   CHK(__FILE__,__LINE__,utilCmdLine_getBoolean( cmdLine, "dump-received-buffer", &dumpReceivedBuffer ));
+   CHK(__FILE__,__LINE__,dcrudIParticipant_new( &participant, 2, &p1, NETWORK_INTERFACE ));
    CHK(__FILE__,__LINE__,ioInetSocketAddress_init( &p2, MCAST_ADDRESS, 2416 ));
    CHK(__FILE__,__LINE__,Person_initFactories( participant, &localFactory, &remoteFactory ));
    CHK(__FILE__,__LINE__,dcrudIParticipant_listen( participant, registry, NETWORK_INTERFACE ));
@@ -79,7 +76,6 @@ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine ) {
       printf( "[A]ubin, [M]uriel, [E]ve, [C]ache, [D]elete first, [Q]uit: " );
       c = toupper((char)fgetc( stdin ));
       printf( "%c\n", c );
-      CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( dispatcher ))
       switch(c) {
       case 'Q':
          CHK(__FILE__,__LINE__,dcrudIRequired_call( monitor, "exit", NULL, NULL ))
@@ -102,9 +98,10 @@ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine ) {
          CHK(__FILE__,__LINE__,dcrudICache_foreach( cache, Person_print, stdout ))
          break;
       }
+      CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( dispatcher ))
    }
-
-   CHK(__FILE__,__LINE__,dcrudNetwork_leave())
+   CHK(__FILE__,__LINE__,dcrudIParticipant_leave( participant ));
+   CHK(__FILE__,__LINE__,dcrudIParticipant_delete( &participant ));
    CHK(__FILE__,__LINE__,releaseStaticRegistry( &registry ))
    CHK(__FILE__,__LINE__,Person_releaseFactories())
    return UTIL_STATUS_NO_ERROR;

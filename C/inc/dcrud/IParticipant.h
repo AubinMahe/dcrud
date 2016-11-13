@@ -28,14 +28,7 @@ typedef struct dcrudRemoteFactory_s {
 
 } dcrudRemoteFactory;
 
-/**
- * Use the registry to instanciate and listen to other participants.
- * @param This     this participant
- * @param registry the registry to use
- * @param intrfc   the network interface to use, identified by its IP address, may be null,
- * in such case the first up, non loopback, multicast capable interface will be used
- * @param dumpReceivedBuffer if true, dump the received frames on stderr
- */
+utilStatus dcrudIParticipant_new                  ( dcrudIParticipant * This, unsigned int publisherId, const ioInetSocketAddress * address, const char * intrfc );
 utilStatus dcrudIParticipant_listen               ( dcrudIParticipant   This, dcrudIRegistry registry, const char * intrfc );
 utilStatus dcrudIParticipant_registerLocalFactory ( dcrudIParticipant   This, dcrudLocalFactory * local );
 utilStatus dcrudIParticipant_registerRemoteFactory( dcrudIParticipant   This, dcrudRemoteFactory * remote );
@@ -44,7 +37,9 @@ utilStatus dcrudIParticipant_createCache          ( dcrudIParticipant   This, un
 utilStatus dcrudIParticipant_getCache             ( dcrudIParticipant   This, unsigned int   cacheId, dcrudICache * cache );
 utilStatus dcrudIParticipant_getDispatcher        ( dcrudIParticipant   This, dcrudIDispatcher * dispatcher );
 utilStatus dcrudIParticipant_createShareable      ( dcrudIParticipant   This, dcrudClassID classID, dcrudShareableData data, dcrudShareable * shareable );
-utilStatus dcrudIParticipant_run                  ( dcrudIParticipant   This );
+utilStatus dcrudIParticipant_isAlive              ( dcrudIParticipant   This, bool * alive );
+utilStatus dcrudIParticipant_leave                ( dcrudIParticipant   This );
+utilStatus dcrudIParticipant_delete               ( dcrudIParticipant * This );
 
 #ifdef __cplusplus
 }

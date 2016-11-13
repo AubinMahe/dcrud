@@ -187,7 +187,6 @@ utilStatus dcrudICache_create( dcrudICache self, dcrudShareable item ) {
          if( shared ) {
             char buffer[40];
             dcrudGUID_toString((dcrudGUID)id, buffer, sizeof( buffer ));
-            fprintf( stderr, "%s:%d:Item already published: %s!\n", __FILE__, __LINE__, buffer );
             status = UTIL_STATUS_DUPLICATE;
          }
          else {
@@ -396,15 +395,16 @@ utilStatus dcrudICache_refresh( dcrudICache self ) {
                status = collMap_put( This->local, guid, item, NULL );
             }
             else {
-               char bufferClass[1024];
-               char bufferGUID [1024];
+               char         szClass[1024];
+               char         szGUID [1024];
                dcrudClassID classId = NULL;
+
                dcrudClassID_unserialize( &classId, update );
-               dcrudClassID_toString( classId, bufferClass, sizeof( bufferClass ));
+               dcrudClassID_toString( classId, szClass, sizeof( szClass ));
                dcrudClassID_delete( &classId );
-               dcrudGUID_toString   ( guid   , bufferGUID , sizeof( bufferGUID  ));
-               fprintf( stderr, "%s:%d:Unknown %s of %s\n",
-                  __FILE__, __LINE__, bufferClass, bufferGUID );
+               dcrudGUID_toString   ( guid   , szGUID , sizeof( szGUID  ));
+               fprintf( stderr, "%s:%d:Warning:unknown %s of %s\n",
+                  __FILE__, __LINE__, szGUID, szClass );
             }
          }
          else {

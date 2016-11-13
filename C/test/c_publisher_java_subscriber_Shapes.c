@@ -1,6 +1,4 @@
-#include <dcrud/Network.h>
-#include <dcrud/DebugSettings.h>
-
+#include <dcrud/IParticipant.h>
 #include <os/System.h>
 
 #include <util/CmdLine.h>
@@ -211,34 +209,31 @@ static dcrudArguments exitSrvc( dcrudIParticipant participant, dcrudArguments ar
    dcrudICache_foreach( cache, deleteShape, NULL );
    dcrudClassID_delete( &rectangleFactory.classID );
    dcrudClassID_delete( &ellipseFactory  .classID );
-   dcrudNetwork_leave();
+   dcrudIParticipant_delete( &participant );
    printf( "Well done.\n" );
-   exit(0);
    return NULL;
    (void)args;
 }
 
 utilStatus c_publisher_java_subscriber_Shapes( const utilCmdLine cmdLine ) {
    ioInetSocketAddress p1;
-   dcrudIParticipant   participant;
-   utilStatus          status;
+   dcrudIParticipant   participant   = NULL;
+   utilStatus          status        = UTIL_STATUS_NO_ERROR;
    dcrudICache         cache         = NULL;
    dcrudIDispatcher    dispatcher    = NULL;
    dcrudIProvided      shapesFactory = NULL;
    dcrudIProvided      iMonitor      = NULL;
-   dcrudShareable      rectangle;
-   dcrudShareable      ellipse;
-   bool                dumpReceivedBuffer;
-   dcrudIRegistry      registry = NULL;
-   dcrudShareableData  rectData = NULL;
-   dcrudShareableData  ellipseData = NULL;
+   dcrudShareable      rectangle     = NULL;
+   dcrudShareable      ellipse       = NULL;
+   dcrudIRegistry      registry      = NULL;
+   dcrudShareableData  rectData      = NULL;
+   dcrudShareableData  ellipseData   = NULL;
+   bool                alive;
 
-   CHK(__FILE__,__LINE__,utilCmdLine_getBoolean( cmdLine, "dump-received-buffer", &dumpReceivedBuffer ));
-   dcrudDebugSettings->dumpNetworkReceiverOperations = dumpReceivedBuffer;
-
+   (void)cmdLine;
    CHK(__FILE__,__LINE__,getStaticRegistry( &registry ));
    CHK(__FILE__,__LINE__,ioInetSocketAddress_init( &p1, MCAST_ADDRESS, 2417 ));
-   CHK(__FILE__,__LINE__,dcrudNetwork_join( 2, &p1, NETWORK_INTERFACE, &participant ));
+   CHK(__FILE__,__LINE__,dcrudIParticipant_new( &participant, 2, &p1, NETWORK_INTERFACE ));
    CHK(__FILE__,__LINE__,dcrudClassID_resolve( &rectangleFactory.classID, 1, 1, 1, 1 ));
    rectangleFactory.serialize   = (dcrudLocalFactory_Serialize  )ShareableShape_serialize;
    rectangleFactory.unserialize = (dcrudLocalFactory_Unserialize)ShareableShape_unserialize;
@@ -264,11 +259,13 @@ utilStatus c_publisher_java_subscriber_Shapes( const utilCmdLine cmdLine ) {
       iMonitor     , "exit"  , participant, (dcrudIOperation)exitSrvc ));
    CHK(__FILE__,__LINE__,dcrudIParticipant_listen( participant, registry, NETWORK_INTERFACE ));
    printf( "Publish every 40 ms.\n" );
-   for(;;) {
+   while( alive ) {
       CHK(__FILE__,__LINE__,dcrudICache_publish( cache ));
       CHK(__FILE__,__LINE__,osSystem_sleep( 40U ));
       CHK(__FILE__,__LINE__,dcrudICache_foreach( cache, moveShape, cache ));
       CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( dispatcher ));
+      CHK(__FILE__,__LINE__,dcrudIParticipant_isAlive( participant, &alive))
    }
+   CHK(__FILE__,__LINE__,dcrudIParticipant_new( &participant, 2, &p1, NETWORK_INTERFACE ));
    return status;
 }

@@ -27,32 +27,27 @@ typedef struct channelTestApp__ {
 
 } channelTestApp;
 
-static void parseHello( short msgId, ioByteBuffer decoder, void * app ) {
+static utilStatus parseHello( short msgId, ioByteBuffer decoder, void * app ) {
    char   text[1024];
-   bool   ok    = ioByteBuffer_getString( decoder, text, sizeof( text ));
    double value = 0.0;
-   ok = ok && ioByteBuffer_getDouble( decoder, &value );
-   if( ok ) {
-      fprintf( stderr, "parseHello: %d received: '%s', %f\n", msgId, text, value );
-   }
-   else {
-      fprintf( stderr, "parseHello: failed\n" );
-   }
+   CHK(__FILE__,__LINE__,ioByteBuffer_getString( decoder, text, sizeof( text )))
+   CHK(__FILE__,__LINE__,ioByteBuffer_getDouble( decoder, &value ))
+   fprintf( stderr, "parseHello: %d received: '%s', %f\n", msgId, text, value );
+   return UTIL_STATUS_NO_ERROR;
    (void)app;
 }
 
-static void parseFamily( short msgId, ioByteBuffer decoder, void * app ) {
+static utilStatus parseFamily( short msgId, ioByteBuffer decoder, void * app ) {
    channelTestFamily * family = NULL;
-   if( channelCoDec_getReference( decoder, &family )) {
-      char   buffer[256];
-      size_t sizeOfBuffer = sizeof( buffer );
-      buffer[0] = '\0';
-      channelTestFamily_toString( family, buffer, &sizeOfBuffer );
-      fprintf( stderr, "parseFamily: %d received: %s\n", msgId, buffer );
-   }
-   else {
-      fprintf( stderr, "parseFamily: failed\n" );
-   }
+   char                buffer[256];
+   size_t              sizeOfBuffer = sizeof( buffer );
+
+   CHK(__FILE__,__LINE__,channelCoDec_getReference( decoder, &family ))
+   buffer[0] = '\0';
+   CHK(__FILE__,__LINE__,channelTestFamily_toString( family, buffer, &sizeOfBuffer ))
+   fprintf( stderr, "parseFamily: %d:%s\n", msgId, buffer );
+   channelTestFamily_delete( &family );
+   return UTIL_STATUS_NO_ERROR;
    (void)app;
 }
 
@@ -111,7 +106,6 @@ static utilStatus channelTestApp_init(
 static utilStatus channelTestApp_done( channelTestApp * This ) {
    CHK(__FILE__,__LINE__,ioByteBuffer_delete     ( &This->encoder    ))
    CHK(__FILE__,__LINE__,channelUDPChannel_delete( &This->UDPChannel ))
-   CHK(__FILE__,__LINE__,channelFactories_done())
    return UTIL_STATUS_NO_ERROR;
 }
 

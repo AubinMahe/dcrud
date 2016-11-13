@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 
 import org.hpms.mw.dcrud.Arguments.CallMode;
 import org.hpms.mw.dcrud.ClassID.Type;
+import org.hpms.util.SerializerHelper;
 
 abstract class AbstractNetworkReceiver extends Thread implements IProtocol {
 

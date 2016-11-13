@@ -6,6 +6,7 @@
 
 #include <util/Pool.h>
 #include <util/String.h>
+#include <util/Trace.h>
 
 
 #include "Shareable_private.h"
@@ -393,6 +394,9 @@ utilStatus dcrudArguments_dump( dcrudArguments self, FILE * target ) {
       unsigned int count = 0;
       status = dcrudArguments_getCount( self, &count );
       if( status == UTIL_STATUS_NO_ERROR ) {
+         if( NULL == target ) {
+            target = stderr;
+         }
          ctxt.source = This;
          ctxt.buffer = 0;
          ctxt.file   = target;

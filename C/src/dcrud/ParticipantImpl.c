@@ -35,8 +35,8 @@ static void exitHook( void ) {
 #  include <unistd.h>
 #endif
 
-utilStatus dcrudIParticipantImpl_new(
-   dcrudIParticipantImpl **    target,
+utilStatus dcrudIParticipant_new(
+   dcrudIParticipant *         self,
    unsigned int                publisherId,
    const ioInetSocketAddress * addr,
    const char *                intrfc  )
@@ -56,15 +56,13 @@ utilStatus dcrudIParticipantImpl_new(
    }
    atexit( exitHook );
 #endif
-   if( NULL == target ) {
+   if( NULL == self ) {
       return UTIL_STATUS_NULL_ARGUMENT;
    }
-   dcrudIParticipant self;
-   UTIL_ALLOCATE_ADT( dcrudIParticipant, &self, This );
+   UTIL_ALLOCATE_ADT( dcrudIParticipant, self, This );
    if( UTIL_STATUS_NO_ERROR != status ) {
       return status;
    }
-   *target = This;
    memset( &lIntrfc, 0, sizeof( lIntrfc ));
    This->magic   = dcrudIParticipantImplMAGIC;
    This->header  = NULL;
@@ -115,6 +113,7 @@ static utilStatus createReceiver( collForeach * context ) {
    utilStatus                  status =
       dcrudNetworkReceiver_new( &rcvr, p->participant, addr, p->networkInterface );
    if( UTIL_STATUS_NO_ERROR == status ) {
+      p->participant->isAlive = true;
       status = collList_add( p->participant->receivers, rcvr );
    }
    return status;
@@ -125,8 +124,8 @@ utilStatus dcrudIParticipant_listen(
    dcrudIRegistry    registry,
    const char *      networkInterface )
 {
-   utilStatus              status = UTIL_STATUS_NO_ERROR;
-   dcrudIParticipantImpl * This   = dcrudIParticipant_safeCast( self, &status );
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   dcrudIParticipantImpl * This = dcrudIParticipant_safeCast( self, &status );
    if( UTIL_STATUS_NO_ERROR == status ) {
       if( NULL == networkInterface ) {
          status = UTIL_STATUS_NULL_ARGUMENT;
@@ -147,41 +146,65 @@ utilStatus dcrudIParticipant_listen(
    return status;
 }
 
-utilStatus dcrudIParticipantImpl_delete( dcrudIParticipantImpl ** self ) {
+utilStatus dcrudIParticipant_leave( dcrudIParticipant self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
-   if( NULL == self ) {
-      status = UTIL_STATUS_NULL_ARGUMENT;
+   dcrudIParticipantImpl * This = dcrudIParticipant_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      This->isAlive = false;
    }
-   else {
-      unsigned int i;
-      unsigned int count = 0;
-      dcrudIParticipantImpl * This = *self;
+   return status;
+}
 
-      collList_size( This->receivers, &count );
-      for( i = 0; i < count; ++i ) {
-         dcrudNetworkReceiver item = NULL;
-         if( collList_get( This->receivers, i, (collListItem*)&item ) == UTIL_STATUS_NO_ERROR ) {
-            dcrudNetworkReceiver_delete( &item );
-         }
-      }
-      for( i = 0; i < This->cacheCount; ++i ) {
-         dcrudCache_delete( &(This->caches[i] ));
-      }
-      ioByteBuffer_delete    ( &This->header          );
-      ioByteBuffer_delete    ( &This->payload         );
-      ioByteBuffer_delete    ( &This->message         );
-      osMutex_delete         ( &This->cachesMutex     );
-      osMutex_delete         ( &This->factoriesMutex  );
-      osMutex_delete         ( &This->publishersMutex );
-      osMutex_delete         ( &This->outMutex        );
-      collMap_delete         ( &This->factories       );
-      collMap_delete         ( &This->publishers      );
-      collMap_delete         ( &This->callbacks       );
-      collList_delete        ( &This->receivers       );
-      closesocket            (  This->out             );
-      dcrudIDispatcher_delete( &This->dispatcher      );
-      UTIL_RELEASE( dcrudIParticipantImpl )
+utilStatus dcrudIParticipant_isAlive( dcrudIParticipant self, bool * alive ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   dcrudIParticipantImpl * This = dcrudIParticipant_safeCast( self, &status );
+   if( UTIL_STATUS_NO_ERROR == status ) {
+      *alive = This->isAlive;
    }
+   return status;
+}
+
+utilStatus dcrudIParticipant_delete( dcrudIParticipant * self ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   unsigned int i;
+   unsigned int count = 0;
+   bool alive;
+   dcrudIParticipantImpl * This;
+
+   if( NULL == self ) {
+      return UTIL_STATUS_NULL_ARGUMENT;
+   }
+   This = dcrudIParticipant_safeCast( *self, &status );
+   if( UTIL_STATUS_NO_ERROR != status ) {
+      return status;
+   }
+   CHK(__FILE__,__LINE__,dcrudIParticipant_isAlive( *self, &alive ))
+   if( alive ) {
+      return UTIL_STATUS_ILLEGAL_STATE;
+   }
+   CHK(__FILE__,__LINE__,collList_size( This->receivers, &count ))
+   for( i = 0; i < count; ++i ) {
+      dcrudNetworkReceiver item = NULL;
+      CHK(__FILE__,__LINE__,collList_get( This->receivers, i, (collListItem*)&item ))
+      CHK(__FILE__,__LINE__,dcrudNetworkReceiver_delete( &item ))
+   }
+   for( i = 0; i < This->cacheCount; ++i ) {
+      CHK(__FILE__,__LINE__,dcrudCache_delete( &(This->caches[i] )))
+   }
+   CHK(__FILE__,__LINE__,ioByteBuffer_delete    ( &This->header          ))
+   CHK(__FILE__,__LINE__,ioByteBuffer_delete    ( &This->payload         ))
+   CHK(__FILE__,__LINE__,ioByteBuffer_delete    ( &This->message         ))
+   CHK(__FILE__,__LINE__,osMutex_delete         ( &This->cachesMutex     ))
+   CHK(__FILE__,__LINE__,osMutex_delete         ( &This->factoriesMutex  ))
+   CHK(__FILE__,__LINE__,osMutex_delete         ( &This->publishersMutex ))
+   CHK(__FILE__,__LINE__,osMutex_delete         ( &This->outMutex        ))
+   CHK(__FILE__,__LINE__,collMap_delete         ( &This->factories       ))
+   CHK(__FILE__,__LINE__,collMap_delete         ( &This->publishers      ))
+   CHK(__FILE__,__LINE__,collMap_delete         ( &This->callbacks       ))
+   CHK(__FILE__,__LINE__,collList_delete        ( &This->receivers       ))
+   CHK(__FILE__,__LINE__,dcrudIDispatcher_delete( &This->dispatcher      ))
+   closesocket( This->out );
+   UTIL_RELEASE( dcrudIParticipantImpl )
    return status;
 }
 

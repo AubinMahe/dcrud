@@ -51,15 +51,15 @@ final class Person extends Shareable {
 
    @Override
    public void serialize( ByteBuffer target ) {
-      org.hpms.mw.dcrud.SerializerHelper.putString   ( _forname  , target );
-      org.hpms.mw.dcrud.SerializerHelper.putString   ( _name     , target );
+      org.hpms.util.SerializerHelper.putString   ( _forname  , target );
+      org.hpms.util.SerializerHelper.putString   ( _name     , target );
       tests            .SerializerHelper.putLocalDate( _birthdate, target );
    }
 
    @Override
    public void unserialize( ByteBuffer source ) {
-      _forname   = org.hpms.mw.dcrud.SerializerHelper.getString   ( source );
-      _name      = org.hpms.mw.dcrud.SerializerHelper.getString   ( source );
+      _forname   = org.hpms.util.SerializerHelper.getString   ( source );
+      _name      = org.hpms.util.SerializerHelper.getString   ( source );
       _birthdate = tests            .SerializerHelper.getLocalDate( source );
    }
 
