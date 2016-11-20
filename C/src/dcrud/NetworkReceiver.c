@@ -227,6 +227,7 @@ utilStatus dcrudNetworkReceiver_operation( dcrudNetworkReceiverImpl * This, ioBy
          CHK(__FILE__,__LINE__,dcrudGUID_unserialize( &item, frame ))
          CHK(__FILE__,__LINE__,dcrudGUID_toString   ( item, szGUID, sizeof( szGUID )))
          CHK(__FILE__,__LINE__,dcrudArguments_putGUID( args, name, item ))
+         CHK(__FILE__,__LINE__,dcrudGUID_delete     ( &item ))
          if( utilDebugSettings->dumpNetworkReceiverOperations ) {
             fprintf( stderr, "\t\t%d:                GUID: %s\n", i, szGUID );
          }

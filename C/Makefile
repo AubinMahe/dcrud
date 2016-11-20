@@ -75,7 +75,7 @@ ifeq ($(UNAME_S),Linux)
 else
    LINK_FLAGS_DEBUG   = -lws2_32
    LINK_FLAGS_RELEASE = -lws2_32
-	LIB_SRCS += src/util/Sockets.c
+	LIB_SRCS += src/io/sockets.c
 endif
 
 LIB_DEPS_DEBUG   = $(patsubst %.c,Debug/%.d,$(LIB_SRCS))

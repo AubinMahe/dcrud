@@ -106,10 +106,10 @@ static utilStatus releaseValue( collForeach * context ) {
       CHK(__FILE__,__LINE__,dcrudArguments_getType((dcrudArguments)This, key, &type ));
       if( typSTRING == type  ) {
          CHK(__FILE__,__LINE__,utilString_delete( &value->String ))
-      }
+      }/*
       else if( typCLASS_ID == type  ) {
          CHK(__FILE__,__LINE__,dcrudClassID_delete( &value->ClassID ))
-      }
+      }*/
       else if( typGUID == type  ) {
          CHK(__FILE__,__LINE__,dcrudGUID_delete( &value->GUID ))
       }
@@ -417,11 +417,11 @@ utilStatus dcrudArguments_putNull( dcrudArguments self, const char * key ) {
    else {
       dcrudArgumentsImpl * This = dcrudArguments_safeCast( self, &status );
       if( status == UTIL_STATUS_NO_ERROR ) {
-         char *      allocateKey = NULL;
+         char *      newKey = NULL;
          collMapPair prev;
-         CHK(__FILE__,__LINE__,utilString_dup( &allocateKey, key ))
-         CHK(__FILE__,__LINE__,collMap_put( This->args , allocateKey, NULL    , &prev ))
-         CHK(__FILE__,__LINE__,collMap_put( This->types, allocateKey, &typNULL, NULL ))
+         CHK(__FILE__,__LINE__,utilString_clone( &newKey, key ))
+         CHK(__FILE__,__LINE__,collMap_put( This->args , newKey, NULL    , &prev ))
+         CHK(__FILE__,__LINE__,collMap_put( This->types, newKey, &typNULL, NULL ))
          if( prev.key ) {
             collForeach context;
             context.user  = This;
@@ -459,13 +459,13 @@ utilStatus dcrudArguments_put##N( dcrudArguments self, const char * key, T t ) {
          if( UTIL_STATUS_NO_ERROR == status ) {\
             collMapPair           prev;\
             dcrudArgumentsValue * value       = NULL;\
-            char *                allocateKey = NULL;\
+            char *                newKey = NULL;\
             CHK(__FILE__,__LINE__,utilPool_reserve( &dcrudArgumentsValuePool, &value ))\
-            CHK(__FILE__,__LINE__,utilString_dup( &allocateKey, key ))\
+            CHK(__FILE__,__LINE__,utilString_clone( &newKey, key ))\
             memset( value, 0, sizeof( dcrudArgumentsValue ));\
             value->N = t;\
-            CHK(__FILE__,__LINE__,collMap_put( This->args, allocateKey, value, &prev ))\
-            CHK(__FILE__,__LINE__,collMap_put( This->types, allocateKey, &typ##D, NULL ))\
+            CHK(__FILE__,__LINE__,collMap_put( This->args, newKey, value, &prev ))\
+            CHK(__FILE__,__LINE__,collMap_put( This->types, newKey, &typ##D, NULL ))\
             if( prev.key ) {\
                collForeach context;\
                context.user  = This;\
@@ -491,16 +491,16 @@ utilStatus dcrudArguments_put##N( dcrudArguments self, const char * key, T t ) {
          if( UTIL_STATUS_NO_ERROR == status ) {\
             collMapPair           prev;\
             dcrudArgumentsValue * argsValue   = NULL;\
-            char *                allocateKey = NULL;\
+            char *                newKey = NULL;\
             argsValue = (dcrudArgumentsValue *)malloc( sizeof( dcrudArgumentsValue ));\
             if( NULL == argsValue ) {\
                return UTIL_STATUS_TOO_MANY;\
             }\
             memset( argsValue, 0, sizeof( dcrudArgumentsValue ));\
-            CHK(__FILE__,__LINE__,utilString_dup( &allocateKey, key ))\
+            CHK(__FILE__,__LINE__,utilString_clone( &newKey, key ))\
             argsValue->N = t;\
-            CHK(__FILE__,__LINE__,collMap_put( This->args, allocateKey, argsValue, &prev ))\
-            CHK(__FILE__,__LINE__,collMap_put( This->types, allocateKey, &typ##D, NULL ))\
+            CHK(__FILE__,__LINE__,collMap_put( This->args, newKey, argsValue, &prev ))\
+            CHK(__FILE__,__LINE__,collMap_put( This->types, newKey, &typ##D, NULL ))\
             if( prev.key ) {\
                collForeach context;\
                context.user  = This;\
@@ -539,7 +539,7 @@ utilStatus dcrudArguments_putString( dcrudArguments self, const char * key, cons
 #endif
          if( UTIL_STATUS_NO_ERROR == status ) {
             collMapPair           prev;
-            char *                allocateKey = NULL;
+            char *                newKey = NULL;
             dcrudArgumentsValue * argsValue   = NULL;
 
 #ifdef STATIC_ALLOCATION
@@ -551,10 +551,63 @@ utilStatus dcrudArguments_putString( dcrudArguments self, const char * key, cons
             }
 #endif
             memset( argsValue, 0, sizeof( dcrudArgumentsValue ));
-            CHK(__FILE__,__LINE__,utilString_dup( &allocateKey      , key   ))
-            CHK(__FILE__,__LINE__,utilString_dup( &argsValue->String, value ))
-            CHK(__FILE__,__LINE__,collMap_put( This->args , allocateKey, argsValue , &prev ))
-            CHK(__FILE__,__LINE__,collMap_put( This->types, allocateKey, &typSTRING, NULL  ))
+            CHK(__FILE__,__LINE__,utilString_clone( &newKey      , key   ))
+            CHK(__FILE__,__LINE__,utilString_clone( &argsValue->String, value ))
+            CHK(__FILE__,__LINE__,collMap_put( This->args , newKey, argsValue , &prev ))
+            CHK(__FILE__,__LINE__,collMap_put( This->types, newKey, &typSTRING, NULL  ))
+            if( prev.key ) {
+               collForeach context;
+               context.user  = This;
+               context.key   = prev.key;
+               context.value = prev.value;
+               releaseValue( &context );
+            }
+         }
+      }
+   }
+   return status;
+}
+
+utilStatus dcrudArguments_putGUID( dcrudArguments self, const char * key, const dcrudGUID value ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if(( NULL == key )||( NULL == value )) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudArgumentsImpl * This = dcrudArguments_safeCast( self, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+#ifdef STATIC_ALLOCATION
+         if( dcrudArgumentsValuePoolInit ) {
+            status = utilPool_new(
+               &dcrudArgumentsValuePool,
+               "dcrudArgumentsValue",
+               dcrudArgumentsValuePoolData,
+               sizeof( dcrudArgumentsValue ),
+               dcrudArgumentsValuePoolEntries,
+               dcrudArgumentsValuePoolSize );
+            if( UTIL_STATUS_NO_ERROR == status ) {
+               dcrudArgumentsValuePoolInit = false;
+            }
+         }
+#endif
+         if( UTIL_STATUS_NO_ERROR == status ) {
+            collMapPair           prev;
+            char *                newKey = NULL;
+            dcrudArgumentsValue * argsValue   = NULL;
+
+#ifdef STATIC_ALLOCATION
+            CHK(__FILE__,__LINE__,utilPool_reserve( &dcrudArgumentsValuePool, &argsValue ))
+#else
+            argsValue = (dcrudArgumentsValue *)malloc( sizeof( dcrudArgumentsValue ));
+            if( NULL == argsValue ) {
+               return UTIL_STATUS_TOO_MANY;
+            }
+#endif
+            memset( argsValue, 0, sizeof( dcrudArgumentsValue ));
+            CHK(__FILE__,__LINE__,utilString_clone( &newKey         , key   ))
+            CHK(__FILE__,__LINE__,dcrudGUID_clone( &argsValue->GUID, value ))
+            CHK(__FILE__,__LINE__,collMap_put( This->args , newKey, argsValue, &prev ))
+            CHK(__FILE__,__LINE__,collMap_put( This->types, newKey, &typGUID , NULL  ))
             if( prev.key ) {
                collForeach context;
                context.user  = This;
@@ -580,7 +633,6 @@ DCRUD_ARGS_DECLARE_PUT( Ulong    , uint64_t      , ULONG     )
 DCRUD_ARGS_DECLARE_PUT( Float    , float         , FLOAT     )
 DCRUD_ARGS_DECLARE_PUT( Double   , double        , DOUBLE    )
 DCRUD_ARGS_DECLARE_PUT( ClassID  , dcrudClassID  , CLASS_ID  )
-DCRUD_ARGS_DECLARE_PUT( GUID     , dcrudGUID     , GUID      )
 DCRUD_ARGS_DECLARE_PUT( Shareable, dcrudShareable, SHAREABLE )
 
 utilStatus dcrudArguments_isNull( dcrudArguments self, const char * key, bool * result ) {

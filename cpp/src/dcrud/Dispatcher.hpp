@@ -19,7 +19,10 @@ namespace dcrud {
    public:
 
       Dispatcher( ParticipantImpl & participant ) :
-         _participant( participant )
+         _participant         ( participant ),
+         _providedMutex       (),
+         _provided            (),
+         _operationQueuesMutex()
       {}
 
       virtual IProvided & provide( const std::string & interfaceName );

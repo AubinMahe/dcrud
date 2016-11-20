@@ -54,12 +54,7 @@ namespace dcrud {
 
       ~ ParticipantImpl();
 
-      virtual void listen(
-         const IRegistry &   registry,
-         const std::string & networkInterface,
-         bool                dumpReceivedBuffer = false );
-
-      virtual void listen( const IRegistry & registry, bool dumpReceivedBuffer = false );
+      virtual void listen( const IRegistry & registry, const std::string & networkInterface );
 
       virtual void registerLocalFactory( const ClassID & id, localFactory_t factory );
 
@@ -103,7 +98,7 @@ namespace dcrud {
 
       void dataDelete( const GUID & id );
 
-      void dataUpdate( io::ByteBuffer & frame, int payloadSize );
+      void dataUpdate( io::ByteBuffer & frame, size_t payloadSize );
 
       void pushCreateOrUpdateItem( Shareable * item );
 
@@ -136,5 +131,9 @@ namespace dcrud {
       byte               _cacheCount;
       int                _callId;
       networkReceivers_t _receivers;
+
+   private:
+      ParticipantImpl( const ParticipantImpl & );
+      ParticipantImpl & operator = ( const ParticipantImpl & );
    };
 }

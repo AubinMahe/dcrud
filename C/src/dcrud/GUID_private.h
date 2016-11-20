@@ -13,12 +13,12 @@ typedef struct dcrudGUIDImpl_s {
 
 } dcrudGUIDImpl;
 
-utilStatus dcrudGUID_new      ( dcrudGUID * target );
-utilStatus dcrudGUID_delete   ( dcrudGUID * This );
-utilStatus dcrudGUID_isShared ( const dcrudGUID self, bool * shared );
-utilStatus dcrudGUID_isOwnedBy( const dcrudGUID self, unsigned publisherId, bool * isOwnedBy );
-utilStatus dcrudGUID_set      ( dcrudGUID This, const dcrudGUID right );
-utilStatus dcrudGUID_init     ( dcrudGUID This, unsigned int publisherId, unsigned int nextInstance );
+utilStatus dcrudGUID_new      ( /* */ dcrudGUID * This );
+utilStatus dcrudGUID_clone    ( /* */ dcrudGUID * This, const dcrudGUID ref );
+utilStatus dcrudGUID_isShared ( const dcrudGUID   This, bool * shared );
+utilStatus dcrudGUID_isOwnedBy( const dcrudGUID   This, unsigned publisherId, bool * isOwnedBy );
+utilStatus dcrudGUID_set      ( /* */ dcrudGUID   This, const dcrudGUID right );
+utilStatus dcrudGUID_init     ( /* */ dcrudGUID   This, unsigned int publisherId, unsigned int nextInstance );
 
 #ifdef __cplusplus
 }

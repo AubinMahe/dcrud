@@ -28,7 +28,7 @@ static struct OpCreateShape : public dcrud::IOperation {
       const dcrud::Arguments & args         )
    {
       dcrud::ClassID clazz;
-      if( args.get( "class", clazz )) {
+      if( args.getClassID( "class", clazz )) {
          ShareableShape * shape = new ShareableShape( clazz );
          shape->set( args );
          dcrud::ICache & cache = participant.getCache( 0 );
@@ -46,7 +46,7 @@ struct OpUpdateShape : public dcrud::IOperation {
       const dcrud::Arguments & args         )
    {
       dcrud::Shareable * shareable = 0;
-      if( args.get( "shape", shareable )) {
+      if( args.getShareable( "shape", shareable )) {
          ShareableShape * shape = dynamic_cast<ShareableShape *>( shareable );
          shape->move();
          dcrud::ICache & cache = participant.getCache( 0 );
@@ -64,7 +64,7 @@ static struct OpDeleteShape : public dcrud::IOperation {
       const dcrud::Arguments & args         )
    {
       dcrud::Shareable * shareable = 0;
-      if( args.get( "shape", shareable )) {
+      if( args.getShareable( "shape", shareable )) {
          ShareableShape * shape = dynamic_cast<ShareableShape *>( shareable );
          dcrud::ICache &  cache = participant.getCache( 0 );
          cache.deleTe( *shape );
@@ -76,10 +76,10 @@ static struct OpDeleteShape : public dcrud::IOperation {
 } opDeleteShape;
 
 void ShareableShape::set( const dcrud::Arguments & args ) {
-   args.get( "x", x );
-   args.get( "y", y );
-   args.get( "w", w );
-   args.get( "h", h );
+   args.getDouble( "x", x );
+   args.getDouble( "y", y );
+   args.getDouble( "w", w );
+   args.getDouble( "h", h );
 }
 
 void ShareableShape::registerClasses( dcrud::IParticipant & participant ) {
@@ -100,7 +100,17 @@ static double nextDouble( double min, double max ) {
 }
 
 ShareableShape::ShareableShape( const dcrud::ClassID & classID ) :
-   dcrud::Shareable( classID )
+   dcrud::Shareable( classID ),
+   name(),    // std::string
+   x( 0.0 ),  // double
+   y( 0.0 ),  // double
+   w( 0.0 ),  // double
+   h( 0.0 ),  // double
+   fill  (),  // FxColor
+   stroke(),  // FxColor
+   dx( 0.0 ), // double
+   dy( 0.0 )  // double
+
 {
    std::ostringstream fmt;
    if( classID == RectangleClassID ) {

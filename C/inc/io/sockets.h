@@ -9,13 +9,13 @@ extern "C" {
 #  include <ws2tcpip.h>
 #  include <mswsock.h>
    int inet_pton( int af, const char * src, void * dst );
-#elif linux
+#else
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <netinet/ip.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
-#  define SOCKET int
+   typedef int SOCKET;
 #  define INVALID_SOCKET (-1)
 #  define closesocket close
 #endif

@@ -6,7 +6,7 @@
 
 #include <io/NetworkInterfaces.h>
 
-#include <util/CheckSysCall.h>
+#include <util/check.hpp>
 
 #include <dcrud/Shareable.hpp>
 #include <dcrud/ICallback.hpp>
@@ -14,6 +14,7 @@
 #include <dcrud/IRegistry.hpp>
 
 #include <stdio.h>
+#include <string.h>
 
 #include <stdexcept>
 #include <algorithm>
@@ -31,8 +32,18 @@ ParticipantImpl::ParticipantImpl(
    _header     ( HEADER_SIZE  ),
    _payload    ( PAYLOAD_SIZE ),
    _message    ( 64*1024 ), // UDP MAX packet size
-   _cacheCount ( 0 ),
-   _callId     ( 0 )
+   _outMutex   (),
+   _out        ( 0 ),
+   _cachesMutex(),
+   _factoriesMutex(),
+   _localFactories(),
+   _remoteFactories(),
+   _callbacks(),
+   _target(),
+   _dispatcher( 0 ),
+   _cacheCount( 0 ),
+   _callId    ( 0 ),
+   _receivers()
 {
 #ifdef _WIN32
    WSADATA wsaData;
@@ -43,30 +54,23 @@ ParticipantImpl::ParticipantImpl(
       throw std::runtime_error( "WSAStartup" );
    }
 #endif
-   _out = socket( AF_INET, SOCK_DGRAM, 0 );
-   if( ! utilCheckSysCall( _out != INVALID_SOCKET, __FILE__, __LINE__, "socket" )) {
-      throw std::runtime_error( "socket" );
-   }
+   CPPCHK(__FILE__,__LINE__,
+      ((_out = socket( AF_INET, SOCK_DGRAM, 0 ))<0)
+         ? UTIL_STATUS_STD_API_ERROR : UTIL_STATUS_NO_ERROR)
    memset( &_target, 0, sizeof( _target ));
    _target.sin_family      = AF_INET;
    _target.sin_port        = htons( addr._port );
    _target.sin_addr.s_addr = inet_addr( addr._inetAddress.c_str());
    int trueValue = 1;
-   if( ! utilCheckSysCall( 0 ==
-      setsockopt( _out, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue )),
-      __FILE__, __LINE__, "setsockopt(SO_REUSEADDR)" ))
-   {
-      throw std::runtime_error( "setsockopt(SO_REUSEADDR)" );
-   }
+   CPPCHK(__FILE__, __LINE__,
+      setsockopt( _out, SOL_SOCKET, SO_REUSEADDR, (char*)&trueValue, sizeof( trueValue ))
+         ? UTIL_STATUS_STD_API_ERROR : UTIL_STATUS_NO_ERROR )
    struct in_addr lIntrfc;
    memset( &lIntrfc, 0, sizeof( lIntrfc ));
    lIntrfc.s_addr = inet_addr( intrfc.c_str());
-   if( ! utilCheckSysCall( 0 ==
-      setsockopt( _out, IPPROTO_IP, IP_MULTICAST_IF, (char *)&lIntrfc, sizeof( lIntrfc )),
-      __FILE__, __LINE__, "setsockopt(IP_MULTICAST_IF,%s)", intrfc.c_str()))
-   {
-      throw std::runtime_error( "setsockopt(IP_MULTICAST_IF)" );
-   }
+   CPPCHK(__FILE__, __LINE__,
+      setsockopt( _out, IPPROTO_IP, IP_MULTICAST_IF, (char *)&lIntrfc, sizeof( lIntrfc ))
+         ? UTIL_STATUS_STD_API_ERROR : UTIL_STATUS_NO_ERROR )
    printf( "sending to %s:%d via interface %s\n",
       addr._inetAddress.c_str(), addr._port, intrfc.c_str());
    _dispatcher            = new Dispatcher( *this );
@@ -84,27 +88,12 @@ ParticipantImpl:: ~ ParticipantImpl() {
    }
 }
 
-void ParticipantImpl::listen(
-   const IRegistry &   registry,
-   const std::string & networkInterface,
-   bool                dumpReceivedBuffer /* = false */ )
-{
+void ParticipantImpl::listen( const IRegistry & registry, const std::string & networkInterface ) {
    const socketAddresses_t & participants = registry.getParticipants();
    for( socketAddressesCstIter_t it = participants.begin(); it != participants.end(); ++it ) {
       const io::InetSocketAddress & addr     = *it;
       NetworkReceiver *             receiver =
-         new NetworkReceiver( *this, addr, networkInterface, dumpReceivedBuffer );
-      _receivers.push_back( receiver );
-   }
-}
-
-void ParticipantImpl::listen( const IRegistry & registry, bool dumpReceivedBuffer ) {
-   std::string               networkInterface = ioNetworkInterfaces_getFirst( true );
-   const socketAddresses_t & participants     = registry.getParticipants();
-   for( socketAddressesCstIter_t it = participants.begin(); it != participants.end(); ++it ) {
-      const io::InetSocketAddress & addr     = *it;
-      NetworkReceiver *             receiver =
-         new NetworkReceiver( *this, addr, networkInterface, dumpReceivedBuffer );
+         new NetworkReceiver( *this, addr, networkInterface );
       _receivers.push_back( receiver );
    }
 }
@@ -145,11 +134,11 @@ void ParticipantImpl::pushCreateOrUpdateItem( Shareable * item ) {
    _payload.clear();
    item->serialize( _payload );
    _payload.flip();
-   int size = _payload.remaining();
+   unsigned size = (unsigned)_payload.remaining();
    _header.clear();
    _header.put( SIGNATURE, 0, SIGNATURE_SIZE );
    _header.putByte( DATA_CREATE_OR_UPDATE );
-   _header.putInt( size );
+   _header.putUInt( size );
    item->_id   .serialize( _header );
    item->_class.serialize( _header );
    _header.flip();
@@ -157,7 +146,7 @@ void ParticipantImpl::pushCreateOrUpdateItem( Shareable * item ) {
    _message.put( _header  );
    _message.put( _payload );
    _message.flip();
-   _message.send( _out, _target );
+   _message.sendTo( _out, _target );
 }
 
 void ParticipantImpl::publishUpdated( shareables_t & updated ) {
@@ -172,7 +161,7 @@ void ParticipantImpl::pushDeleteItem( Shareable * item ) {
    _header.putByte( DATA_DELETE );
    item->_id.serialize( _header );
    _header.flip();
-   _header.send( _out, _target );
+   _header.sendTo( _out, _target );
 }
 
 void ParticipantImpl::publishDeleted( shareables_t & deleted ) {
@@ -199,7 +188,7 @@ void ParticipantImpl::call(
       args->serialize( _message );
    }
    _message.flip();
-   _message.send( _out, _target );
+   _message.sendTo( _out, _target );
 }
 
 int ParticipantImpl::call(
@@ -241,7 +230,7 @@ void ParticipantImpl::dataDelete( const dcrud::GUID & id ) {
    }
 }
 
-void ParticipantImpl::dataUpdate( io::ByteBuffer & frame, int payloadSize ) {
+void ParticipantImpl::dataUpdate( io::ByteBuffer & frame, size_t payloadSize ) {
    os::Synchronized sync( _cachesMutex );
    for( unsigned i = 0U; i < CACHE_COUNT; ++i ) {
       Cache * cache = _caches[i];

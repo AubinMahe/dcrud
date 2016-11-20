@@ -129,8 +129,8 @@ utilStatus dcrudOperationCall_new(
       UTIL_ALLOCATE( dcrudOperationCall );
       if( UTIL_STATUS_NO_ERROR == status ) {
          This->operation  = operation;
-         CHK(__FILE__,__LINE__,utilString_dup( &This->intrfcName, intrfcName ))
-         CHK(__FILE__,__LINE__,utilString_dup( &This->opName    , opName     ))
+         CHK(__FILE__,__LINE__,utilString_clone( &This->intrfcName, intrfcName ))
+         CHK(__FILE__,__LINE__,utilString_clone( &This->opName    , opName     ))
          This->callId     = callId;
          This->arguments  = arguments;
       }
@@ -460,7 +460,6 @@ utilStatus dcrudIDispatcher_execute(
    if( status == UTIL_STATUS_NO_ERROR ) {
       dcrudIProvidedImpl * provided = NULL;
       status = collMap_get( This->provided, (collMapKey)intrfcName, &provided );
-      utilStatus_checkAndLog(status,__FILE__,__LINE__,"collMap_get");
       if( status == UTIL_STATUS_NOT_FOUND ) {
          status = UTIL_STATUS_NO_ERROR;
          dcrudArguments_delete( &args );

@@ -8,6 +8,7 @@ extern "C" {
 UTIL_ADT( dcrudGUID );
 
 utilStatus dcrudGUID_unserialize( /* */ dcrudGUID * This, ioByteBuffer source );
+utilStatus dcrudGUID_delete     ( /* */ dcrudGUID * This );
 utilStatus dcrudGUID_serialize  ( const dcrudGUID   This, ioByteBuffer target );
 utilStatus dcrudGUID_toString   ( const dcrudGUID   This, char * target, size_t targetSize );
 int        dcrudGUID_compareTo  ( const dcrudGUID * left, const dcrudGUID * right );

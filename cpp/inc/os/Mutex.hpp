@@ -14,7 +14,7 @@ namespace os {
 
    public:
 
-      Mutex() {
+      Mutex() : _mutex( 0 ) {
          osMutex_new( &_mutex );
       }
 

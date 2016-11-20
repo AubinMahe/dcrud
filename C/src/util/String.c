@@ -82,7 +82,7 @@ utilStatus utilString_new( char ** This, size_t size ) {
    return status;
 }
 
-utilStatus utilString_dup( char ** This, const char * source ) {
+utilStatus utilString_clone( char ** This, const char * source ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    if(( This == NULL )||( source == NULL )) {
       status = UTIL_STATUS_NULL_ARGUMENT;

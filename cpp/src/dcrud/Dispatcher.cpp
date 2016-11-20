@@ -19,19 +19,19 @@ namespace dcrud {
 
       virtual void create( const Arguments & how ) {
          Arguments args( how );
-         args.put( ICRUD_INTERFACE_CLASSID, _classID );
+         args.putClassID( ICRUD_INTERFACE_CLASSID, _classID );
          _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_CREATE, &args, 0 );
       }
 
       virtual void update( Shareable & what, const Arguments & how ) {
          Arguments args( how );
-         args.put( ICRUD_INTERFACE_GUID, what.getGUID());
+         args.putGUID( ICRUD_INTERFACE_GUID, what.getGUID());
          _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_UPDATE, &args, 0 );
       }
 
       virtual void deleTe( Shareable & what ) {
          Arguments args;
-         args.put( ICRUD_INTERFACE_GUID, what.getGUID());
+         args.putGUID( ICRUD_INTERFACE_GUID, what.getGUID());
          _participant.call( ICRUD_INTERFACE_NAME, ICRUD_INTERFACE_DELETE, &args, 0 );
       }
 
@@ -126,22 +126,32 @@ void Dispatcher::handleRequests() {
                }
             }
             else {
-               ClassID classID;
-               GUID    id;
-               if(   op->_opName == ICRUD_INTERFACE_CREATE
-                  && op->_arguments.get( ICRUD_INTERFACE_CLASSID, classID ))
-               {
-                  _participant.create( classID, op->_arguments );
+               if( op->_opName == ICRUD_INTERFACE_CREATE ) {
+                  ClassID classID;
+                  if( op->_arguments.getClassID( ICRUD_INTERFACE_CLASSID, classID )) {
+                     _participant.create( classID, op->_arguments );
+                  }
+                  else {
+                     // TODO: report error
+                  }
                }
-               else if( op->_opName == ICRUD_INTERFACE_UPDATE
-                  && op->_arguments.get( ICRUD_INTERFACE_GUID, id ))
-               {
-                  _participant.update( id, op->_arguments );
+               else if( op->_opName == ICRUD_INTERFACE_UPDATE ) {
+                  GUID id;
+                  if( op->_arguments.getGUID( ICRUD_INTERFACE_GUID, id )) {
+                     _participant.update( id, op->_arguments );
+                  }
+                  else {
+                     // TODO: report error
+                  }
                }
-               else if( op->_opName == ICRUD_INTERFACE_DELETE
-                  && op->_arguments.get( ICRUD_INTERFACE_GUID, id ))
-               {
-                  _participant.deleTe( id );
+               else if( op->_opName == ICRUD_INTERFACE_DELETE ) {
+                  GUID id;
+                  if( op->_arguments.getGUID( ICRUD_INTERFACE_GUID, id )) {
+                     _participant.deleTe( id );
+                  }
+                  else {
+                     // TODO: report error
+                  }
                }
                else {
                   fprintf( stderr, "%s:%d: Unexpected Publisher operation '%s'\n",

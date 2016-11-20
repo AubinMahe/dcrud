@@ -5,10 +5,12 @@
 
 using namespace dcrud;
 
-Arguments::Arguments( void ) {
-   setMode ( IRequired::ASYNCHRONOUS_DEFERRED );
-   setQueue( IRequired::DEFAULT_QUEUE );
-}
+Arguments::Arguments( void ) :
+   _args (),
+   _types(),
+   _mode ( IRequired::ASYNCHRONOUS_DEFERRED ),
+   _queue( IRequired::DEFAULT_QUEUE )
+{}
 
 Arguments:: ~ Arguments() {
    for( argsIter_t it = _args.begin(); it != _args.end(); ++it ) {
@@ -16,21 +18,25 @@ Arguments:: ~ Arguments() {
          ClassID::Type type  = _types.find( it->first )->second;
          void *        value = it->second;
          switch( type ) {
-         case ClassID::TYPE_NULL       : break;
-         case ClassID::TYPE_BYTE       : delete (byte *          )value; break;
-         case ClassID::TYPE_BOOLEAN    : delete (byte *          )value; break;
-         case ClassID::TYPE_SHORT      : delete (unsigned short *)value; break;
-         case ClassID::TYPE_INTEGER    : delete (unsigned int *  )value; break;
-         case ClassID::TYPE_LONG       : delete (unsigned long * )value; break;
-         case ClassID::TYPE_FLOAT      : delete (float *         )value; break;
-         case ClassID::TYPE_DOUBLE     : delete (double *        )value; break;
-         case ClassID::TYPE_STRING     : delete (std::string *   )value; break;
-         case ClassID::TYPE_CLASS_ID   : delete (ClassID *       )value; break;
-         case ClassID::TYPE_GUID       : delete (dcrud::GUID *          )value; break;
-         case ClassID::TYPE_CALL_MODE  : delete (byte *          )value; break;
-         case ClassID::TYPE_QUEUE_INDEX: delete (byte *          )value; break;
-         case ClassID::TYPE_SHAREABLE  : break;
-         case ClassID::LAST_TYPE       : break;
+         case ClassID::TYPE_NULL            : break;
+         case ClassID::TYPE_CHAR            :
+         case ClassID::TYPE_BYTE            :
+         case ClassID::TYPE_BOOLEAN         : delete (byte *          )value; break;
+         case ClassID::TYPE_SHORT           : delete (short *         )value; break;
+         case ClassID::TYPE_UNSIGNED_SHORT  : delete (unsigned short *)value; break;
+         case ClassID::TYPE_INTEGER         : delete (int *           )value; break;
+         case ClassID::TYPE_UNSIGNED_INTEGER: delete (unsigned int *  )value; break;
+         case ClassID::TYPE_LONG            : delete (long *          )value; break;
+         case ClassID::TYPE_UNSIGNED_LONG   : delete (unsigned long * )value; break;
+         case ClassID::TYPE_FLOAT           : delete (float *         )value; break;
+         case ClassID::TYPE_DOUBLE          : delete (double *        )value; break;
+         case ClassID::TYPE_STRING          : delete (std::string *   )value; break;
+         case ClassID::TYPE_CLASS_ID        : delete (ClassID *       )value; break;
+         case ClassID::TYPE_GUID            : delete (dcrud::GUID *   )value; break;
+         case ClassID::TYPE_SHAREABLE       : break;
+         case ClassID::LAST_TYPE            : break;
+         default:
+            break;
          }
       }
    }
@@ -46,57 +52,72 @@ void Arguments::putNull( const std::string & key ) {
    _types[key] = ClassID::TYPE_NULL;
 }
 
-void Arguments::put( const std::string & key, const byte & value ) {
+void Arguments::putByte( const std::string & key, byte value ) {
    _args [key] = new byte( value );
    _types[key] = ClassID::TYPE_BYTE;
 }
 
-void Arguments::put( const std::string & key, const bool & value ) {
+void Arguments::putBool( const std::string & key, bool value ) {
    _args [key] = new byte( value ? 1 : 0 );
    _types[key] = ClassID::TYPE_BOOLEAN;
 }
 
-void Arguments::put( const std::string & key, const unsigned short & value ) {
+void Arguments::putShort( const std::string & key, short value ) {
+   _args [key] = new short( value );
+   _types[key] = ClassID::TYPE_SHORT;
+}
+
+void Arguments::putUShort( const std::string & key, unsigned short value ) {
    _args [key] = new unsigned short( value );
    _types[key] = ClassID::TYPE_SHORT;
 }
 
-void Arguments::put( const std::string & key, const unsigned int & value ) {
+void Arguments::putInt( const std::string & key, int value ) {
+   _args [key] = new int( value );
+   _types[key] = ClassID::TYPE_INTEGER;
+}
+
+void Arguments::putUInt( const std::string & key, unsigned int value ) {
    _args [key] = new unsigned int( value );
    _types[key] = ClassID::TYPE_INTEGER;
 }
 
-void Arguments::put( const std::string & key, const uint64_t & value ) {
+void Arguments::putLong( const std::string & key, const int64_t & value ) {
+   _args [key] = new int64_t( value );
+   _types[key] = ClassID::TYPE_LONG;
+}
+
+void Arguments::putULong( const std::string & key, const uint64_t & value ) {
    _args [key] = new uint64_t( value );
    _types[key] = ClassID::TYPE_LONG;
 }
 
-void Arguments::put( const std::string & key, const float & value ) {
+void Arguments::putFloat( const std::string & key, float value ) {
    _args [key] = new float( value );
    _types[key] = ClassID::TYPE_FLOAT;
 }
 
-void Arguments::put( const std::string & key, const double & value ) {
+void Arguments::putDouble( const std::string & key, const double & value ) {
    _args [key] = new double( value );
    _types[key] = ClassID::TYPE_DOUBLE;
 }
 
-void Arguments::put( const std::string & key, const std::string & value ) {
+void Arguments::putString( const std::string & key, const std::string & value ) {
    _args [key] = new std::string( value );
    _types[key] = ClassID::TYPE_STRING;
 }
 
-void Arguments::put( const std::string & key, const ClassID & value ) {
+void Arguments::putClassID( const std::string & key, const ClassID & value ) {
    _args [key] = new ClassID( value );
    _types[key] = ClassID::TYPE_CLASS_ID;
 }
 
-void Arguments::put( const std::string & key, const dcrud::GUID & value ) {
+void Arguments::putGUID( const std::string & key, const dcrud::GUID & value ) {
    _args [key] = new dcrud::GUID( value );
    _types[key] = ClassID::TYPE_GUID;
 }
 
-void Arguments::put( const std::string & key, const Shareable * value ) {
+void Arguments::putShareable( const std::string & key, const Shareable * value ) {
    _args [key] = const_cast<Shareable *>( value );
    _types[key] = ClassID::TYPE_SHAREABLE;
 }
@@ -109,7 +130,7 @@ bool Arguments::isNull( const std::string & key ) const {
    return it->second;
 }
 
-bool Arguments::get( const std::string & key, byte & value ) const {
+bool Arguments::getByte( const std::string & key, byte & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -122,7 +143,7 @@ bool Arguments::get( const std::string & key, byte & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, bool & value ) const {
+bool Arguments::getBool( const std::string & key, bool & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -135,7 +156,20 @@ bool Arguments::get( const std::string & key, bool & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, unsigned short & value ) const {
+bool Arguments::getShort( const std::string & key, short & value ) const {
+   argsCstIter_t it = _args.find( key );
+   if( it == _args.end()) {
+      return false;
+   }
+   const ClassID::Type & type = _types.find( it->first )->second;
+   if( type != ClassID::TYPE_SHORT ) {
+      return false;
+   }
+   value = *(const short *)it->second;
+   return true;
+}
+
+bool Arguments::getUShort( const std::string & key, unsigned short & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -148,7 +182,20 @@ bool Arguments::get( const std::string & key, unsigned short & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, unsigned int & value ) const {
+bool Arguments::getInt( const std::string & key, int & value ) const {
+   argsCstIter_t it = _args.find( key );
+   if( it == _args.end()) {
+      return false;
+   }
+   const ClassID::Type & type = _types.find( it->first )->second;
+   if( type != ClassID::TYPE_INTEGER ) {
+      return false;
+   }
+   value = *(const int *)it->second;
+   return true;
+}
+
+bool Arguments::getUInt( const std::string & key, unsigned int & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -161,7 +208,20 @@ bool Arguments::get( const std::string & key, unsigned int & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, uint64_t & value ) const {
+bool Arguments::getLong( const std::string & key, int64_t & value ) const {
+   argsCstIter_t it = _args.find( key );
+   if( it == _args.end()) {
+      return false;
+   }
+   const ClassID::Type & type = _types.find( it->first )->second;
+   if( type != ClassID::TYPE_LONG ) {
+      return false;
+   }
+   value = *(const int64_t *)it->second;
+   return true;
+}
+
+bool Arguments::getULong( const std::string & key, uint64_t & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -174,7 +234,7 @@ bool Arguments::get( const std::string & key, uint64_t & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, float & value ) const {
+bool Arguments::getFloat( const std::string & key, float & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -187,7 +247,7 @@ bool Arguments::get( const std::string & key, float & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, double & value ) const {
+bool Arguments::getDouble( const std::string & key, double & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -200,7 +260,7 @@ bool Arguments::get( const std::string & key, double & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, std::string & value ) const {
+bool Arguments::getString( const std::string & key, std::string & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -213,7 +273,7 @@ bool Arguments::get( const std::string & key, std::string & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, ClassID & value ) const {
+bool Arguments::getClassID( const std::string & key, ClassID & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -226,7 +286,7 @@ bool Arguments::get( const std::string & key, ClassID & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, dcrud::GUID & value ) const {
+bool Arguments::getGUID( const std::string & key, dcrud::GUID & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -239,7 +299,7 @@ bool Arguments::get( const std::string & key, dcrud::GUID & value ) const {
    return true;
 }
 
-bool Arguments::get( const std::string & key, Shareable * & value ) const {
+bool Arguments::getShareable( const std::string & key, Shareable * & value ) const {
    argsCstIter_t it = _args.find( key );
    if( it == _args.end()) {
       return false;
@@ -253,13 +313,11 @@ bool Arguments::get( const std::string & key, Shareable * & value ) const {
 }
 
 void Arguments::setMode( byte mode ) {
-   _args ["@mode"] = new byte( mode );
-   _types["@mode"] = ClassID::TYPE_CALL_MODE;
+   _mode = mode;
 }
 
 void Arguments::setQueue( byte queue ) {
-   _args ["@queue"] = new byte( queue );
-   _types["@queue"] = ClassID::TYPE_QUEUE_INDEX;
+   _queue = queue;
 }
 
 ClassID::Type Arguments::getType( const std::string & key ) const {
@@ -284,20 +342,23 @@ void Arguments::serialize( io::ByteBuffer & message ) const {
       else {
          ClassID::serialize( type, message );
          switch( type ) {
-         case ClassID::TYPE_NULL       : /* No data. */                                   break;
-         case ClassID::TYPE_BOOLEAN    : message.putBoolean( *(bool*            )value ); break;
-         case ClassID::TYPE_BYTE       : message.putByte   ( *(byte *           )value ); break;
-         case ClassID::TYPE_SHORT      : message.putShort  ( *(unsigned short * )value ); break;
-         case ClassID::TYPE_INTEGER    : message.putInt    ( *(unsigned int *   )value ); break;
-         case ClassID::TYPE_LONG       : message.putLong   ( *(uint64_t *       )value ); break;
-         case ClassID::TYPE_FLOAT      : message.putFloat  ( *(float *          )value ); break;
-         case ClassID::TYPE_DOUBLE     : message.putDouble ( *(double *         )value ); break;
-         case ClassID::TYPE_STRING     : message.putString ( *(std::string *    )value ); break;
-         case ClassID::TYPE_CLASS_ID   : ((ClassID *)value)->serialize( message );        break;
-         case ClassID::TYPE_GUID       : ((dcrud::GUID *   )value)->serialize( message );        break;
-         case ClassID::TYPE_CALL_MODE  : message.putByte   ( *(byte *           )value ); break;
-         case ClassID::TYPE_QUEUE_INDEX: message.putByte   ( *(byte *           )value ); break;
-         case ClassID::TYPE_SHAREABLE  : /* Already handled before this switch. */        break;
+         case ClassID::TYPE_NULL            : /* No data. */ break;
+         case ClassID::TYPE_BOOLEAN         : message.putBoolean( *(const bool*            )value ); break;
+         case ClassID::TYPE_CHAR            :
+         case ClassID::TYPE_BYTE            : message.putByte   ( *(const byte *           )value ); break;
+         case ClassID::TYPE_SHORT           : message.putShort  ( *(const unsigned short * )value ); break;
+         case ClassID::TYPE_UNSIGNED_SHORT  : message.putUShort ( *(const unsigned short * )value ); break;
+         case ClassID::TYPE_INTEGER         : message.putInt    ( *(const unsigned int *   )value ); break;
+         case ClassID::TYPE_UNSIGNED_INTEGER: message.putUInt   ( *(const unsigned int *   )value ); break;
+         case ClassID::TYPE_LONG            : message.putLong   ( *(const uint64_t *       )value ); break;
+         case ClassID::TYPE_UNSIGNED_LONG   : message.putULong  ( *(const uint64_t *       )value ); break;
+         case ClassID::TYPE_FLOAT           : message.putFloat  ( *(const float *          )value ); break;
+         case ClassID::TYPE_DOUBLE          : message.putDouble ( *(const double *         )value ); break;
+         case ClassID::TYPE_STRING          : message.putString ( *(const std::string *    )value ); break;
+         case ClassID::TYPE_CLASS_ID        : ((const ClassID *)value)->serialize( message );        break;
+         case ClassID::TYPE_GUID            : ((const GUID *   )value)->serialize( message );        break;
+         case ClassID::TYPE_SHAREABLE       : /* Already handled before this switch. */              break;
+         case ClassID::LAST_TYPE:
          default:
             throw std::invalid_argument( name );
          }

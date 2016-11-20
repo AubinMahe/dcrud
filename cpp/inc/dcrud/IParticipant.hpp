@@ -19,12 +19,7 @@ namespace dcrud {
 
       virtual ~ IParticipant() {}
 
-      virtual void listen(
-         const IRegistry &   registry,
-         const std::string & networkInterface,
-         bool                dumpReceivedBuffer = false ) = 0;
-
-      virtual void listen( const IRegistry & registry, bool dumpReceivedBuffer = false ) = 0;
+      virtual void listen( const IRegistry & registry, const std::string & networkInterface ) = 0;
 
       virtual void registerLocalFactory ( const ClassID & id, localFactory_t factory ) = 0;
 

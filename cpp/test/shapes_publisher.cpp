@@ -6,6 +6,7 @@
 #include <dcrud/IOperation.hpp>
 
 #include <os/System.h>
+#include <util/DebugSettings.h>
 
 #include "StaticRegistry.hpp"
 #include "ShareableShape.hpp"
@@ -44,7 +45,8 @@ private:
 
 public:
 
-   ShapesSample( bool dumpReceivedBuffer = false ) :
+   ShapesSample( const std::string & networkIntrfc ) :
+      _registry   (),
       _participant(
          dcrud::Network::join( 2, io::InetSocketAddress( "224.0.0.3", 2417 ), "192.168.1.7" )),
       _cache      ( _participant.getDefaultCache()),
@@ -53,7 +55,7 @@ public:
       ShareableShape::registerClasses   ( _participant );
       ShareableShape::registerOperations( _dispatcher  );
       _dispatcher.provide( "IMonitor" ).addOperation( "exit", *new ExitSrvc());
-      _participant.listen( _registry, dumpReceivedBuffer );
+      _participant.listen( _registry, networkIntrfc );
    }
 
    ~ ShapesSample() {
@@ -99,9 +101,9 @@ private:
 
 int main( int argc, char * argv[] ) {
    try {
-      const bool dumpReceivedBuffer =
+      utilDebugSettings->dumpReceivedBuffer =
          ( argc > 1 ) && ( 0 == strcmp( argv[1], "--dump-received-buffer" ));
-      ShapesSample( dumpReceivedBuffer ).run();
+      ShapesSample( "192.168.1.9" ).run();
       printf( "Well done.\n" );
    }
    catch( const std::exception & x ) {

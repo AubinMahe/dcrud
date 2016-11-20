@@ -23,8 +23,28 @@ utilStatus dcrudGUID_new( dcrudGUID * self ) {
    return status;
 }
 
+utilStatus dcrudGUID_clone( dcrudGUID * self, const dcrudGUID ref ) {
+   utilStatus status = UTIL_STATUS_NO_ERROR;
+   if( self == NULL ) {
+      status = UTIL_STATUS_NULL_ARGUMENT;
+   }
+   else {
+      dcrudGUIDImpl * from = dcrudGUID_safeCast( ref, &status );
+      if( UTIL_STATUS_NO_ERROR == status ) {
+         dcrudGUIDImpl * This = NULL;
+         UTIL_ALLOCATE_ADT( dcrudGUID, self, This );
+         if( UTIL_STATUS_NO_ERROR == status ) {
+            This->publisher = from->publisher;
+            This->instance  = from->instance;
+         }
+      }
+   }
+   return status;
+}
+
 utilStatus dcrudGUID_delete( dcrudGUID * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
+//   utilPrintStackTrace();
    UTIL_RELEASE( dcrudGUIDImpl )
    return status;
 }

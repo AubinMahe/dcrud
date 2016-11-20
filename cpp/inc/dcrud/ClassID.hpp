@@ -10,18 +10,20 @@ namespace dcrud {
       enum Type {
 
          TYPE_NULL,
-         TYPE_BYTE,
          TYPE_BOOLEAN,
+         TYPE_BYTE,
+         TYPE_CHAR,
          TYPE_SHORT,
+         TYPE_UNSIGNED_SHORT,
          TYPE_INTEGER,
+         TYPE_UNSIGNED_INTEGER,
          TYPE_LONG,
+         TYPE_UNSIGNED_LONG,
          TYPE_FLOAT,
          TYPE_DOUBLE,
          TYPE_STRING,
          TYPE_CLASS_ID,
          TYPE_GUID,
-         TYPE_CALL_MODE,
-         TYPE_QUEUE_INDEX,
          TYPE_SHAREABLE,
 
          LAST_TYPE

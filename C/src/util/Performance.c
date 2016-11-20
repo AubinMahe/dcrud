@@ -41,7 +41,7 @@ utilStatus utilPerformance_record( const char * attribute, uint64_t elapsed ) {
       if( status != UTIL_STATUS_NO_ERROR ) {
          return status;
       }
-      CHK(__FILE__,__LINE__,utilString_dup( &key, attribute ));
+      CHK(__FILE__,__LINE__,utilString_clone( &key, attribute ));
       CHK(__FILE__,__LINE__,collMap_put( s_samplesByAttribute, key, samples, NULL ))
       if( status != UTIL_STATUS_NO_ERROR ) {
          return status;

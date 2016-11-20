@@ -31,7 +31,8 @@ DCRUD offers remote asynchronous operations too, grouped into interfaces. If an 
 
 # How to build #
 
-Hand made Makefiles, Eclipse and Visual Studio project are provided. Use Eclipse JDT with CDT plugin or Visual Studio 2015 or type `make` to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, `jar-lib`, `jar-test`. *TODO: use autoconf/automake (help welcome)*
+Hand made Makefiles, Eclipse and Visual Studio project are provided. Use Eclipse JDT with CDT plugin or Visual Studio 2015 or type `make` to build `dcrud-c-lib`, `dcrud-c-test`, `dcrud-cpp-lib`, `dcrud-cpp-test`, `jar-lib`, `jar-test`.
+*TODO: use autoconf/automake (help welcome)*
 
 # API Overview #
 
@@ -61,6 +62,10 @@ Hand made Makefiles, Eclipse and Visual Studio project are provided. Use Eclipse
    - `util` : debugging, performances probes, system calls checking, errors reporting and logging, *doesn't exists in Java and C++*.
 - Java implementation is pure, without any kind of JNI
 - C++ implementation depends on C implementation because it uses `os` and `io` modules
+
+# Embeddability #
+
+DCRUD, in C is compilable with -DSTATIC_ALLOCATION which forbid malloc usage. Allocations are made from pools, which are preallocated. All pool's sizes are defined in a single file, one per package.
 
 ## Implementation of inheritance in C language ##
 
@@ -154,7 +159,7 @@ Each time a participant receives a Registry, it merges it to its own and broadca
 
 See [tests.registry.GUI](Java/test/tests/registry/GUI.java) and [testRegistry.sh](Java/testRegistry.sh) for a test of the protocol with 12 participants.
 
-### When a participant shut down:###
+### When a participant shut down: ###
 
 1. Gently: a message is send to one which update its registry and then broadcast it.
 2. Abruptly (on failure): the first participant which detect that the resource are no longer available update its registry and then broadcast it.

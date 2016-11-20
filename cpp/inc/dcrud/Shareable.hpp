@@ -14,6 +14,7 @@ namespace dcrud {
    public:
 
       Shareable( const ClassID & classId ) :
+         _id   (),
          _class( classId )
       {}
 

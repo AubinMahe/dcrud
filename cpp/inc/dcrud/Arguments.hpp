@@ -29,31 +29,38 @@ namespace dcrud {
          return _args.size();
       }
 
-      void putNull( const std::string & key );
-      void put    ( const std::string & key, const byte &           value );
-      void put    ( const std::string & key, const bool &           value );
-      void put    ( const std::string & key, const unsigned short & value );
-      void put    ( const std::string & key, const unsigned int &   value );
-      void put    ( const std::string & key, const uint64_t &       value );
-      void put    ( const std::string & key, const float &          value );
-      void put    ( const std::string & key, const double &         value );
-      void put    ( const std::string & key, const std::string &    value );
-      void put    ( const std::string & key, const ClassID &        value );
-      void put    ( const std::string & key, const GUID &           value );
-      void put    ( const std::string & key, const Shareable *      value );
+      void putNull     ( const std::string & key );
+      void putByte     ( const std::string & key, byte                   value );
+      void putBool     ( const std::string & key, bool                   value );
+      void putShort    ( const std::string & key, short                  value );
+      void putUShort   ( const std::string & key, unsigned short         value );
+      void putInt      ( const std::string & key, int                    value );
+      void putUInt     ( const std::string & key, unsigned int           value );
+      void putLong     ( const std::string & key, const int64_t &        value );
+      void putULong    ( const std::string & key, const uint64_t &       value );
+      void putFloat    ( const std::string & key, float                  value );
+      void putDouble   ( const std::string & key, const double &         value );
+      void putString   ( const std::string & key, const std::string &    value );
+      void putClassID  ( const std::string & key, const ClassID &        value );
+      void putGUID     ( const std::string & key, const GUID &           value );
+      void putShareable( const std::string & key, const Shareable *      value );
 
-      bool isNull ( const std::string & key ) const;
-      bool get    ( const std::string & key, byte &           value ) const;
-      bool get    ( const std::string & key, bool &           value ) const;
-      bool get    ( const std::string & key, unsigned short & value ) const;
-      bool get    ( const std::string & key, unsigned int &   value ) const;
-      bool get    ( const std::string & key, uint64_t &       value ) const;
-      bool get    ( const std::string & key, float &          value ) const;
-      bool get    ( const std::string & key, double &         value ) const;
-      bool get    ( const std::string & key, std::string &    value ) const;
-      bool get    ( const std::string & key, ClassID &        value ) const;
-      bool get    ( const std::string & key, GUID &           value ) const;
-      bool get    ( const std::string & key, Shareable * &    value ) const;
+      bool isNull      ( const std::string & key ) const;
+
+      bool getByte     ( const std::string & key, byte &           value ) const;
+      bool getBool     ( const std::string & key, bool &           value ) const;
+      bool getShort    ( const std::string & key, short &          value ) const;
+      bool getUShort   ( const std::string & key, unsigned short & value ) const;
+      bool getInt      ( const std::string & key, int &            value ) const;
+      bool getUInt     ( const std::string & key, unsigned int &   value ) const;
+      bool getLong     ( const std::string & key, int64_t &        value ) const;
+      bool getULong    ( const std::string & key, uint64_t &       value ) const;
+      bool getFloat    ( const std::string & key, float &          value ) const;
+      bool getDouble   ( const std::string & key, double &         value ) const;
+      bool getString   ( const std::string & key, std::string &    value ) const;
+      bool getClassID  ( const std::string & key, ClassID &        value ) const;
+      bool getGUID     ( const std::string & key, GUID &           value ) const;
+      bool getShareable( const std::string & key, Shareable * &    value ) const;
 
       void setMode ( byte mode );
 
@@ -75,5 +82,7 @@ namespace dcrud {
 
       args_t  _args;
       types_t _types;
+      byte    _mode;
+      byte    _queue;
    };
 }

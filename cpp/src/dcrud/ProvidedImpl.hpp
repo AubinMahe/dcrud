@@ -11,7 +11,7 @@ namespace dcrud {
    class ProvidedImpl : public IProvided {
    public:
 
-      ProvidedImpl( void ) {}
+      ProvidedImpl( void ) : _opsInOut() {}
 
       virtual IProvided & addOperation( const std::string & opName, IOperation & executor ) {
          _opsInOut[opName] = &executor;

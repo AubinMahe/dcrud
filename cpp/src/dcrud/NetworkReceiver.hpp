@@ -14,15 +14,14 @@ namespace dcrud {
       NetworkReceiver(
          ParticipantImpl &             participant,
          const io::InetSocketAddress & addr,
-         const std::string &           intrfc,
-         bool                          dumpReceivedBuffer = false );
+         const std::string &           intrfc );
 
       ~ NetworkReceiver();
 
       void dataDelete( void );
       void dataUpdate( void );
       void operation ( void );
-      void run       ( void );
+      void run       ( void ) __attribute__ ((noreturn));
 
    private:
 
@@ -35,6 +34,5 @@ namespace dcrud {
 #else
       pthread_t         _thread;
 #endif
-      bool              _dumpReceivedBuffer;
    };
 }

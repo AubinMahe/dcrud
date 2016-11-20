@@ -11,6 +11,17 @@ using namespace dcrud;
 #endif
 
 Cache::Cache( ParticipantImpl & participant ) :
+   _classes       (),
+   _updatedMutex  (),
+   _updated       (),
+   _deletedMutex  (),
+   _deleted       (),
+   _toUpdateMutex (),
+   _toUpdate      (),
+   _toDeleteMutex (),
+   _toDelete      (),
+   _localMutex    (),
+   _local         (),
    _nextInstance  ( 1U          ),
    _ownershipCheck( false       ),
    _participant   ( participant )
@@ -130,7 +141,7 @@ void Cache::refresh( void ) {
          os::Synchronized sync2( _toUpdateMutex );
          for( byteBuffersIter_t it = _toUpdate.begin(); it != _toUpdate.end(); ++it ) {
             io::ByteBuffer * update   = *it;
-            dcrud::GUID             id       = dcrud::GUID   ::unserialize( *update );
+            GUID             id       = GUID   ::unserialize( *update );
             ClassID          classId  = ClassID::unserialize( *update );
             localIter_t      itemIter = _local.find( id );
             if( itemIter == _local.end()) {

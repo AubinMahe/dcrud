@@ -6,10 +6,8 @@
 class StaticRegistry : public dcrud::IRegistry {
 public:
 
-   StaticRegistry( void ) {
-      _participants.insert( io::InetSocketAddress( MCAST_ADDRESS, 2416 ));
-      _participants.insert( io::InetSocketAddress( MCAST_ADDRESS, 2417 ));
-   }
+   StaticRegistry( void );
+   ~ StaticRegistry();
 
    virtual const dcrud::socketAddresses_t & getParticipants( void ) const {
       return _participants;

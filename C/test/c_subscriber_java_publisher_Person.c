@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static utilStatus remotelyCreatePerson(
+utilStatus remotelyCreatePerson(
    dcrudICRUD   personCRUD,
    const char * forname,
    const char * name,
@@ -31,13 +31,13 @@ static utilStatus remotelyCreatePerson(
    return UTIL_STATUS_NO_ERROR;
 }
 
-static utilStatus getFirstEntry( collForeach * context ) {
+utilStatus getFirstEntry( collForeach * context ) {
    dcrudShareable * first = context->user;
    *first = context->value;
    return UTIL_STATUS_ILLEGAL_STATE;
 }
 
-static utilStatus remotelyDeleteFirstEntry( dcrudICache cache, dcrudICRUD personCRUD ) {
+utilStatus remotelyDeleteFirstEntry( dcrudICache cache, dcrudICRUD personCRUD ) {
    dcrudShareable first = NULL;
    dcrudICache_foreach( cache, getFirstEntry, &first );
    if( first ) {
@@ -73,9 +73,10 @@ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine ) {
    CHK(__FILE__,__LINE__,dcrudIDispatcher_require( dispatcher, "IMonitor", &monitor ));
 
    for( i = 0; c != 'Q'; ++i ) {
+      CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( dispatcher ))
       printf( "[A]ubin, [M]uriel, [E]ve, [C]ache, [D]elete first, [Q]uit: " );
       c = toupper((char)fgetc( stdin ));
-      printf( "%c\n", c );
+      printf( "\n" );
       switch(c) {
       case 'Q':
          CHK(__FILE__,__LINE__,dcrudIRequired_call( monitor, "exit", NULL, NULL ))
@@ -98,7 +99,6 @@ utilStatus c_subscriber_java_publisher_Person( const utilCmdLine cmdLine ) {
          CHK(__FILE__,__LINE__,dcrudICache_foreach( cache, Person_print, stdout ))
          break;
       }
-      CHK(__FILE__,__LINE__,dcrudIDispatcher_handleRequests( dispatcher ))
    }
    CHK(__FILE__,__LINE__,dcrudIParticipant_leave( participant ));
    CHK(__FILE__,__LINE__,dcrudIParticipant_delete( &participant ));
