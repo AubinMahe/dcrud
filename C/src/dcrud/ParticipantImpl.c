@@ -47,13 +47,7 @@ utilStatus dcrudIParticipant_new(
    utilStatus status;
 #ifdef _WIN32
    WSADATA wsaData;
-   if( ! utilCheckSysCall( 0 ==
-      WSAStartup( MAKEWORD( 2, 2 ), &wsaData ),
-      __FILE__, __LINE__, "WSAStartup" ))
-   {
-      *target = NULL;
-      return UTIL_STATUS_INIT_FAILED;
-   }
+   CHK(__FILE__,__LINE__, 0 == WSAStartup( MAKEWORD(2,2), &wsaData ))
    atexit( exitHook );
 #endif
    if( NULL == self ) {

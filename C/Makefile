@@ -1,7 +1,10 @@
-CC = gcc
-AR = ar
+WIN32_CC = i686-w64-mingw32-gcc
+WIN32_AR = i686-w64-mingw32-ar
+CC       = gcc
+AR       = ar
+
 UNAME_S := $(shell uname -s)
-CFLAGS_COMMON  = -I inc -I src -fPIC
+CFLAGS_COMMON  = -I inc -I src
 ifeq ($(UNAME_S),Linux)
    CFLAGS_COMMON += -std=gnu11 -pthread -D_FORTIFY_SOURCE=2
 endif
@@ -27,6 +30,7 @@ LIB_SRCS =\
  src/io/ByteBuffer.c\
  src/io/InetSocketAddress.c\
  src/io/magic.c\
+ src/io/sockets.c\
 \
  src/coll/Comparator.c\
  src/coll/List.c\
@@ -69,14 +73,17 @@ EXE_SRCS =\
  test-channel/Person.c\
  test-channel/Types.c
 
-ifeq ($(UNAME_S),Linux)
-   LINK_FLAGS_DEBUG   = -pthread -rdynamic
-   LINK_FLAGS_RELEASE = -pthread
-else
-   LINK_FLAGS_DEBUG   = -lws2_32
-   LINK_FLAGS_RELEASE = -lws2_32
-	LIB_SRCS += src/io/sockets.c
-endif
+EXE_SRCS_WIN32 =\
+ $(EXE_SRCS)
+
+LIB_SRCS_WIN32 =\
+ $(LIB_SRCS)\
+ src/util/iso8601.c
+
+LINK_FLAGS_DEBUG         = -pthread -rdynamic
+LINK_FLAGS_RELEASE       = -pthread
+LINK_FLAGS_DEBUG_WIN32   = -lws2_32
+LINK_FLAGS_RELEASE_WIN32 = -lws2_32
 
 LIB_DEPS_DEBUG   = $(patsubst %.c,Debug/%.d,$(LIB_SRCS))
 LIB_OBJS_DEBUG   = $(patsubst %.c,Debug/%.o,$(LIB_SRCS))
@@ -98,41 +105,94 @@ LIB_OBJS_STATIC_RELEASE = $(patsubst %.c,Static-Release/%.o,$(LIB_SRCS))
 EXE_DEPS_STATIC_RELEASE = $(patsubst %.c,Static-Release/%.d,$(EXE_SRCS))
 EXE_OBJS_STATIC_RELEASE = $(patsubst %.c,Static-Release/%.o,$(EXE_SRCS))
 
+LIB_DEPS_DEBUG_WIN32   = $(patsubst %.c,Debug-Win32/%.d,$(LIB_SRCS_WIN32))
+LIB_OBJS_DEBUG_WIN32   = $(patsubst %.c,Debug-Win32/%.o,$(LIB_SRCS_WIN32))
+EXE_DEPS_DEBUG_WIN32   = $(patsubst %.c,Debug-Win32/%.d,$(EXE_SRCS_WIN32))
+EXE_OBJS_DEBUG_WIN32   = $(patsubst %.c,Debug-Win32/%.o,$(EXE_SRCS_WIN32))
+
+LIB_DEPS_RELEASE_WIN32 = $(patsubst %.c,Release-Win32/%.d,$(LIB_SRCS_WIN32))
+LIB_OBJS_RELEASE_WIN32 = $(patsubst %.c,Release-Win32/%.o,$(LIB_SRCS_WIN32))
+EXE_DEPS_RELEASE_WIN32 = $(patsubst %.c,Release-Win32/%.d,$(EXE_SRCS_WIN32))
+EXE_OBJS_RELEASE_WIN32 = $(patsubst %.c,Release-Win32/%.o,$(EXE_SRCS_WIN32))
+
+LIB_DEPS_STATIC_DEBUG_WIN32 = $(patsubst %.c,Static-Debug-Win32/%.d,$(LIB_SRCS_WIN32))
+LIB_OBJS_STATIC_DEBUG_WIN32 = $(patsubst %.c,Static-Debug-Win32/%.o,$(LIB_SRCS_WIN32))
+EXE_DEPS_STATIC_DEBUG_WIN32 = $(patsubst %.c,Static-Debug-Win32/%.d,$(EXE_SRCS_WIN32))
+EXE_OBJS_STATIC_DEBUG_WIN32 = $(patsubst %.c,Static-Debug-Win32/%.o,$(EXE_SRCS_WIN32))
+
+LIB_DEPS_STATIC_RELEASE_WIN32 = $(patsubst %.c,Static-Release-Win32/%.d,$(LIB_SRCS_WIN32))
+LIB_OBJS_STATIC_RELEASE_WIN32 = $(patsubst %.c,Static-Release-Win32/%.o,$(LIB_SRCS_WIN32))
+EXE_DEPS_STATIC_RELEASE_WIN32 = $(patsubst %.c,Static-Release-Win32/%.d,$(EXE_SRCS_WIN32))
+EXE_OBJS_STATIC_RELEASE_WIN32 = $(patsubst %.c,Static-Release-Win32/%.o,$(EXE_SRCS_WIN32))
+
 .PRECIOUS:\
+ $(LIB_DEPS_DEBUG)\
+ $(EXE_DEPS_DEBUG)\
+ $(LIB_DEPS_RELEASE)\
+ $(EXE_DEPS_RELEASE)\
  $(LIB_DEPS_STATIC_DEBUG)\
  $(EXE_DEPS_STATIC_DEBUG)\
  $(LIB_DEPS_STATIC_RELEASE)\
  $(EXE_DEPS_STATIC_RELEASE)\
- $(LIB_DEPS_DEBUG)\
- $(EXE_DEPS_DEBUG)\
- $(LIB_DEPS_RELEASE)\
- $(EXE_DEPS_RELEASE)
+ $(LIB_DEPS_DEBUG_WIN32)\
+ $(EXE_DEPS_DEBUG_WIN32)\
+ $(LIB_DEPS_RELEASE_WIN32)\
+ $(EXE_DEPS_RELEASE_WIN32)\
+ $(LIB_DEPS_STATIC_DEBUG_WIN32)\
+ $(EXE_DEPS_STATIC_DEBUG_WIN32)\
+ $(LIB_DEPS_STATIC_RELEASE_WIN32)\
+ $(EXE_DEPS_STATIC_RELEASE_WIN32)\
 
--include $(LIB_DEPS_STATIC_DEBUG)
--include $(EXE_DEPS_STATIC_DEBUG)
--include $(LIB_DEPS_STATIC_RELEASE)
--include $(EXE_DEPS_STATIC_RELEASE)
 -include $(LIB_DEPS_DEBUG)
 -include $(EXE_DEPS_DEBUG)
 -include $(LIB_DEPS_RELEASE)
 -include $(EXE_DEPS_RELEASE)
+-include $(LIB_DEPS_STATIC_DEBUG)
+-include $(EXE_DEPS_STATIC_DEBUG)
+-include $(LIB_DEPS_STATIC_RELEASE)
+-include $(EXE_DEPS_STATIC_RELEASE)
+-include $(LIB_DEPS_DEBUG_WIN32)
+-include $(EXE_DEPS_DEBUG_WIN32)
+-include $(LIB_DEPS_RELEASE_WIN32)
+-include $(EXE_DEPS_RELEASE_WIN32)
+-include $(LIB_DEPS_STATIC_DEBUG_WIN32)
+-include $(EXE_DEPS_STATIC_DEBUG_WIN32)
+-include $(LIB_DEPS_STATIC_RELEASE_WIN32)
+-include $(EXE_DEPS_STATIC_RELEASE_WIN32)
 
-.PHONY: static-debug static-release debug release all clean tests coll io shapes
+.PHONY:\
+        debug              release\
+ static-debug       static-release\
+        debug-win32        release-win32\
+ static-debug-win32 static-release-win32\
+ all clean tests coll io shapes
 
-all: static-debug static-release debug release
+all:\
+        debug              release\
+ static-debug       static-release\
+        debug-win32        release-win32\
+ static-debug-win32 static-release-win32
 
-static-debug: Static-Debug/dcrud-c-test
-static-release: Static-Release/dcrud-c-test
 debug: Debug/dcrud-c-test
 release: Release/dcrud-c-test
+static-debug: Static-Debug/dcrud-c-test
+static-release: Static-Release/dcrud-c-test
+debug-win32: Debug-Win32/dcrud-c-test
+release-win32: Release-Win32/dcrud-c-test
+static-debug-win32: Static-Debug-Win32/dcrud-c-test
+static-release-win32: Static-Release-Win32/dcrud-c-test
 
 tests: coll io shapes
 
 clean:
-	rm -fr Static-Debug
-	rm -fr Static-Release
 	rm -fr Debug
 	rm -fr Release
+	rm -fr Static-Debug
+	rm -fr Static-Release
+	rm -fr Debug-Win32
+	rm -fr Release-Win32
+	rm -fr Static-Debug-Win32
+	rm -fr Static-Release-Win32
 
 #------------------------------- TESTS -------------------------------
 # tn  test n
@@ -232,18 +292,6 @@ ms6: Static-Debug/dcrud-c-test
 
 #------------------------------- BUILD -------------------------------
 
-Static-Debug/dcrud-c-test: Static-Debug/libdcrud-c.a $(EXE_OBJS_STATIC_DEBUG)
-	$(CC) -o $@ $(EXE_OBJS_STATIC_DEBUG)   -LStatic-Debug   -ldcrud-c $(LINK_FLAGS_DEBUG)
-
-Static-Release/dcrud-c-test: Static-Release/libdcrud-c.a $(EXE_OBJS_STATIC_RELEASE)
-	$(CC) -o $@ $(EXE_OBJS_STATIC_RELEASE) -LStatic-Release -ldcrud-c $(LINK_FLAGS_RELEASE)
-
-Static-Debug/libdcrud-c.a: $(LIB_OBJS_STATIC_DEBUG)
-	$(AR) rc $@ $(LIB_OBJS_STATIC_DEBUG)
-
-Static-Release/libdcrud-c.a: $(LIB_OBJS_STATIC_RELEASE)
-	$(AR) rc $@ $(LIB_OBJS_STATIC_RELEASE)
-
 Debug/dcrud-c-test: Debug/libdcrud-c.a $(EXE_OBJS_DEBUG)
 	$(CC) -o $@ $(EXE_OBJS_DEBUG)   -LDebug   -ldcrud-c $(LINK_FLAGS_DEBUG)
 
@@ -255,6 +303,36 @@ Debug/libdcrud-c.a: $(LIB_OBJS_DEBUG)
 
 Release/libdcrud-c.a: $(LIB_OBJS_RELEASE)
 	$(AR) rc $@ $(LIB_OBJS_RELEASE)
+
+Debug/%.d: %.c
+	@mkdir -p $$(dirname $@)
+	@$(CC) $(CFLAGS_DEBUG)                       -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Debug/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(CC) -c $(CFLAGS_DEBUG) $< -o $@
+
+Release/%.d: %.c
+	@mkdir -p $$(dirname $@)
+	@$(CC) $(CFLAGS_RELEASE)                     -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Release/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(CC) -c $(CFLAGS_RELEASE) $< -o $@
+
+#-- Static --
+
+Static-Debug/dcrud-c-test: Static-Debug/libdcrud-c.a $(EXE_OBJS_STATIC_DEBUG)
+	$(CC) -o $@ $(EXE_OBJS_STATIC_DEBUG)   -LStatic-Debug   -ldcrud-c $(LINK_FLAGS_DEBUG)
+
+Static-Release/dcrud-c-test: Static-Release/libdcrud-c.a $(EXE_OBJS_STATIC_RELEASE)
+	$(CC) -o $@ $(EXE_OBJS_STATIC_RELEASE) -LStatic-Release -ldcrud-c $(LINK_FLAGS_RELEASE)
+
+Static-Debug/libdcrud-c.a: $(LIB_OBJS_STATIC_DEBUG)
+	$(AR) rc $@ $(LIB_OBJS_STATIC_DEBUG)
+
+Static-Release/libdcrud-c.a: $(LIB_OBJS_STATIC_RELEASE)
+	$(AR) rc $@ $(LIB_OBJS_STATIC_RELEASE)
 
 Static-Debug/%.d: %.c
 	@mkdir -p $$(dirname $@)
@@ -272,18 +350,62 @@ Static-Release/%.o: %.c
 	@mkdir -p $$(dirname $@)
 	$(CC) $(CFLAGS_RELEASE) -c -DSTATIC_ALLOCATION $< -o $@
 
-Debug/%.d: %.c
-	@mkdir -p $$(dirname $@)
-	@$(CC) $(CFLAGS_DEBUG)                       -MM -MP -MT $(subst .d,.o,$@) $< >$@
+#-- Win32 --
 
-Debug/%.o: %.c
-	@mkdir -p $$(dirname $@)
-	$(CC) -c $(CFLAGS_DEBUG) $< -o $@
+Debug-Win32/dcrud-c-test: Debug-Win32/libdcrud-c.a $(EXE_OBJS_DEBUG_WIN32)
+	$(WIN32_CC) -o $@ $(EXE_OBJS_DEBUG_WIN32)   -LDebug-Win32   -ldcrud-c $(LINK_FLAGS_DEBUG_WIN32)
 
-Release/%.d: %.c
-	@mkdir -p $$(dirname $@)
-	@$(CC) $(CFLAGS_RELEASE)                     -MM -MP -MT $(subst .d,.o,$@) $< >$@
+Release-Win32/dcrud-c-test: Release-Win32/libdcrud-c.a $(EXE_OBJS_RELEASE_WIN32)
+	$(WIN32_CC) -o $@ $(EXE_OBJS_RELEASE_WIN32) -LRelease-Win32 -ldcrud-c $(LINK_FLAGS_RELEASE_WIN32)
 
-Release/%.o: %.c
+Debug-Win32/libdcrud-c.a: $(LIB_OBJS_DEBUG_WIN32)
+	$(WIN32_AR) rc $@ $(LIB_OBJS_DEBUG_WIN32)
+
+Release-Win32/libdcrud-c.a: $(LIB_OBJS_RELEASE_WIN32)
+	$(WIN32_AR) rc $@ $(LIB_OBJS_RELEASE_WIN32)
+
+Debug-Win32/%.d: %.c
 	@mkdir -p $$(dirname $@)
-	$(CC) -c $(CFLAGS_RELEASE) $< -o $@
+	@$(WIN32_CC) $(CFLAGS_DEBUG)                       -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Debug-Win32/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(WIN32_CC) -c $(CFLAGS_DEBUG) $< -o $@
+
+Release-Win32/%.d: %.c
+	@mkdir -p $$(dirname $@)
+	@$(WIN32_CC) $(CFLAGS_RELEASE)                     -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Release-Win32/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(WIN32_CC) -c $(CFLAGS_RELEASE) $< -o $@
+
+#-- Static Win32 --
+
+Static-Debug-Win32/dcrud-c-test: Static-Debug-Win32/libdcrud-c.a $(EXE_OBJS_STATIC_DEBUG_WIN32)
+	$(WIN32_CC) -o $@ $(EXE_OBJS_STATIC_DEBUG_WIN32)   -LStatic-Debug-Win32   -ldcrud-c $(LINK_FLAGS_DEBUG_WIN32)
+
+Static-Release-Win32/dcrud-c-test: Static-Release-Win32/libdcrud-c.a $(EXE_OBJS_STATIC_RELEASE_WIN32)
+	$(WIN32_CC) -o $@ $(EXE_OBJS_STATIC_RELEASE_WIN32) -LStatic-Release-Win32 -ldcrud-c $(LINK_FLAGS_RELEASE_WIN32)
+
+Static-Debug-Win32/libdcrud-c.a: $(LIB_OBJS_STATIC_DEBUG_WIN32)
+	$(WIN32_AR) rc $@ $(LIB_OBJS_STATIC_DEBUG_WIN32)
+
+Static-Release-Win32/libdcrud-c.a: $(LIB_OBJS_STATIC_RELEASE_WIN32)
+	$(WIN32_AR) rc $@ $(LIB_OBJS_STATIC_RELEASE_WIN32)
+
+Static-Debug-Win32/%.d: %.c
+	@mkdir -p $$(dirname $@)
+	@$(WIN32_CC) $(CFLAGS_DEBUG)   -DSTATIC_ALLOCATION -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Static-Debug-Win32/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(WIN32_CC) $(CFLAGS_DEBUG) -c -DSTATIC_ALLOCATION $< -o $@
+
+Static-Release-Win32/%.d: %.c
+	@mkdir -p $$(dirname $@)
+	@$(WIN32_CC) $(CFLAGS_RELEASE) -DSTATIC_ALLOCATION -MM -MP -MT $(subst .d,.o,$@) $< >$@
+
+Static-Release-Win32/%.o: %.c
+	@mkdir -p $$(dirname $@)
+	$(WIN32_CC) $(CFLAGS_RELEASE) -c -DSTATIC_ALLOCATION $< -o $@

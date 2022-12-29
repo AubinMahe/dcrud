@@ -11,12 +11,12 @@ extern "C" {
 #  endif
 #  include <windows.h>
    typedef HANDLE                   osThread;
-   typedef LPTHREAD_START_ROUTINE   osThreadRoutine;
 #else
 #  include <pthread.h>
    typedef pthread_t                osThread;
-   typedef void *( *                osThreadRoutine )( void * );
 #endif
+
+typedef void *( * osThreadRoutine )( void * );
 
 bool osThread_create( osThread * thread, osThreadRoutine entry, void * arg );
 bool osThread_join  ( osThread   thread );

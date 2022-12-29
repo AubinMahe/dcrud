@@ -23,7 +23,7 @@ typedef struct dcrudNetworkReceiverImpl_s {
 
    unsigned                magic;
    dcrudIParticipantImpl * participant;
-   SOCKET                  in;
+   int                     in;
    ioByteBuffer            inBuf;
    osThread                thread;
 
@@ -311,14 +311,14 @@ void * dcrudNetworkReceiver_run( dcrudNetworkReceiverImpl * This ) {
             ioByteBuffer_remaining( This->inBuf, &ignored );
             if( ignored != 0 ) {
                fprintf( stderr, "%s:%d:%lu received byte%s ignored\n",
-                  __FILE__, __LINE__, ignored, ignored > 1 ? "s": "" );
+                  __FILE__, __LINE__, (long unsigned int)ignored, ignored > 1 ? "s": "" );
             }
          }
          else {
             size_t limit;
             ioByteBuffer_getLimit( This->inBuf, &limit );
             fprintf( stderr, "%s:%d:Garbage received, %lu bytes discarded!\n",
-               __FILE__, __LINE__, limit );
+               __FILE__, __LINE__, (long unsigned int)limit );
          }
       }
       else {
@@ -351,6 +351,8 @@ utilStatus dcrudNetworkReceiver_new(
          struct sockaddr_in local_sin;
          struct ip_mreq     mreq;
          int                T = 1;
+         int                sckt;
+
          memset( &local_sin, 0, sizeof( local_sin ));
          memset( &mreq     , 0, sizeof( mreq ));
          local_sin.sin_family      = AF_INET;
@@ -358,7 +360,8 @@ utilStatus dcrudNetworkReceiver_new(
          local_sin.sin_addr.s_addr = htonl( INADDR_ANY );
          mreq.imr_multiaddr.s_addr = inet_addr( addr->inetAddress );
          mreq.imr_interface.s_addr = inet_addr( intrfc );
-         CHK(__FILE__,__LINE__,((This->in = socket( AF_INET, SOCK_DGRAM, 0 ))<0)?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         CHK(__FILE__,__LINE__,((sckt = socket( AF_INET, SOCK_DGRAM, 0 ))<0)?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
+         This->in = sckt;
          CHK(__FILE__,__LINE__,setsockopt( This->in, SOL_SOCKET, SO_REUSEADDR, (char*)&T, sizeof( T ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
          CHK(__FILE__,__LINE__,bind( This->in, (struct sockaddr *)&local_sin, sizeof( local_sin ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
          CHK(__FILE__,__LINE__,setsockopt( This->in, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof( mreq ))?UTIL_STATUS_STD_API_ERROR:UTIL_STATUS_NO_ERROR);
@@ -375,7 +378,9 @@ utilStatus dcrudNetworkReceiver_new(
 utilStatus dcrudNetworkReceiver_delete( dcrudNetworkReceiver * self ) {
    utilStatus status = UTIL_STATUS_NO_ERROR;
    dcrudNetworkReceiverImpl * This = *(dcrudNetworkReceiverImpl **)self;
+#ifdef _linux
    shutdown( This->in, SHUT_RD );
+#endif
    osThread_join( This->thread );
    closesocket( This->in );
    CHK(__FILE__,__LINE__,ioByteBuffer_delete( &This->inBuf ))

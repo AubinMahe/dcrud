@@ -105,7 +105,7 @@ namespace io {
 
       void putBoolean( bool value ) {
          CPPCHK(__FILE__,__LINE__, ioByteBuffer_putByte( _buffer, value ? 1 : 0 ))
-      };
+      }
 
       bool getBoolean( void ) {
          byte value = 0;
@@ -127,7 +127,7 @@ namespace io {
          return value;
       }
 
-      unsigned short getUshort( void ) {
+      unsigned short getUShort( void ) {
          unsigned short value = 0;
          CPPCHK(__FILE__,__LINE__, ioByteBuffer_getUShort( _buffer, &value ))
          return value;

@@ -2,6 +2,7 @@
 #include <util/CmdLine.h>
 #include <util/Pool.h>
 #include <util/Trace.h>
+#include <io/sockets.h>
 
 #ifdef _WIN32
 #  include <crtdbg.h>

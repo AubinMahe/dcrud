@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _MSC_VER
 #  define strcasecmp stricmp
 #else
 #  include <strings.h>

@@ -21,5 +21,9 @@ int collStringCompare( const char ** left, const char ** right ) {
 }
 
 int collPointerCompare( const void ** left, const void ** right ) {
+#ifdef _WIN32
+   return (unsigned)*left - (unsigned)*right;
+#else
    return (uint64_t)*left - (uint64_t)*right;
+#endif
 }

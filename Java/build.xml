@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="project" default="all">
 
-   <property name="build-lib" value="BUILD-LIB" />
-   <property name="jar-lib"   value="dcrud.jar" />
+   <property name="build-lib"  value="BUILD-LIB" />
+   <property name="jar-lib"    value="dcrud.jar" />
 
    <property name="build-test" value="BUILD-TEST" />
    <property name="jar-test"   value="dcrud-ui.jar" />
 
+   <path id="jfx13">
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.base.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.controls.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.fxml.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.graphics.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.media.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.swing.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx.web.jar" />
+      <pathelement path="/usr/lib/jvm/openjfx-sdk-13/lib/javafx-swt.jar" />
+   </path>
+  
    <target name="all" depends="jar-lib,jar-test,api-docs" description="" />
 
    <target name="clean" description="">
@@ -39,6 +50,7 @@
          debug            ="false"
          optimize         ="true"
          destdir          ="${build-lib}"
+         classpathref     ="jfx13"
          includeantruntime="false">
          <src path="../Java/src" />
       </javac>
@@ -54,9 +66,11 @@
          debug            ="false"
          optimize         ="true"
          destdir          ="${build-test}"
-         includeantruntime="false"
-         classpath        ="${jar-lib}">
+         includeantruntime="false">
          <src path="../Java/test" />
+         <src path="../Java/src-gen" />
+         <classpath location="${jar-lib}" />
+         <classpath refid="jfx13" />
       </javac>
    </target>
 

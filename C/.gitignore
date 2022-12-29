@@ -1,1 +1,9 @@
 /getifaddrs.c
+Debug
+Debug-Win32
+Release
+Release-Win32
+Static-Debug
+Static-Debug-Win32
+Static-Release
+Static-Release-Win32

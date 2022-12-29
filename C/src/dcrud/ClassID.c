@@ -14,6 +14,11 @@ UTIL_POOL_DECLARE    ( dcrudClassIDImpl )
 static dcrudClassIDImpl * allClasses[dcrudGUIDImpl_POOL_SIZE];
 static unsigned           allClassesCount;
 
+#ifndef __COMPAR_FN_T
+#  define __COMPAR_FN_T
+typedef int (*__compar_fn_t) (const void *, const void *);
+#endif
+
 utilStatus dcrudClassID_resolve(
    dcrudClassID * self,
    byte           package1,

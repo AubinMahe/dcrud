@@ -1,14 +1,13 @@
 #include "ISO8601Date.h"
+
 #include <util/Pool.h>
+#include <util/iso8601.h>
+#include <util/String.h>
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "../inc/util/String.h"
 #include "poolSizes.h"
-
-#define __USE_XOPEN
-#include <time.h>
 
 UTIL_POOL_DECLARE( channelTestISO8601Date )
 
